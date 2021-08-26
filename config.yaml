@@ -1,0 +1,21 @@
+baseurl: /
+title: My Econ Tricks
+author: Ludovic Vigneron
+copyright: © Ludovic Vigneroin 2021–2022. All rights reserved.
+canonifyurls: yes
+paginate: 4
+theme: silhouette-hugo
+pygmentsUseClasses: yes
+params:
+  author: My Econ Tricks
+  contentSharing: Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+  introDescription: Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d'années,
+                    Maître de Conférences à l'Université Polytechnique Hauts de France.
+social:
+  linkedin: ludovic-vigneron-1ba27749
+  twitter: VigneronLudovic
+  
+  
+  
+  
+  

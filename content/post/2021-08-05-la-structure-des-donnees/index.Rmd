@@ -1,0 +1,285 @@
+---
+title: La structure des données
+author: Ludovic Vigneron
+date: '2021-08-05'
+slug: []
+categories:
+  - R
+tags:
+  - Exercice
+editor_options: 
+  chunk_output_type: inline
+---
+
+Depuis quelques temps déjà, je me suis lancé dans l'écriture d'un manuel de statistiques utilisant R pour la présentation des concepts et comme outil pratique pour leur mise en oeuvre. L'idée est qu'une simulation numérique bien pensée rend leur compréhension plus facile que les seuls développements mathématiques (même si le livre en contient sa part). En montrant les choses à partir de petits programmes et en donnant les clés pour librement les modifier, il offre au lecteur la possibilité d'approcher les mécaniques et de découvrir leurs limites en les mettant à l'épreuve.
+
+Mais pour ce faire, il est nécessaire de maîtriser un minimum du langage de programmation. Aussi, la première partie du livre est consacrée à sa présentation. Celle-ci s'étale sur plusieurs chapitres. Chacun d'eux (comme tous ceux du livre) est accompagné d'une série d'exercices mobilisant R. Je profite de ce blog pour rendre le travail de relecture plus amusant en en partageant certains. Je tiendrai bien sûr le lecteur informé de l'avancé de l'ouvrage (dès que j'aurai trouvé un titre plus percutant qu'"Introduction à la Statistique avec R", promis je fais une annonce...) et de ses futurs débouchés éditoriaux.
+
+En attendant, voyons cela de plus près avec les exercices du chapitre 1 (version actuelle). Pour chacun d'eux, avant d'en reproduire l'énoncé et d'en présenter la résolution, je commencerai par un rappel des notions abordées.
+
+# Exercice 1 : type, mode et la classe d'un objet
+
+R est un langage orienté objet à la structure vectorielle, c'est-à-dire qu'il s'organise autour d'éléments désignés comme des objets appelés à interagir entre eux pour en former d'autres. L'objet de base, celui qui compose en dernier ressort tous les autres, est le vecteur.
+
+Un vecteur ne peut contenir qu'un type de donnée à la fois. Il en existe cinq différents : "logical", "integer", "double", "complex" et "character" (des éléments binaires VRAI/FAUX, des entiers, des nombres à virgule, des nombres complexes et des lettres). Si un vecteur mélange des données pouvant être rattachées à plusieurs types, il adoptera celui du plus détaillé. A ce jeu, l'information de type "character" l'emporte sur tout les autres. Si un vecteur est vide, il sera de type "NULL". La fonction **typeof()** permet d'obtenir l'information sur l'objet considéré.
+
+L'information contenue dans un objet est stockée en mémoire selon un format défini de manière à permettre de préserver l'information et limiter la place prise par cette dernière. On a pour les vecteurs en fonction de leur type les modes de stockage suivants (du moins gourmand au plus gourmand en ressources) :
+
+-   logical =\> logical
+
+-   integer et double =\> numeric
+
+-   complex =\> complex
+
+-   character =\> character
+
+Les vecteurs les plus lourds sont les "character". S'ils présentent des régularités , il sera intéressant de les convertir en facteurs (avec **as.factor()**) pour réduire leur taille en mémoire. Ils prennent alors le format "numeric". R convertit souvent des vecteurs "character" en facteur lors de leur importation pour traitement à partir d'une source externe. Pour les objets complexes combinant plusieurs type de vecteurs (data.frame, list...), le mode de stockage correspondant et "list". La fonction **mode()** permet d'obtenir directement l'information sur le mode de stockage.
+
+Pour les traitements spécifiques, R utilise des objets pouvant être plus complexes que les simples vecteurs (matrix, array, data.frame, list...). Ceux-ci sont regroupés en classes. Chaque classe aura ses propres règles de fonctionnement et de présentation. Ainsi, une data.frame regroupe des vecteurs pouvant être de type différents mais qui doivent être de même taille. Une list regroupe des vecteurs de tous types mais pouvant être de tailles différentes. Une matrix comprend des vecteurs de mêmes tailles et de mêmes types... Concernant plus spécifiquement les vecteurs seuls, leur classe correspond à leur mode de stockage. La fonction **class()** permet d'obtenir l'information directement.
+
+Il est important de connaître les types, modes et classes des objets manipulés dans vos programmes de manière à connaître les opérations qu'il est possible de réaliser sur l'information qu'ils contiennent. Si nécessaire, vous devrez procéder à des transformations pour permettre les traitements que vous envisagez.
+
+Mais trêve de bavardages, voici l'énoncé du premier exercice du livre:
+
+***Identifiez le type, le mode de stockage et la classe des objets suivant:***
+
+```{r}
+A<-c(TRUE,FALSE,FALSE,FALSE,TRUE)
+B<-c(1,2.5,10,15,13,0)
+C<-c(A,B)
+D<-2i
+E<-c(C,D)
+F<-c(C,"La La La")
+```
+
+On pourrait simplement utiliser les fonctions **typeof()**, **mode()** et **class()** pour obtenir directement la réponse mais avant essayons de la déduire des règles que nous venons d'énoncées.
+
+Pour le vecteur A, il n'y a pas de grande difficluté. Il n'est composé que de valeurs logique TRUE/FALSE. Il est donc simplement de type "logical". Il sera stocké également sous forme "logical" dans la mesure où il s'agit de la forme la moins consommatrice en ressources. En tant que vecteur sa classe correspond à son mode de stockage, ce sera donc une nouvelle fois "logical".
+
+```{r}
+c(typeof(A),mode(A),class(A))
+```
+
+Le vecteur B contient une serie de nombres. Des entiers à l'exception du second 2.5 qui est un nombre décimal. Il est donc de type "double" et est stocké sous la forme "numeric". Sa classe correspond à son mode de stockage et donc "numeric".
+
+```{r}
+c(typeof(B),mode(B),class(B))
+```
+
+Le vecteur C correspond à la jonction des vecteurs A et B. Il prend le type du plus complexe des deux (le vecteur B). Il est donc de type "double". Son mode de stockage est en conséquence "numeric" de même que sa classe.
+
+```{r}
+c(typeof(C),mode(C),class(C))
+```
+
+Le vecteur D ne présente qu'un seul élément le nombre complexe 2i. Son type est donc "complex" de même que son mode de stockage et sa classe.
+
+```{r}
+c(typeof(D),mode(D),class(D))
+```
+
+Le vecteur E correspond à l'adjonction des vecteurs C qui est de type "double" et du vecteur D qui est de type "complex". Il prend le type du plus compliqué des deux. Il est dons de type "complex" et sera stocké selon ce même mode et sera de cette même classe.
+
+```{r}
+c(typeof(E),mode(E),class(E))
+```
+
+Le vecteur F combine le vecteur C, qui est de type "double" (l'adjonction de A, qui est "logical", et B, qui est "double), et un élément (un vecteur" comprenant le texte "La La La". Il prend le type du vecteur le plus complexe ici le texte. Il est donc de type "character", sera stocké sous ce même mode et sera de cette même classe.
+
+```{r}
+c(typeof(F),mode(F),class(F))
+```
+
+Voici pour la version actuelle de l'exercice. Je pense ajouter des questions incluant des variables manquantes NA classiques et des NaN qui marquent le résultat d'un calcul qui ne serait pas un nombre (Not a Number). Ceux-ci pourrait être confondus avec chaînes de caractères. On aurait par exemple:
+
+```{r}
+G<-c(2,5.5,6,NA,10,14)
+G
+```
+
+Le vecteur G est composé de nombres dont un à virgule. Le NA représentant une valeur manquante qui peut être de tout type. Elle est considérée comme du même type que les autres. Le vecteur est donc de type "double" et est stocké sous format "numeric" et appatient à la classe "numeric".
+
+```{r}
+c(typeof(G),mode(G),class(G))
+```
+
+Une autre question pourrait porter sur un vecteur n'incluant que des variables manquantes de différentes formes.
+
+```{r}
+H<-c(NA,NaN,NA)
+H
+```
+
+Le vecteur pourrait être de type "NULL" puisque ne contenant aucune information valable. Ce n'est cependant pas le cas. Il pourrait également être de type "logical", le format le moins encombrant à stocker en mémoire. En fait, le NaN qu'il intègre est de nature numérique. Le vecteur est de type "double", le format numérique le plus complexe. Il est stocké sous format "numeric" et de classe "numeric".
+
+```{r}
+c(typeof(H),mode(H),class(H))
+```
+
+L'exercice peut également être enrichi en intégrant des objets plus complexe comme des matrices ou des data frame que l'on peut assembler avec la fonction **cbind()**.
+
+```{r}
+I<-cbind(B,G)
+I
+```
+
+En réunissant les deux vecteurs de type "double", on obtient un nouvel objet du même type. Il est stocké au format "numeric". Il est de classe "matrix" (ou "array").
+
+```{r}
+c(typeof(I),mode(I),class(I))
+```
+
+Voyons ce qu'il en est lorsque l'on réunit deux vecteurs de types différents. Prenons ici un vecteur de type "double" et un vecteur de type "character".
+
+```{r}
+J<-c('A','B','C','A','B+','D')
+J<-cbind(B,J)
+J
+```
+
+Les informations de type "character" étant plus difficiles à stocker, ce type l'emport sur l'autre. L'objet obtenu est donc de type "character". Il est stocké comme "character" . Sa classe est "matrix" (ou "array").
+
+```{r}
+c(typeof(J),mode(J),class(J))
+```
+
+Si pour joindre les vecteurs ont utilise une data frame, les choses sont légèrement différentes. La data frame permet la coexistence de plusieurs types de vecteur. Prenons un vecteur de type "double" et un vecteur de type "integer".
+
+```{r}
+K<-1:6
+K<-data.frame(J,K)
+K
+```
+
+Le type de l'objet est "list" de même que le son mode de stockage. Sa classe est "data.frame". Cela reflète le fait qu'une data frame n'est qu'une list d'un type particulier (qui comprend uniquement des vecteurs de même taille).
+
+```{r echo=TRUE, paged.print=FALSE}
+c(typeof(K),mode(K),class(K))
+```
+
+# Exercice 2 : calculs sous R
+
+Il s'agit ici d'utiliser R pour réaliser des opérations de programmations linéaires simples (impliquant vecteurs et matrices). L'objectif est de familiariser le lecteur avec les fonctions associées avec les opérateurs mobilisés: transposition de matrice avec **t()**, inversion avec **solve()** et produit matriciel avec **%\*%** . Mais aussi, de le sensibiliser au principe de recyclage du vecteur les plus petits retenu par R et du décalage que cela implique par rapport à l'arithmétique classique.
+
+Pour ceux qui aurait besoin de quelques rappels sur les opérations à réaliser, voici une série de liens avec des vidéos reprenant les différentes notions mobilisées:
+
+-   [généralité sur les matrices](https://www.youtube.com/watch?v=Sdg9O-HqSN0)
+
+-   [multiplication de matrices](https://www.youtube.com/watch?v=rxz6nYDwE1Q)
+
+-   [inversion de matrices](https://www.youtube.com/watch?v=a5XQKEQnf_Y)
+
+Vous noterez l'origine commune de ces vidéos: la chaîne [youtube Exo7](<https://www.youtube.com/user/Exo7Math/featured>), qui est tenue par des collègues de mathématiques de l'université de Lille. Le travail proposé y est à la fois rigoureux et accessible. Je ne saurais que vous la recommander.
+
+***Réalisez les opérations suivantes en utilisant les règles de l'arithmétique classique et comparez vos résultats avec ceux obtenus avec R.***
+
++---------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **a.** $$\left(\begin{array}{c}20 \\ 12 \\ 8\end{array}\right)\times{2}+\left(\begin{array}{c}1\\2\\1\end{array}\right)$$ | **d.**$$                                                                                                                                                                                                                                                               |
+|                                                                                                                           |                                                                                                                              \left( \begin{array}{cc} 1 \ 3\\ 2 \ 3\end{array}\right)^t.\left(\begin{array}{cc} 1 \ 0\\ 0 \ 1\end{array}\right)                        |
+|                                                                                                                           |                                                                                                                              $$                                                                                                                                        |
++---------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **b.** $$                                                                                                                 | **e.**$$                                                                                                                                                                                                                                                               |
+|  \left(\begin{array} {c} 1\\2\\3\\10 \end{array}\right)+\left(\begin{array} {c} 5\\5 \end{array}\right) -1                |                                                                                                                              \left(\begin{array}{ccc} \ 1 \ 1\ 1\\ 12\ 2\ -3 \\ 3 \ 4 \ 1 \end{array}\right)^{-1} .\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right) |
+|  $$                                                                                                                       |                                                                                                                              $$                                                                                                                                        |
++---------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+| **c.**$$                                                                                                                  | **f.**$$                                                                                                                                                                                                                                                               |
+|  \left(\begin{array}{} 1\\3\\-5 \end{array}\right).\left(\begin{array}{} 4\\-2\\-1 \end{array}\right)                     |                                                                                                                              \left(\left( \begin{array}\ 1\ 6\ 1 \\ 6\ 3\ 1                                                                                            |
+|  $$                                                                                                                       |                                                                                                                               \end{array}\right)+4\right)^T                                                                                                            |
+|                                                                                                                           |                                                                                                                              $$                                                                                                                                        |
++---------------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+
+Voyons les choses opérations par opérations.
+
+**a.**
+
+$$\left(\begin{array}{c}20 \\ 12 \\ 8\end{array}\right)\times{2}+\left(\begin{array}{c}1\\2\\1\end{array}\right)=\left(\begin{array}{c}40 \\ 24 \\ 16\end{array}\right)+\left(\begin{array}{c}1\\2\\1\end{array}\right)=\left(\begin{array}{c}41\\26\\17\end{array}\right)$$
+
+Pour le premier calcul, il n'y a pas de difficultés particulières. Le premier vecteur est multiplié par une constante et donc tous ces éléments le sont individuellement. On additionne alors chaque élément des deux vecteurs un à un en fonction de leur rang.
+
+```{r include=TRUE}
+a<-c(20,12,8)
+b<-c(1,2,1)
+a*2+b
+```
+
+**b.**
+
+$$
+\left(\begin{array} {c} 1\\2\\3\\10 \end{array}\right)+\left(\begin{array} {c} 5\\5 \end{array}\right) -1 = \left(\begin{array} {c} 6\\7\\3\\10 \end{array}\right)-1=\left(\begin{array} {c} 5\\6\\2\\9 \end{array} \right)
+$$
+
+Ici on additionne un vecteur de quatre éléments avec un vecteur de deux. L'opération n'engage donc que les deux premier l'élément du grand vecteur. On soustrait une constante au résultat et donc à chaque élément du vecteur.
+
+```{r}
+a<-c(1,2,3,10)
+b<-c(5,5)
+a+b-1
+```
+
+Lorsque l'on fait l'opération sous R, on obtient un résultat différent dans la mesure où le petit vecteur est recyclé pour s'ajuster au grand. Si l'on veut retrouver le résultat, il faut étendre le petit vecteur pour qu'il ait la même taille que le grand, ce qui crée des valeurs manquantes NA, puis transformer ces valeurs manquantes en 0
+
+```{r}
+length(b)<-length(a)
+b[which(is.na(b))]<-0
+a+b-1
+```
+
+**c.**
+
+$$
+\left(\begin{array}{} 1\\3\\-5 \end{array}\right).\left(\begin{array}{} 4\\ -2\\ -1 \end{array}\right)=1\times4+3\times-2-5\times-1=4-6+5=3
+$$
+
+Il s'agit de réaliser un produit matriciel. Chaque élément d'un vecteur est multiplié par l'élément correspondant dans l'autre puis l'ensemble est additionné. Le même résultat s'obtient sans difficulté sous R en utilisant l'opérateur **%\*%**.
+
+```{r}
+a<-c(1,3,-5)
+b<-c(4,-2,-1)
+a%*%b
+```
+
+**d.**
+
+$$
+\left( \begin{array}{cc} 1 \ 3\\ 2 \ 3\end{array}\right)^t.\left(\begin{array}{cc} 1 \ 0\\ 0 \ 1\end{array}\right)=\left(\begin{array} \ 1 \ 2 \\ 3\ 3 \end{array}\right).\left(\begin{array}{cc} 1 \ 0\\ 0 \ 1\end{array}\right)=\left(\begin{array}{cc} (1\times1)+(3\times0)\ (3\times0)+(2\times1)\\ (3\times1)+(3\times0) \ (3\times0)+(3\times1)\end{array}\right)=\left(\begin{array}{cc} 1 \ 2\\ 3 \ 3\end{array}\right)
+$$
+
+On commence par transposer une matrice, c'est à dire faire en sorte que ses lignes deviennent ses colonnes et ses colonnes ses lignes. Ceux-ci est réalisé dans R avec la fonction **t()**. Puis, on effectue un produit matriciel en utilisant une nouvelle fois l'opérateur **%\*%.**
+
+```{r}
+A<-matrix(c(1,2,3,3),nrow=2,ncol=2)
+B<-matrix(c(1,0,0,1),nrow=2,ncol=2)
+t(A)%*%B
+```
+
+**e.**
+
+$$
+\left(\begin{array}{ccc} \ 1 \ 1\ 1\\ 12\ 2\ -3 \\ 3 \ 4 \ 1 \end{array}\right)^{-1} .\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)=\left(\begin{array}{ccc} \ 1 \ 1\ 1\\ 12\ 2\ -3 \\ 3 \ 4 \ 1 \end{array}\right|\left|\begin{array}{ccc} \ 1 \ 0\ 0\\ 0\ 1\ 0 \\ 0 \ 0 \ 1 \end{array}\right).\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)=\left(\begin{array}{ccc} \ 0.4 \ 0.0857\ -0.1428\\ -0.6\ -0.0571\ 0.4285 \\ 1.23 \ -0.0285 \ -0.2857 \end{array}\right).\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)=\left(\begin{array}{}\ 0.8285 \\ -0.8857 \\ 2.0571 \end{array}\right)
+$$
+
+L'inversion de la matrice est réalisée sous R grâce à la fonction **solve()**. Ici, aucune difficulté la matrice proposée est inversible. Puis, l'on utilise %\*% pour le produit matriciel entre la matrice obtenu et le vecteur.
+
+```{r}
+A<-matrix(c(1,12,3,1,2,4,1,-3,1),nrow=3,ncol=3)
+b<-c(2,2,1)
+solve(A)%*%b
+```
+
+**f.**
+
+$$
+\left(\left( \begin{array}\ 1\ 6\ 1 \\ 6\ 3\ 1
+ \end{array}\right)+4\right)^T=\left(\begin{array}\ 5\ 10\ 5 \\ 10\ 7\ 5
+ \end{array}\right)^T=\left(\begin{array}\ 5\ 10\\ 7 \ 10\\ 5\ 5
+ \end{array}\right)
+$$
+
+On additionne une constante à une matrice et donc à chacun de ses éléments. Puis, on transpose le résultat (avec la fonction **t()**).
+
+```{r}
+A<-matrix(c(1,6,6,3,1,1),nrow=2,ncol=3)
+t(A+4)
+```
+
+Voilà qui est déjà long pour un billet rapide... Je vais donc renvoyer à plus tard la relecture partagée des autres exercices. J'espère que sa lecture vous aura été utile. Pour ma part, cela m'a permis de revenir sur certains points (corriger quelques boulettes dans le manuscrit) et de m'interroger avec le recul sur la pertinence de quelques uns. Comme on dit : "Work in progress".
