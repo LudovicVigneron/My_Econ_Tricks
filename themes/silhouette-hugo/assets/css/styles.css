@@ -10,16 +10,18 @@ body {
 .main {
     display: flex;
     flex: 1;
-}
+    }
 
 h1, h2, h3, h4, h5, h6,
 .h1, .h2, .h3, .h4, .h5, .h6 {
     word-wrap: break-word;
+    
 }
 
 hr {
     border-top: 1px dotted #2c2a24;
     margin-bottom: 0;
+   
 }
 
 pre {
@@ -36,32 +38,43 @@ a,
     word-wrap: break-word;
 }
 
+
+.top-nav {
+    background-color: #000000;
+}
+
+
 .top-nav .container {
     max-width: 1575px;
-    padding-left: 0;
-    padding-right: 0;
+    padding-left: 100;
+    padding-right: 100;
+    background-color: #000000;
 }
+
 
 .navbar-brand {
     font-family: 'Oswald', sans-serif;
-    font-size: 1.6rem;
-    padding: 0;
+    font-size: 1.6rem ;
+    padding: 10;
 }
 
 .navbar-brand img {
     vertical-align: baseline;
+    background-color: #000000;
 }
 
 .top-nav a,
 .top-nav a:hover {
     text-decoration: none;
-    color: #fff;
+    color: #e3d096;
+    background-color: #000000;
 }
 
 a.card {
     text-decoration: none;
     color: #000;
     border: 0;
+    background-color: #000000;
 }
 
 .top-nav,
@@ -76,7 +89,7 @@ footer,
 }
 
 footer {
-    background-color: #27343c;
+    background-color: #000000;
     color: #fff3e4;
     font-size: .8rem;
     padding: 30px 30px;
@@ -129,6 +142,7 @@ footer hr {
 }
 
 .top-nav {
+    background-color: #000000;
     color: #fff;
     border-color: rgba(255,255,255,0);
 }
@@ -138,7 +152,7 @@ footer hr {
 }
 
 .share-icons a {
-    color: #eeedea;
+    color: #fff;
 }
 
 .share-icons .fa-inverse {
@@ -166,7 +180,7 @@ footer hr {
 }
 
 .white-shadow-text {
-    text-shadow: 0 0 3px #222;
+    text-shadow: 0 0 20px #222;
     color: #fcfbf7;
 }
 
