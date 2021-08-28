@@ -219,7 +219,7 @@ g_an_f<-ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+
   geom_smooth(se=FALSE,aes(colour="Tendance (loess regression)"))+
   geom_hline(aes(yintercept=mean(d_m$deg_C),colour="Moyenne"))+
   labs(x='**années**',y='**°C**')+
-  scale_colour_manual(name="*Légende*", values=c("blue", "red"))+
+  scale_colour_manual(name="*Légende*", values=c("red", "blue"))+
   coord_cartesian(xlim=c(1770,2022),ylim=c(7.2,11),expand = FALSE)+
   theme_minimal()
 (g_j+g_m+g_an)/g_an_f+
