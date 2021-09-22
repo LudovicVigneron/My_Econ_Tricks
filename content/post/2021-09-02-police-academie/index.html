@@ -14,8 +14,8 @@ tags:
 <link href="{{< blogdown/postref >}}index_files/lightable/lightable.css" rel="stylesheet" />
 
 
-<p>La personnalisation d’un graphe passe aussi par celle des textes qui l’accompagnent. Que ce soit son titre, sa légende ou tout autres annotations, une mise en forme s’impose. Nous l’avons vu celle-ci est possible dans GGPLOT2 au travers des éléments du thème retenu. Il s’agit d’indiquer au sein de l’ajout de mise en forme introduit par la fonction <strong>theme()</strong> l’objet sur lequel vous voulez appliquer votre choix et de l’introduire par la fonction <strong>element_text()</strong>. Celle-ci permet entre autre de changer la police, l’encrage, le centrage, l’orientation, la couleur… Dans ce nouveau post, nous nous focaliserons sur cette modification. Bien souvent, les graphes produits sont amenés à s’intégrer dans des rapports (ou d’autres supports). Il peut être intéressant de pouvoir s’assurer d’une continuité de forme en s’assurant que la police utilisée dans les graphes soit la même que celle utilisée dans le reste du document.</p>
-<p>Pour illustrer les méthodes mises en oeuvre, reprenons (une nouvelle fois) notre série temporelle concernant les moyennes annuelles de températures sur le centre de l’Angleterre de 1772 à nos jours. Pour cela, importons à nouveau les données, puis procédons aux transformations habituelles et stockons l’ensemble dans la une data frame nommée dat.</p>
+<p>La personnalisation d’un graphe passe aussi par celle des textes qui l’accompagnent. Que ce soit son titre, sa légende ou tout autres annotations, une mise en forme s’impose. Nous l’avons vu celle-ci est possible dans GGPLOT2 au travers des éléments du thème retenu. Il s’agit d’indiquer, au sein de l’ajout de mise en forme introduit par la fonction <strong>theme()</strong>, l’objet sur lequel vous voulez appliquer votre choix et de l’introduire par la fonction <strong>element_text()</strong>. Celle-ci permet entre autre de changer la police, l’encrage, le centrage, l’orientation, la couleur… Dans ce nouveau post, nous nous focaliserons sur ces modifications. Bien souvent, les graphes produits sont amenés à s’intégrer dans des rapports (ou d’autres supports). Il peut être intéressant de s’assurer d’une continuité de forme en faisant en sorte que la police utilisée dans les graphes soit la même que celle utilisée dans le reste du document.</p>
+<p>Pour illustrer les méthodes mises en oeuvre, reprenons (une nouvelle fois) notre série temporelle des moyennes annuelles de températures sur le centre de l’Angleterre de 1772 à nos jours. Pour cela, importons à nouveau les données, procédons aux transformations habituelles et stockons l’ensemble dans la une data frame nommée dat.</p>
 <pre class="r"><code>library(tidyverse)
 dat&lt;-read.table(&quot;https://hadleyserver.metoffice.gov.uk/hadcet/cetdl1772on.dat&quot;)
 colnames(dat)&lt;-c(&#39;year&#39;,&#39;day&#39;,paste0(&#39;month_&#39;,1:12))
@@ -32,7 +32,7 @@ dat&lt;-dat%&gt;%pivot_longer(cols=starts_with(&#39;month_&#39;),names_to=&quot;
 dat&lt;-dat%&gt;%mutate(annee=lubridate::year(date))%&gt;%
             group_by(annee)%&gt;%
             summarise(deg_C=round(mean(degre_C),digits=2))</code></pre>
-<p>Ceci fait, établissons un graphe de base à partir duquel nous travaillerons: le même nuage de points que dans les posts précédant habillé avec le thème minimal et la légende placée en dessous. Appelons le G1.</p>
+<p>Ceci fait, établissons un graphe de base à partir duquel nous travaillerons. Prenons le même nuage de points que dans les posts précédant habillé avec le thème minimal et la légende placée en dessous. Appelons-le G1.</p>
 <pre class="r"><code>G1&lt;-ggplot(dat,aes(x=annee,y=deg_C))+geom_point()+geom_smooth(se=FALSE,aes(colour=&quot;Courbe d&#39;ajustement (loess)&quot;))+
            geom_hline(aes(yintercept=mean(deg_C),colour=&quot;Moyenne&quot;))+
            labs(title=&quot;Températures moyennes au centre de l&#39;Angleterre (1772-2021)&quot;,
@@ -47,7 +47,7 @@ G1</code></pre>
 <p>Maintenant que nous avons une base de travail, voyons comment avancer sur la personnalisation.</p>
 <div id="identifier-les-polices-disponibles-par-défaut" class="section level2">
 <h2>Identifier les polices disponibles par défaut</h2>
-<p>Commençons par voir quelles polices sont disponibles sans qu’il ne soit nécessaire de rien faire. Profitons en pour relever les noms qu’il faut utiliser pour les modiliser via l’option <em>family</em>. La fonction <strong>windowsFonts()</strong>, nous en renvoie le liste.</p>
+<p>Commençons par voir quelles polices sont disponibles sans qu’il ne soit nécessaire de faire quoique ce soit. Profitons-en pour relever les noms qu’il faut utiliser afin les mobiliser via l’option <em>family</em>. La fonction <strong>windowsFonts()</strong>, nous en renvoie le liste.</p>
 <pre class="r"><code>windowsFonts()</code></pre>
 <pre><code>## $serif
 ## [1] &quot;TT Times New Roman&quot;
@@ -57,7 +57,7 @@ G1</code></pre>
 ## 
 ## $mono
 ## [1] &quot;TT Courier New&quot;</code></pre>
-<p>Elle présente trois éléments. Le premier, que l’on connait déjà, est nommé serif. Il permet d’utiliser la police “<em>Times New Roman</em>”. Celle-ci est assez élégante. On la retrouve souvent dans les documents voulant un rendu proche de celui d’un livre. Le second est nommé sans. Il permet d’utiliser la police “<em>Arial</em>” qui plus angulaire, plus proche de ce que l’on lit sur un écran. Le troisième est nommé mono. Il permet d’utiliser la police “<em>Courier New</em>”. Comme toute les polices courriers , elle a la particularité de présenter des caractères qui ont tous la même taille.</p>
+<p>Elle présente trois éléments. Le premier, que l’on connait déjà, est nommé serif. Il permet d’utiliser la police “<em>Times New Roman</em>”. Celle-ci est assez élégante. On la retrouve souvent dans les documents voulant un rendu proche de celui d’un livre. Le second est nommé sans. Il permet d’utiliser la police “<em>Arial</em>” qui est plus angulaire, plus proche de ce que l’on lit sur un écran. Le troisième est nommé mono. Il permet d’utiliser la police “<em>Courier New</em>”. Comme toute les polices courriers, elle a la particularité de présenter des caractères qui ont tous la même taille (comme sur les anciennes machines à écrire).</p>
 <p>Utilisons ces différentes polices pour personnaliser G1. Passons le titre à la police “<em>Time New Roman</em>” avec encrage gras (option <em>face</em>), le sous-titre en “<em>Courier New</em>” avec encrage italique et le contenu de la légende en police “<em>Arial</em>” sans modifier l’encrage.</p>
 <pre class="r"><code>G1+theme(plot.title = element_text(family = &#39;serif&#39;,face=&#39;bold&#39;),
          plot.subtitle = element_text(family = &#39;mono&#39;,face=&#39;italic&#39;),
@@ -68,7 +68,7 @@ G1</code></pre>
 </div>
 <div id="obtenir-de-nouvelles-polices" class="section level2">
 <h2>Obtenir de nouvelles polices</h2>
-<p>Trois polices disponibles, cela parait assez limiter. Voyons comment étendre ce nombre. Plusieurs packages le permettent (extrafont,…). Concentrons-nous sur le plus simple d’utilisation: showtext. Il permet non seulement d’intégrer les autres polices d’écriture stockées dans votre système d’exploitation mais aussi celles mise à disposition par google.Installons-le (<strong>install.packages()</strong>), appelons-le et utilisons la fonction <strong>font_files()</strong> pour obtenir la listes des polices installées.Afin de ne pas alourdir le document, nous nous limiterons ici au 10 premières lignes avec une légère mise en page.</p>
+<p>Trois polices disponibles, cela parait assez limité. Voyons comment étendre ce nombre. Plusieurs packages le permettent (extrafont,…). Concentrons-nous sur le plus simple d’utilisation: showtext. Il permet non seulement d’intégrer les autres polices d’écriture stockées dans votre système d’exploitation, mais aussi celles mise à disposition par google. Installons-le (<strong>install.packages()</strong>), appelons-le (<strong>library()</strong>) et utilisons la fonction <strong>font_files()</strong> pour obtenir la liste des polices installées. Afin de ne pas alourdir le document, nous nous limiterons ici aux 10 premières lignes (avec une légère mise en page).</p>
 <p>’</p>
 <center>
 <p><strong>10 premières lignes de la liste des fichiers font du système</strong></p>
@@ -300,35 +300,35 @@ AmiriQuran-Regular
 </tr>
 </tbody>
 </table>
-<p>Pour la utilisateur de Windows, il peut être plus simple de consulter le site de Microsoft dans la section “<a href="https://docs.microsoft.com/en-us/typography/fonts/windows_10_font_list">typography</a>”. On y retrouve un tableau présentant notamment le nom de la police, sa familly et le nom du fichier la stockant dans le système. Si vous cliquez sur le lien idoine, vous pouvez visualiser un extrait de la police.</p>
-<p>Pour utiliser l’une d’entre-elles dans vos graphes, il suffit de l’appeler avec la fonction <strong>font_add()</strong> en indiquant sa familly et le nom du fichier qui la stock. Reste alors à annoncer que vous mobilisez showtext grâce à la fonction <strong>showtext_auto()</strong> pour pouvoir l’utiliser dans <strong>element_text()</strong>.Voyons un exemple rapide avec la police “<em>Comic Sans MS</em>”, celle-ci a la particularité de présenter de arrêtes arrondies.</p>
+<p>Pour les utilisateurs de Windows, il peut être plus simple de consulter la sections “<a href="https://docs.microsoft.com/en-us/typography/fonts/windows_10_font_list">typography</a>” du site de Microsoft. On y retrouve un tableau présentant notamment le nom de la police, sa familly et le nom du fichier le stockant dans le système. Si vous cliquez sur le lien idoine, vous pouvez visualiser un aperçu de la police qui vous intéresse.</p>
+<p>Pour utiliser l’une de ces polices dans vos graphes, il suffit de l’appeler avec la fonction <strong>font_add()</strong> en indiquant sa familly et le nom du fichier (.ttf) qui la stock. Reste alors à annoncer que vous mobilisez showtext grâce à la fonction <strong>showtext_auto()</strong> pour pouvoir l’utiliser dans <strong>element_text()</strong>. Voyons un exemple rapide avec la police “<em>Comic Sans MS</em>”. Celle-ci a la particularité de présenter de arrêtes arrondies.</p>
 <pre class="r"><code>font_add(&quot;Comic Sans MS&quot;, &quot;comic.ttf&quot;)
 showtext_auto()
 G1+theme(text=element_text(family = &quot;Comic Sans MS&quot;,size=18))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
-<p>Le changement n’est pas spectaculaire. Essayons avec une police plus originale. Elle se nomme Harrington et est stockée dans le fichier Harngton.ttf.</p>
+<p>Le changement n’est pas spectaculaire. Essayons avec une police plus originale. Prenons celle nommée Harrington qui est stockée dans le fichier Harngton.ttf.</p>
 <pre class="r"><code>font_add(&quot;Harrington&quot;, &quot;Harngton.ttf&quot;)
 showtext_auto()
 G1+theme(text=element_text(family = &quot;Harrington&quot;,size=18))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-<p>Si l’ensemble des polices classiques ne suffit pas pour combler vos désirs de personnalisation, vous pouvez également de la même manière importer celles proposées par Google. Il y en a 1092… Pour en avoir un aperçu, il suffit de visiter le site <a href="https://fonts.google.com">fonts.google.com</a>. La fonction permettant d’appeler la police est alors <strong>font_add_google()</strong>. Testons-la avec la police “<em>Montserrat</em>” que je trouve très élégante. Les arguments sont cette fois le nom de la police et le nom que vous utiliserez pour sa family.</p>
+<p>Si l’ensemble des polices classiques ne suffit pas pour combler vos désirs de personnalisation, vous pouvez également de la même manière importer celles proposées par Google. Il y en a 1092… Pour en avoir un aperçu, il suffit de visiter le site <a href="https://fonts.google.com">fonts.google.com</a>. La fonction permettant d’appeler la police est alors <strong>font_add_google()</strong>. Testons-la avec la police “<em>Montserrat</em>”, que je trouve très élégante. Les arguments sont cette fois le nom de la police et le nom que vous utiliserez pour sa family.</p>
 <pre class="r"><code>font_add_google(&quot;Montserrat&quot;, &quot;Montserrat&quot;)
 G1+theme(text = element_text(family = &quot;Montserrat&quot;,size=18))</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<p>Testons en deux autres pour le plaisir: une, que nous appliquerons au titre, et une, que nous appliquerons au caption. Le reste restera en Arial. Prenons celle nommée “<em>Rock Salt</em>” pour le titre et celle nommée “<em>Architects Daughter</em>” pour le caption.</p>
+<p>Testons-en deux autres pour le plaisir: une, que nous appliquerons au titre, et une, que nous appliquerons au caption. Le reste restera en “<em>Arial</em>”. Prenons celle nommée “<em>Rock Salt</em>” pour le titre et celle nommée “<em>Architects Daughter</em>” pour le caption.</p>
 <pre class="r"><code>font_add_google(&quot;Rock Salt&quot;,&quot;rock&quot;)
 font_add_google(&quot;Monoton&quot;,&quot;monoton&quot;)
 showtext_auto()
 G1+theme(plot.title = element_text(family = &quot;rock&quot;,size=12),
-         plot.caption = element_text(family = &quot;monoton&quot;))</code></pre>
+         plot.caption = element_text(family = &quot;monoton&quot;,size=10))</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 </div>
 <div id="aller-plus-loin-dans-la-personnalisation" class="section level2">
 <h2>Aller plus loin dans la personnalisation</h2>
-<p>Comme nous l’avons vue dans le premier post de cette série, il possible d’aller bien au-delà du changement de police, ou d’autres éléments de mise en forme, qui s’appliquera de manière uniforme sur une partie désignée du thème (titre, légende, axe…). Il est possible grâce au package ggtext d’avoir une approche plus fine en intégrant des instructions en markdown et en html à l’intérieur même des textes traités par ggplot pour être intégré au graphe.Pour cela, il ajoute à la liste des fonctions de personnalisation de thème <strong>element_markdown()</strong>.</p>
-<p>Utilisons ces fonctionnalités afin de retravailler notre titre. Commençons simplement par mettre l’ensemble en gras à l’exception de la parenthèse reprenant les dates que l’on mettra en italique. Pour le gras, il suffit d’entourer le partie du texte visée de paquets de deux astérisques (**). Pour l’italique, il suffit de l’entourer de deux astérisques(<em>*</em>). Il n’y a rien de spectaculaire ici. Voyons si on peut faire mieux. Disons que, comme l’on traite du réchauffement climatique, nous pourrions colorer en rouge le mot température. Pour cela, nous allons utiliser une balise html qui va entourer le mot. Elle s’ouvre sur <i> et se ferme sur </i>. A l’intérieur de la balise d’ouverture indiquons le personnalisation souhaitée: style=‘color:red;’. C’est déjà mieux. Mais on peut aller plus loin en intégrant une image du drapeau britannique pour bien faire comprendre de qu’elle aire géographique nous traitons. Cela tombe par que j’ai justement en fichier .png avec le dit drapeau dans mon dossier de travail (source Wikipedia). Comme dirait Sheldon Cooper : ’ fun with flag’. Pour l’intégrer, nous allons utiliser la balise html <img />. Nous indiquerons à l’intérieur l’adresse du fichier (ici juste Flag_of_the_United_Kingdom.png) avec src= et la taille que l’on veut voir occuper par l’image avec width=‘20’. Il aura une largeur de 20 picels et une hauteur à même de respecter les proportions du dessin inital. Voyons ce que tout cela donne. Profitons en pour aligner de titre au bord du graphe et à choisir ’Time New Roman’comme police par défaut.</p>
+<p>Comme nous l’avons vue dans le premier <a href="https://myecontricks.netlify.app/post/2021-08-23-premiers-pas-sur-ggplot2/">post de cette série</a>, il possible d’aller au-delà du changement de police (ou d’autres éléments de mise en forme) qui s’appliquera de manière uniforme sur une partie désignée du thème (titre, légende, axe…). Grâce au package ggtext, on peut avoir une approche plus fine en intégrant des instructions en markdown et en html à l’intérieur même des textes traités par ggplot pour être intégré au graphe. Pour cela, il ajoute à la liste des fonctions de personnalisation de thème <strong>element_markdown()</strong>.</p>
+<p>Utilisons-la afin de retravailler notre titre. Commençons simplement par mettre l’ensemble en gras à l’exception de la parenthèse reprenant les dates que l’on mettra en italique. Pour le gras, il suffit d’entourer le partie du texte visée de paquets de deux astérisques (**). Pour l’italique, il suffit de l’entourer de deux astérisques(<em>*</em>). Il n’y a rien de spectaculaire ici. Voyons si on peut faire mieux. Disons que, comme l’on traite du réchauffement climatique, nous pourrions colorer en rouge le mot température. Pour cela, nous allons utiliser une balise html qui va entourer le mot. A l’intérieur de la balise d’ouverture indiquons la personnalisation souhaitée: style=‘color:red;’. C’est déjà mieux. Mais on peut aller plus loin en intégrant une image du drapeau britannique pour bien faire comprendre de qu’elle aire géographique que nous traitons. Cela tombe parce que j’ai justement en fichier .png avec le dit drapeau dans mon dossier de travail (source: Wikipedia). Comme dirait Sheldon Cooper : ’ fun with flag’. Pour l’intégrer, nous allons utiliser la balise html img. Nous indiquerons à l’intérieur l’adresse du fichier (ici juste src=“Flag_of_the_United_Kingdom.png”) et la taille que l’on veut voir occuper par l’image (width=‘20’). Il aura une largeur de 20 picels et une hauteur à même de respecter les proportions du dessin initial. Voyons ce que tout cela donne. Profitons-en pour aligner de titre au bord du graphe et pour choisir ‘Time New Roman’ comme police par défaut.</p>
 <pre class="r"><code>library(ggtext)
 G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;)+
@@ -337,7 +337,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          plot.title = element_markdown())</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
-<p>C’est pas mal! Vous ne trouvez pas? Un peu petit peut-être? Oui passant la taille de la police à 32 et essayons d’amener des contrats plus doux en adoptant une couleur de fond de type sable (un beige clair tirant très légèrement sur le jaune sans être taupe). Mais comment trouvez le code correspondant à cette merveille? Le plus simple consiste à se rendre sur un site d’internet hébergeant une applet générant pour un couleur sélectionnée via une forme de roue chromatique l’identifiant correspondant. Essayons (<a href="https://htmlcolorcodes.com/fr" class="uri">https://htmlcolorcodes.com/fr</a>)[<a href="https://htmlcolorcodes.com/fr" class="uri">https://htmlcolorcodes.com/fr</a>]. Après quelques tâtonnement, je trouve quelque chose que pourrait convenir une couleur portant le doux nom de #F6F7F0. Je l’applique à plot.background.</p>
+<p>C’est pas mal! Vous ne trouvez pas? Un peu petit peut-être? Oui. Passons la taille de la police à 32 et essayons d’amener des contrastes plus doux en adoptant une couleur de fond de type sable (un beige clair tirant très légèrement sur le jaune sans être taupe). Mais comment trouvez le code correspondant à cette merveille? Le plus simple consiste à se rendre sur un site d’internet hébergeant une applet générant pour une couleur sélectionnée via une forme de roue chromatique le code correspondant. Essayons <a href="https://htmlcolorcodes.com/fr">htmlcolorcodes.com</a>. Après quelques tâtonnement, je trouve quelque chose que pourrait convenir: une couleur portant le doux nom de #F6F7F0. Je l’applique à plot.background.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;)+
    theme(text=element_text(family=&quot;serif&quot;),
@@ -346,7 +346,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          plot.title = element_markdown(size=32))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
-<p>C’est mieux, mais maintenant tout est #F6F7F0 (taupe claire voir sable). Je voudrais que la partie avec le nuage de point reste avec un fond blanc. Je vais donc l’indiquer dans panel.background. Ici, je peux indistinctement utiliser le mot wite ou le code #FFFFFF. J’opte pour la seconde solution qui tellement plus poétique.</p>
+<p>C’est mieux, mais maintenant tout est #F6F7F0 (taupe claire voir sable). Je voudrais que la partie avec le nuage de point reste avec un fond blanc. Je vais donc l’indiquer dans panel.background. Ici, je peux indistinctement utiliser le mot white ou le code #FFFFFF. J’opte pour la seconde solution qui tellement plus poétique.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;)+
    theme(text=element_text(family=&quot;serif&quot;),
@@ -356,7 +356,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          panel.background = element_rect(fill=&#39;#FFFFFF&#39;))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
-<p>Les choses s’améliorent. Néanmoins, les axes ne sont très lisibles. On peut faire mieux. Commençons par redéfinir leurs limites. Dans <strong>coord_catesian()</strong> indiquons que l’on veut que l’axe des ordonnées commence à 7,35° et finisse à 11,1° et que l’axe des abscisses commence en 1770 et finissent en 2024. Revoyons également les graduations. Définissons les pas de numérotation (breaks) avec les compléments <strong>scale_y_continous()</strong> et <strong>scale_x_continous()</strong>. Prenons de 7.5° à 11° avec un pas de 0,5° pour l’ordonnée et de 1775 à 2025 avec un pas de 25 pour les abscisses. Profitons en pour remettre le °C de l’axe des ordonnées dans le sans de la lecture.</p>
+<p>Les choses s’améliorent. Néanmoins, les axes ne sont pas très lisibles. On peut faire mieux. Commençons par redéfinir leurs limites. Dans <strong>coord_catesian()</strong> indiquons que l’on veut que l’axe des ordonnées commence à 7,35° et finisse à 11,1° et que l’axe des abscisses commence en 1770 et finissent en 2024. Revoyons également les graduations. Définissons les pas de numérotation (<em>breaks</em>) avec les compléments <strong>scale_y_continous()</strong> et <strong>scale_x_continous()</strong>. Prenons de 7.5° à 11° avec un pas de 0,5° pour l’ordonnée et de 1775 à 2025 avec un pas de 25 pour les abscisses. Profitons-en pour remettre le °C de l’axe des ordonnées dans le sens de la lecture.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;)+
    coord_cartesian(ylim=c(7.35, 11.1),xlim=c(1770,2024),expand =FALSE ) + 
@@ -370,7 +370,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          axis.title.y = element_text(angle=0,vjust=0.5))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
-<p>On pourrait rendre l’ensemble plus lisibles en augmentant la taille des caractères utilisés disons 24 pour les titres des axes et 18 pour la numérotation.</p>
+<p>On peut rendre l’ensemble plus lisibles en augmentant la taille des caractères utilisés des axes. Disons 24 pour les titres et 18 pour la numérotation.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;)+
    coord_cartesian(ylim=c(7.35, 11.1),xlim=c(1770,2024),expand =FALSE ) + 
@@ -387,7 +387,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          axis.text.y = element_text(size=18))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
-<p>Voilà pour les axes. On peut maintenant s’attaquer au sous-titre qui après trop petit et pas très parlant. Passons-le en taille 24 et réécrivons sur texte. Disons que “Type de représentation: nuage de points” pourrait convenir.</p>
+<p>Voilà pour les axes! On peut maintenant s’attaquer au sous-titre qui apparaît trop petit et pas très parlant. Passons-le en taille 24 et modifions son texte. Disons que “Type de représentation: nuage de points” pourrait convenir.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;,
         subtitle=&quot;Type de représentation : nuage de points&quot;)+
@@ -406,7 +406,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          axis.text.y = element_text(size=18))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
-<p>On avance mais la légende est ridicule. Commençons par passer ses éléments (titre et texte) à la taille 24. Puis, ajoutons lui un cadre à fond gris pour qu’elle ressorte plus nettement.Prenons un gris légèrement vert disons le #E1EAE7.</p>
+<p>On avance, mais la légende est ridicule. Commençons par passer ses éléments (titre et texte) à la taille 24. Puis, ajoutons-lui un cadre à fond gris pour qu’elle ressorte plus nettement. Prenons un gris légèrement vert disons le #E1EAE7.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;,
         subtitle=&quot;Type de représentation : nuage de points&quot;)+
@@ -428,7 +428,7 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          legend.background = element_rect(fill=&#39;#E1EAE7&#39;,size=0.5))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
-<p>Voilà qui est plus lisible. Reste le caption qui apparaît encore trop petit. Passons le en taille 24 et décalons le légèrement vers le bas. Profitons en pour mettre “centre Hadley” en gras et la date en italique.</p>
+<p>Voilà qui est plus lisible. Reste le caption qui apparaît encore trop petit. Passons-le en taille 24 et décalons-le légèrement vers le bas. Profitons-en pour mettre “centre Hadley” en gras et la date en italique.</p>
 <pre class="r"><code>G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
         width=&#39;20&#39; /&gt;&quot;,
         subtitle=&quot;Type de représentation : nuage de points&quot;,
@@ -452,10 +452,10 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          plot.caption = element_markdown(margin=margin(t=15),size=24))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
-<p>L’ensemble est maintenant cohérent. On pourrait s’arrêter là. On peut cependant encore améliorer les choses par exemple en marquant les points remarquables correspondant à l’année la plus froide et à l’année la plus chaude.Commençons par la première.</p>
+<p>L’ensemble est maintenant cohérent. On pourrait s’arrêter là. On peut cependant encore améliorer les choses, par exemple, en marquant deux points remarquables celui correspondant à l’année la plus froide et celui correspondant à l’année la plus chaude. Commençons par la première.</p>
 <pre class="r"><code>c(&#39;température:&#39;,min(dat$deg_C),&#39;année&#39;,dat$annee[dat$deg_C==min(dat$deg_C)])</code></pre>
 <pre><code>## [1] &quot;température:&quot; &quot;7.43&quot;         &quot;année&quot;        &quot;1879&quot;</code></pre>
-<p>Il s’agit de l’année 1879 pour laquelle la température moyenne a été de 7.43°. Nous allons utiliser le <strong>geom_point()</strong> pour le marquer avec pour esthétique les coordonnées du point (x=1879 et y=7,43). Choisissons une couleur pour marquer le fait que ce soit un point froid. Disons un bleu très pale. Essayons le #BCE8F2. Complétons l’ensemble en ajoutant l’image de flocon de neige à coté du point. J’en ai justement une stockée dans mon dossier de travail… Pour cela, nous utilisons le <strong>geom_richtext()</strong> qui est intégré dans ggtext. Retenons les mêmes coordonnées que notre point bleu. Indiquons en label un tag html avec l’adresse de l’image et la taille retenue. Pour éviter la superposition, retenons un paramètre de transparence alpha égale à 0 (totalement transparent), aucun couleur pour le label et très important un décalage de 10 sur l’axe des x (via nudge_x) et de 0,05 sur l’axe des y (nudge_y).</p>
+<p>Il s’agit de l’année 1879 pour laquelle la température moyenne a été de 7,43°. Nous allons utiliser le <strong>geom_point()</strong> pour le marquer avec pour esthétique (<em>aes()</em>) les coordonnées du point (x=1879 et y=7.43). Choisissons une couleur pour marquer le fait que ce soit un point froid. Disons un bleu très pale. Essayons le #BCE8F2. Complétons l’ensemble en ajoutant l’image d’un flocon de neige à coté du point (au cas où la couleur ne suffit pas…). J’en ai justement une stockée dans mon dossier de travail… Pour cela, nous utilisons le <strong>geom_richtext()</strong> qui est intégré dans ggtext. Retenons les mêmes coordonnées que notre point bleu. Indiquons en label un tag html avec l’adresse de l’image et la taille retenue. Pour éviter la superposition, retenons un paramètre de transparence alpha égale à 0 (totalement transparent), aucune couleur pour le label et très important un décalage de 10 sur l’axe des x (via nudge_x) et de 0,05 sur l’axe des y (nudge_y).</p>
 <pre class="r"><code>G1+geom_point(aes(1879,7.43),color=&#39;#BCE8F2&#39;)+
    geom_richtext(aes(x=1879,y=7.43,label=&quot;&lt;img src=&#39;snow.png&#39;, width=&#39;20&#39; /&gt;&#39;&quot;),alpha=0,label.color = NA,nudge_x=10,nudge_y=0.05)+
    labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&gt; moyennes au centre de l&#39;Angleterre** *(1772-2021)* &lt;img src=&#39;Flag_of_the_United_Kingdom.png&#39;,
@@ -481,10 +481,10 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          plot.caption = element_markdown(margin=margin(t=15),size=24))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
-<p>L’ensemble est presque parfait. Reste que le flocon mange un peu l’axe des abscisses. Pour y remédier, étendons le taille de la figure à 8 pouces sur 8 pouces. Nous reviendrons sur ce type de manipulations dans un prochain poste (schématiquement ici j’indique dans les options de mon code chunk fig.height=8, fig.width=8). Ceci fait, attaquons nous à l’année la plus chaude.</p>
+<p>L’ensemble est presque parfait. Reste que le flocon mange un peu l’axe des abscisses. Pour y remédier, étendons le taille de la figure à 8 pouces sur 8 pouces. Nous reviendrons sur ce type de manipulations dans un prochain poste (schématiquement ici j’indique dans les options de mon code chunk fig.height=8, fig.width=8). Ceci fait, attaquons-nous à l’année la plus chaude.</p>
 <pre class="r"><code>c(&#39;température:&#39;,max(dat$deg_C),&#39;année:&#39;,dat$annee[dat$deg_C==max(dat$deg_C)])</code></pre>
 <pre><code>## [1] &quot;température:&quot; &quot;10.95&quot;        &quot;année:&quot;       &quot;2014&quot;</code></pre>
-<p>Ils s’agit de 2014 avec une moyenne de 10.95°. Marquons-la d’un point orange (#F6A148) accompagné d’un petite image de soleil que l’on décalera cette fois vers la gauche de 10 (nudge_x=-10).</p>
+<p>Il s’agit de 2014 avec une moyenne de 10,95°. Marquons-la d’un point orange (#F6A148) accompagné d’un petite image de soleil que l’on décalera cette fois vers la gauche de 10 (nudge_x=-10).</p>
 <pre class="r"><code>G1+geom_point(aes(1879,7.43),color=&#39;#BCE8F2&#39;)+
    geom_richtext(aes(x=1879,y=7.43,label=&quot;&lt;img src=&#39;snow.png&#39;, width=&#39;20&#39; /&gt;&#39;&quot;),alpha=0,label.color = NA,nudge_x=10,nudge_y=0.05)+
    geom_point(aes(2014,10.95),color=&#39;#F6A148&#39;)+
@@ -512,8 +512,8 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          plot.caption = element_markdown(margin=margin(t=15),size=24))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-21-1.png" width="768" /></p>
-<p>Le graphe est maintenant encore plus parlant. Si le point le plus froid apparaît isolé en bas de graphe, ce n’est pas la cas du point le plus chaud. Le premier peut être considéré comme une observation exceptionnelle (un outlier). Le second lui marque une tendance claire au réchauffement climatique.</p>
-<p>Ajoutons un encadré dans la figure pour faciliter la lecture. Pour cela, utilisons le <strong>geom_textbox()</strong> proposé par ggtext. Il permet de personnaliser le texte avec des éléments de markdown et de htlm. Indiquons “Température annuelle:” avec à la ligne " maximum 10,95° constatée en 2014" et “minimum 7,43° constatée en 1879”. Le retour à la ligne se fait avec la balise <BR>. Profitons des fonctionnalités à disposition pour rependre les couleur des points dans le texte (orange pour le max et bleu pale pour le min). Plaçons l’encadré en bas à droite. Définissons sa taille: 0.3 pouces de large et 0.1 pouce de haut. Choisissons un gris un peu foncé comme couleur de fond (#A39380) de manière à le rendre plus visible. Assurons nous que la police soit la même que sur le reste du graphe (serif) et choisissons un encrage gras. Finalement, fixons l’interligne à 0,7 pour que l’ensemble tienne bien dans la boite.</p>
+<p>Le graphe est maintenant encore plus parlant. Si le point le plus froid apparaît isolé en bas de graphe, ce n’est pas le cas du point le plus chaud. Le premier peut être considéré comme une observation exceptionnelle (un outlier). Le second lui marque une tendance claire au réchauffement climatique.</p>
+<p>Ajoutons un encadré dans la figure pour en faciliter la lecture. Pour cela, utilisons le <strong>geom_textbox()</strong> proposé par ggtext. Il permet de personnaliser le texte avec des éléments de markdown et de htlm. Indiquons “Température annuelle:” avec à la ligne " maximum 10,95° constatée en 2014" et “minimum 7,43° constatée en 1879”. Le retour à la ligne se fait avec la balise &lt; BR &gt;. Profitons des fonctionnalités à disposition pour rependre les couleur des points dans le texte (orange pour le max et bleu pale pour le min). Plaçons l’encadré en bas à droite. Définissons sa taille: 0.3 pouces de large et 0.1 pouce de haut. Choisissons un gris un peu foncé comme couleur de fond (#A39380) de manière à le rendre plus visible. Assurons-nous que la police soit la même que sur le reste du graphe (<em>serif</em>) et choisissons un encrage gras. Finalement, fixons l’interligne à 0,7 pour que l’ensemble tienne bien dans la boite.</p>
 <pre class="r"><code>G1+geom_textbox(aes(1972,7.7,
                 label=&quot;Température annuelle:&lt;BR&gt;
                 &lt;i style=&#39;color:#F6A148;&#39;&gt;maximum 10,95° constatée en 2014 &lt;/i&gt;
@@ -551,5 +551,5 @@ G1+labs(title =&quot;**&lt;i style=&#39;color:red;&#39;&gt;Températures&lt;/i&g
          plot.caption = element_markdown(margin=margin(t=15),size=24))</code></pre>
 <pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-22-1.png" width="768" /></p>
-<p>Nous obtenu un graphe vraiment parlant bien différent du matériel de base notamment grâce aux compléments proposés par ggtext.</p>
+<p>Nous obtenons au final un graphe vraiment parlant et surtout bien différent du matériel de base notamment grâce aux compléments proposés par ggtext.</p>
 </div>
