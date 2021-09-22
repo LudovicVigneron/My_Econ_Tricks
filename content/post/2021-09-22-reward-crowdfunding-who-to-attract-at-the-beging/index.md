@@ -1,5 +1,5 @@
 ---
-title: 'Reward Crowdfunding: Who to Attract at the beging?'
+title: 'Reward Crowdfunding: Who to Attract at the begining?'
 author: Ludovic Vigneron
 date: '2021-09-22'
 slug: []
