@@ -1,14 +1,13 @@
 ---
 title: 'Reward Crowdfunding: Who to Attract at the begining?'
-author: Ludovic Vigneron
+author: "Ludovic Vigneron"
 date: '2021-09-22'
 slug: []
-categories:
-  - recherche
+categories: recherche
 tags:
-  - Publication
-  - Crowdfunding
-  - SNA
+- Publication
+- Crowdfunding
+- SNA
 draft: yes
 ---
 
