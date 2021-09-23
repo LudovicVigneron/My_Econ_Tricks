@@ -1,14 +1,14 @@
 ---
-title: 'Reward Crowdfunding: Who to Attract at the begining?'
-author: "Ludovic Vigneron"
-date: '2021-09-22'
+title: Who to attract at the begining?
+author: Ludovic Vigneron
+date: '2021-09-23'
 slug: []
-categories: recherche
+categories:
+  - recherche
 tags:
-- Publication
-- Crowdfunding
-- SNA
-draft: yes
+  - Crowdfunding
+  - SNA
+  - Publication
 ---
 
 Après un long processus de soumission/révisions (débuté en 2017), qui a grandement contribué à améliorer le papier, nous sommes parvenu ma coautrice, Karima Bouaiss, et moi à publier notre étude sur l'impact de la forme que prend l'articulation des goûts des premiers contributeurs à une campagne de crowdfunding avec ceux des autres utilisateurs de la plateforme sur sa réussite. Nous y proposons notamment une modélisation de l'articulation complexe des goûts de chacun au travers d'un réseau construit sur la base des préférences révélées par les choix de supports passés. Ce travail, dont je met le résumé (en anglais) et le lien à la suite dans ce post, a été pour nous l'occasion d'apprendre énormément. Il nous a notamment fait touché du doigt ce que les spécialistes du big data affronte tout les jours la malédiction de la dimensionalité. J'espère que sa lecture vous en sera bénéfique.
@@ -22,5 +22,6 @@ This research study combines the theoretical teachings of revealed preferences, 
 Keywords: Social network, Social capital, Reward crowdfunding, Early backers, Revealed preferences, Graph theory
 
 DOI: [https://doi.org/10.37725/mgmt.v24.4530](https://doi.org/10.37725/mgmt.v24.4530)
+
 
 
