@@ -1,0 +1,706 @@
+---
+title: Les temperatures augmentent
+author: Ludovic Vigneron
+date: '2021-09-27'
+categories:
+  - datavisualisation
+tags:
+  - GGPLOT2
+  - temperature
+output: html_document
+---
+
+Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l'Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d'images, couleurs rappelant le chaud et le froid...). Dans ce nouveau post, nous continuons ce travail en envisageant des modes alternatifs de présentation des données (autres que le nuage années/températures moyennes).
+
+Comme à chaque fois commençons par charger le tidyverse ainsi que les données nécessaires à l'analyse et réalisant quelques opérations de mise en forme. Pour cela, reprenons simplement le code utilisé dans les posts précédents.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+dat<-read.table("https://hadleyserver.metoffice.gov.uk/hadcet/cetdl1772on.dat")
+colnames(dat)<-c('year','day',paste0('month_',1:12))
+dat<-dat%>%pivot_longer(cols=starts_with('month_'),names_to="month",
+                         names_prefix='month_',values_to='d_t')%>%
+            mutate(date=as.Date(paste0(day,'/',month,'/',year),
+                                format='%d/%m/%Y',origin='1/1/1990'))%>%
+            select(date,d_t)%>%
+            arrange(date)%>%
+            mutate(d_t=ifelse(d_t==-999,NA,d_t),
+                   degre_C=d_t/10)%>%
+            filter(is.na(d_t)==FALSE)%>%
+            select(-d_t)
+dat<-dat%>%mutate(annee=lubridate::year(date))%>%
+            group_by(annee)%>%
+            summarise(deg_C=round(mean(degre_C),digits=2))%>% 
+            filter(annee!=2021)
+```
+
+On obtient une base nommée dat reprenant les années et leurs températures moyennes (249 observations pour 2 variables).
+
+# travailler sur la distance aux extrèmes ?
+
+Commençons par le minimum. Si on observe une tendance au réchauffement, il devrait y avoir de plus en plus d'observations qui s'éloignent du minimum. Établissons donc, comme base de travail, une mesure de la distance au minimum et voyons ce que l'on peut en faire. Prenons simplement la différence entre la température constatée et le minimum.
+
+```{r}
+dat <- dat %>% mutate(min=min(deg_C),
+                      dist_min=deg_C-min)
+head(dat)
+```
+
+Voyons à quoi ressemble la variable au travers d'une série de statistiques descriptives.
+
+```{r}
+dat %>% summarise(Mim.=min(dist_min),
+                  prem_quart=quantile(dist_min,probs=.25),
+                  mediane=median(dist_min),
+                  trois_quart=quantile(dist_min,probs=.75),
+                  Max.=max(dist_min),
+                  moyenne=mean(dist_min),
+                  S.d.=sd(dist_min))
+```
+
+Produisons le nuage de points des distances au minimum sur les années d'observations. Pour marquer la valeur de référence (distance 0), traçons une ligne pointillée horizontale pour y=0 et une ligne verticale pleine bleu pour marquer l'année la plus froide (`r dat$annee[dat$deg_C==min(dat$deg_C)]`).
+
+```{r}
+ggplot(dat)+
+  aes(annee,dist_min)+
+  geom_point()+
+  geom_hline(yintercept=0,linetype='dashed')+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color='blue')+
+  labs(y='écarts par rapport au minimum')+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  theme_bw()+
+  theme(axis.title.x=element_blank())
+```
+
+Sans surprise, le nuage a exactement la même forme que celui des températures. Il n'est donc pas plus informatif que celui que nous avons fait dans les posts précédents (celui avec la courbe de tendance). Pour l'améliorer, faisons varier la couleur des points en fonction de la distance au minimum. Une concentration de point de la couleur marquant la distance la plus élevée en fin de période d'observation (les années les plus récentes) indiquera la tendance au réchauffement.
+
+L'opération consiste à ajouter une variable esthétique pour la couleur dans (**aes()**).
+
+```{r}
+ggplot(dat)+
+  aes(annee,dist_min,color=dist_min)+
+  geom_point()+
+  geom_hline(yintercept=0,linetype='dashed')+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color='blue')+
+  labs(y='écarts par rapport au minimum')+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  theme_bw()+
+  theme(axis.title.x=element_blank())
+```
+
+On voit bien une concentration de points plus clairs sur les dernières années marquant ainsi le réchauffement. Néanmoins, on pourrait reprocher au graphe le choix de la couleur bleu souvent assimilé à une gradation vers le froid (plus clair, plus froid). Hors, ici c'est loin d'être le cas. Choisissons une autre forme de dégradé plus parlante. Pour cela, chargeons le package viridis qui en propose de nombreux à associer ainsi que son propre complément d'échelle pour GGPLOT2 : le **scale_fill_viridis()**. Pour un aperçu des progressions proposées, vous pouvez consulter [le site associé au package](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html). Un des avantages de ces dernières est d'être conçu pour que même une personne daltonienne puisse distinguer les nuances. Choisissons la progression appelée plasma qui va du violet sombre au jaune clair.
+
+```{r message=FALSE, warning=FALSE}
+library(viridis)
+ggplot(dat)+
+  geom_point(aes(x=annee,y=dist_min,fill=dist_min),shape=21,colour='black',size=2)+
+  geom_hline(yintercept=0,linetype='dashed')+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color='blue')+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  labs(y='écarts par rapport au minimum')+
+  scale_fill_viridis(option="plasma")+
+  guides(fill=guide_colorbar(title="éloignement au minimum",
+                             title.position = 'top',title.hjust=0.5,
+                             barwidth=unit(20,'lines'),
+                             barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        axis.title.x = element_blank())
+```
+
+C'est mieux, mais toujours pas très différent de notre graphe d'origine. Faisons la même chose avec la température maximale. Calculons la distance associée en veillant à passer l'ensemble à la valeur absolue pour garantir que les distances soient toujours positives.
+
+```{r}
+dat <- dat %>% mutate(max=max(deg_C),
+                      dist_max=abs(deg_C-max))
+head(dat)
+```
+
+Pour réaliser le graphe, choisissons une progression de couleurs différentes. Disons celle nommée rocket.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(dat)+
+  geom_point(aes(x=annee,y=dist_max,fill=dist_max),shape=21,colour='black',size=2)+
+  geom_hline(yintercept=0,linetype='dashed')+
+  geom_vline(xintercept = dat$annee[dat$dist_max==0], color='red')+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  labs(y='écarts par rapport au maximum')+
+  scale_fill_viridis(option="rocket")+
+  guides(fill=guide_colorbar(title="éloignement au maximum",
+                             title.position = 'top',title.hjust=0.5,
+                             barwidth=unit(20,'lines'),
+                             barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        axis.title.x = element_blank())
+```
+
+On peut noter que la forme du nuage est renversé par rapport au graphe d'origine (et à celui de la distance au minimum), ce qui était attendu. Pour le reste, il a la même forme. On voit bien une concentration de points plus sombres, ici les années les plus proches, en bas à droite (proche du maximum) manquant ainsi le réchauffement.
+
+Encore une fois, on rien de très innovant dans la présentation. Essayons un nuage de points présentant les distances aux extrêmes en coordonné et l'année de mesure comme couleur pour les points. Compte tenu du nombre de ces derniers et pour bien marquer les différences, prenons une progressions intégrant deux couleurs. Choisissons celle nommée turbo.
+
+```{r}
+ggplot(dat,aes(dist_min,dist_max,color=annee))+
+  geom_point()+
+  labs(x='distances au minimum',y='distances au maximum')+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.1,3.6),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_y_continuous(breaks=seq(0,3.5,0.25))+
+  scale_color_viridis(option="turbo")+
+  guides(color=guide_colorbar(title="année",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top')
+```
+
+Les points s'articulent sur une droite à 45° tombante avec les années les plus proches du maximum sont plus fréquemment marquées par des points plus rouges, elles sont donc plus récentes, et les plus proches du minimum par des points plus bleus, elles sont donc plus anciennes.  On note que les couleurs associées aux années les plus récentes sont majoritairement située sur le bas et ce qui une nouvelle fois la marque du réchauffement.
+
+Vous me direz on pourrait faire la même chose en utilisant un seul axe. Faisons-le sur la distance au minimum.
+
+```{r}
+ggplot(dat)+
+  geom_hline(yintercept = 0,linetype='dashed')+
+  geom_point(aes(x=dist_min,y=0,color=annee))+
+  labs(x='distances au minimum')+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_color_viridis(option="turbo")+
+  guides(color=guide_colorbar(title="année",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())
+```
+
+On retrouve la concentration points rouges marquant les dernières années sur la droite de l'axe (au dessus de la distance de 3). Néanmoins, on peut se demander si cela n'est pas un effet d'optique dû à la superposition des points sur l'axe. Les points foncés cachent les points clairs en cas de superposition. Pour éviter cette difficulté, on peut répartir les points aléatoirement au dessus et en dessous de l'axe pour limiter le chevauchement. Pour cela, dans l'option position du **geom_point()**, j'utilise la fonction **position_jitter()** qui va les répartir aléatoirement en précisant que la bande de fluctuation verticale est comprise entre -0.005 et +0.005 (l'option seed assure la reproductibilité du tirage aléatoire).
+
+```{r}
+ggplot(dat)+
+  geom_hline(yintercept = 0,linetype='dashed')+
+  geom_point(aes(x=dist_min,y=0,fill=annee),
+             shape=21,
+             position = position_jitter(height = 0.005,
+                                        seed=5))+
+  labs(x='distances au minimum')+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_fill_viridis(option="turbo")+
+  guides(fill=guide_colorbar(title="année",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())
+  
+```
+
+C'est mieux! Il n'y a plus de problèmes de superpositions. Ajoutons un repaire pour isoler les années les température les plus élevés (les observations avec les distances au minimum les plus élevées). Traçons une ligne pointillée verticale à 2.75.
+
+```{r}
+ggplot(dat)+
+  geom_hline(yintercept = 0,linetype='dashed')+
+  geom_point(aes(x=dist_min,y=0,fill=annee),
+             shape=21,
+             position = position_jitter(height = 0.005,
+                                        seed=5))+
+  geom_vline(xintercept = 2.75,linetype='dotted')+
+  labs(x='distances au minimum')+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_fill_viridis(option="turbo")+
+  guides(fill=guide_colorbar(title="année",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())
+```
+
+C'est plus clair. Mais, est-ce vraiment nécessaire de travailler avec des distances au minimum. Encore une fois, il apparaît que non. Réalisons le même graphe directement avec les températures en choisissant cette fois le 75ème percentile comme marqueur (`r quantile(dat$deg_C,probs=0.75)`) des cas les années les plus chaudes.
+
+```{r}
+ggplot(dat)+
+  geom_hline(yintercept = 0,linetype='dashed')+
+  geom_point(aes(x=deg_C,y=0,fill=annee),
+             shape=21,
+             position = position_jitter(height = 0.005,
+                                        seed=5))+
+  geom_vline(xintercept = 9.820,linetype='dotted')+
+  labs(x='°C')+
+  coord_cartesian(xlim=c(7.3,11),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(7.25,11,0.25))+
+  scale_fill_viridis(option="turbo")+
+  guides(fill=guide_colorbar(title="année",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())
+```
+
+Le graphe est quasi identique au précédent. Bref la distance aux extrêmes, utilisez de la sorte ne donne pas grand chose de plus que les données brutes.
+
+Essayons d'envisager une transformation de cette information, un classement des observations en fonction de leurs distances aux extrêmes. Pour cela, attribuons leur un rang. Le rang 1 marque la position de l'extrême considéré, le rang deux celui des la température venant juste après...
+
+```{r}
+dat$rk_min <- rank(dat$dist_min)
+dat$rk_max <- rank(dat$dist_max)
+head(dat)
+```
+
+Notez que certaines observations ont des rangs qui ne sont pas des nombres entiers. C'est tout simplement que sur ces rangs, nous avons des observations présentant la même valeur de la variable de classement (des ex aequo). 
+
+Représentons ces rangs au travers de deux courbes, un rouge pour le  classement des années les plus chaudes et un bleu pour le classement des années les plus froides. L'abscisse sera le rang et l'ordonnée la distance à l'extrême. Les deux courbes seront bien sûr symétriques par rapport à point un point situé entre elles et se rejoindrons à leurs extrémités. L'année la plus froide a le rang 1 pour la distance au plus froid et le rang 249 pour la distance au plus chaud. L'année la plus chaude a le rang 1 pour la distance au plus chaud et le rang 249 pour la distance au plus froid. 
+
+```{r}
+ggplot(dat)+
+  geom_line(aes(x=rk_max,
+                  y=dist_max),color='red')+
+  geom_line(aes(x=rk_min,
+                  y=dist_min),color='blue')+
+  labs(x="rang",y="ditances")+
+  coord_cartesian(xlim=c(-1,251),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,250,25))+
+  scale_y_continuous(breaks=seq(0,3.5,.5))+
+  theme_bw()
+```
+
+La courbe classant les années des plus froides aux plus chaudes (la bleu) est au dessus de la courbe classant les années des plus chaudes aux plus froides. 
+
+la 50ème année la plus chaude est 1 degré plus froide que la plus chaude. 
+la 50ème année la plus froide est 1.5 degré plus chaude que la plus froide.
+la courbe des rouges celle représentant la distance à la plus chaude est toujours sous la courbe de bleu celle représentant la distance à la plus froide
+
+cela montre que l'année la plus froide est plus extrême que l'année la plus chaude. on a plus de 
+
+mais cela ne dit rien sur la temporalité 
+
+
+```{r}
+median(dat$dist_min)
+median(dat$dist_max)
+```
+
+```{r}
+dat<-dat %>% mutate(r_max_50_20=ifelse(annee%in%1960:2020,rk_max,0),
+                    r_min_50_20=ifelse(annee%in%1960:2020,rk_min,0))
+```
+
+
+```{r}
+ggplot(dat)+
+  geom_point(aes(r_max_50_20,dist_max))+
+  geom_point(aes(x=r_min_50_20,y=dist_min))+
+  geom_line(aes(x=rk_max,
+                  y=dist_max),color='red')+
+  geom_line(aes(x=rk_min,
+                  y=dist_min),color='blue')+
+
+  labs(x="rangs",y="ditances")+
+  coord_cartesian(xlim=c(0,251),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,250,25))+
+  scale_y_continuous(breaks=seq(0,3.5,.5))+
+  theme_bw()
+```
+
+# travailler sur à partir de dénombrements
+
+
+
+
+```{r}
+an_chaud<-unlist(dat %>% filter(deg_C>quantile(deg_C,probs=0.75)) %>% select(annee))
+p_sup_75<-function(...){
+        x<-length(an_chaud[an_chaud>...])/length(an_chaud)
+return(x)
+}
+an<-seq(1770,2020,10)
+pr_an_c<-c()
+for(i in an){
+  x<-p_sup_75(i)
+  pr_an_c<-c(pr_an_c,x)
+}
+rm(x)
+prop_an<-c()
+for (i in an){
+  x<-sum(dat$annee>i)/249
+  prop_an<-c(prop_an,x)
+}  
+rm(x)
+dd<-tibble(an,pr_an_c,prop_an)
+dd
+```
+
+```{r}
+ggplot(dd)+aes(x=an)+
+  geom_point(aes(y=pr_an_c),color='red')+
+  geom_line(aes(y=prop_an))+
+  scale_y_continuous(breaks=seq(0,1,.1),labels=scales::percent)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  theme_bw()+
+  theme(axis.title= element_blank())
+
+```
+
+
+
+
+On a 54.84% des années les plus chaudes (celles au-dessus du 3ème quartile de la série) qui se trouvent après 1950 bien que ces année ne représentent que 28.11% de notre échantillon, 50% après 1960, 48.39 après 
+
+
+
+
+
+
+
+
+
+
+```{r}
+dddd<-dat %>% mutate(rk_deg=rank(deg_C),
+                     prop_an_d_inf=(rk_deg-1)/249,
+                     prop_an_inf=(rank(annee)-1)/249)%>%
+  arrange(prop_an_inf)
+dddd
+```
+
+```{r}
+ggplot(dddd) +
+  geom_point(aes(deg_C,prop_an_d_inf,color=annee),shape=19,size=1.1)+
+  geom_vline(xintercept = mean(dat$deg_C),linetype='dashed')+
+  geom_hline(yintercept = 0.75, linetype='dotted')+
+  labs(x='°C')+
+  scale_x_continuous(breaks=seq(7.25,11,0.25))+
+  scale_y_continuous(labels=scales::percent)+
+  scale_color_viridis(option="turbo")+
+  guides(color=guide_colorbar(title="année",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        axis.title.y = element_blank())
+```
+
+
+```{r}
+ggplot(dddd) +
+  geom_point(aes(annee,prop_an_d_inf,color=deg_C))+
+  geom_point(aes(annee,prop_an_inf),size=0.5)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_color_viridis(option="plasma")+
+  scale_y_continuous(labels=scales::percent)+
+  guides(color=guide_colorbar(title="°C",
+                              title.position = 'top',
+                              title.hjust=0.5,
+                              barwidth=unit(20,'lines'),
+                              barheight = unit(0.5,'lines')))+
+  theme_bw()+
+  theme(legend.position = 'top',
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank())
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# travailler sur une distance à une période de références
+
+
+```{r}
+dat$moy_19 <- mean(dat$deg_C[dat$annee<1900])
+dat$dist_19<-dat$deg_C-dat$moy_19
+dat$plus_ch_19<-dat$dist_19>0
+head(dat)
+```
+
+lolipop chart
+
+```{r}
+ggplot(dat,aes(annee,dist_19))+
+  geom_point(aes(color=plus_ch_19),size=1.5)+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 1900,color='purple')+
+  geom_segment(aes(xend=annee, 
+                   y=0, 
+                   yend=dist_19))+
+  labs(y='écart par rapport à la moyenne avant 1900 (en °C)')+
+  coord_cartesian(xlim=c(1770,2023),ylim=c(-1.80,1.9),expand = FALSE)+
+  scale_color_manual(values=c("blue", "red"))+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(-2,2,0.25))+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = 'none',
+        panel.grid.minor = element_blank())
+```
+
+
+
+
+```{r}
+ggplot(dat,aes(annee,dist_19))+
+  geom_area(aes(fill=plus_ch_19),colour='black')+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 1900,color='purple')+
+  labs(y='écart par rapport à la moyenne avant 1900 (en °C)')+
+  coord_cartesian(xlim=c(1770,2023),ylim=c(-1.80,1.9),expand = FALSE)+
+  scale_fill_manual(values=c("blue", "red"))+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(-2,2,0.25))+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = 'none',
+        panel.grid.minor = element_blank())
+```
+
+
+
+
+```{r}
+dat <- dat %>% mutate(ving_5=cut(dat$annee,breaks=seq(1772,2025,25),
+                                 include.lowest = TRUE,dig.lab = 4))
+```
+
+
+```{r}
+ggplot(dat)+
+  aes(ving_5,deg_C)+
+  geom_boxplot(aes(color=ving_5),show.legend=FALSE)+
+  geom_point(size=0.5,position=position_jitter(width=0.2,seed = 5))+
+  
+  theme_bw()+
+  theme(axis.title.x=element_blank())
+```
+
+
+# l'inclusion d'autres marqueurs de tendance
+
+
+la moyenne roulante 
+
+
+
+```{r}
+dat$min_d_am5<-zoo::rollmean(dat$dist_min,5,na.pad=TRUE)
+```
+
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(dat)+
+  aes(annee,dist_min)+
+  geom_point()+
+  geom_hline(yintercept=0,linetype='dashed')+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color='blue')+
+  geom_line(aes(y=min_d_am5),color='red')+
+  geom_smooth(span=0.015,se=FALSE)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  labs(y='écart par rapport au minimum')+
+  theme_bw()+
+  theme(axis.title.x=element_blank())
+```
+
+
+
+
+
+```{r}
+dat$moy<-mean(dat$deg_C)
+dat$diff_m<-dat$deg_C-dat$moy
+dat$c_s<-cumsum(dat$diff_m)
+dat$moy[1]
+```
+
+cumsum des différences à la moyenne
+
+```{r}
+ggplot(dat)+
+  aes(annee,c_s)+
+  geom_line()+
+  labs(y='cumul des écarts à la moyenne')+
+  coord_cartesian(xlim=c(1770,2025),ylim=c(-37,2),expand = FALSE)+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(-35,0,5))+
+  theme_bw()+
+  theme(axis.title.x = element_blank())
+```
+
+
+
+
+```{r}
+dat$g_p<-ifelse(dat$annee<1887,'p1',
+                ifelse(dat$annee<1981,'p2','p3'))
+ggplot(dat)+
+  aes(annee,deg_C,color=g_p)+
+  geom_line()+
+  labs(y='°C')+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(7.25,11),
+                  expand=FALSE)+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(7,11,0.5))+
+  geom_smooth(method = "lm", se = FALSE)+
+  theme_bw()+
+  theme(legend.position = 'none',
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(vjust=0.5,angle=0))
+```
+
+
+
+```{r}
+library(changepoint)
+library(bcp)
+library(strucchange)
+library(segmented)
+library(tree)
+```
+
+
+```{r}
+library(strucchange)
+breakpoints(deg_C ~ annee, data = dat)
+```
+
+
+```{r}
+df<-dat %>% select(deg_C,annee) %>% rename(y=deg_C,x=annee)
+lin_mod <- lm(y ~ x, data = df)
+segm_mod <- segmented(lin_mod, seg.Z = ~x,
+                      psi=list(x=c(1900,1990)))
+summary(segm_mod)$psi
+
+```
+
+
+
+```{r}
+plot(segm_mod,res=T)
+points(segm_mod)
+```
+
+```{r}
+tree_mod <- tree(y ~ x, data = df)
+summary(tree_mod)
+```
+
+```{r}
+plot(tree_mod)
+text(tree_mod, pretty = TRUE)
+```
+
+
+```{r}
+library(changepoint)
+fit_changepoint = cpt.meanvar(dat$deg_C,method = "PELT",penalty = 'MBIC')
+
+# Return estimates
+c(ints = param.est(fit_changepoint)$mean,
+  cp = cpts(fit_changepoint))
+```
+
+```{r}
+plot(fit_changepoint)
+plot(fit_changepoint, diagnostic = TRUE)
+```
+
+
+dat$deg_C[which(dat$annee %in% 1772:1930)]
+
+```{r}
+dat$av_19<-ifelse(dat$annee<1900,'avant 1900','aprés 1900')
+range(dat$deg_C)
+10.95-7.43
+```
+
+
+
+```{r}
+ggplot(dat,aes(deg_C))+
+  geom_histogram(boundary=0,binwidth=0.1,color='white',closed='left')+
+  geom_vline(xintercept = mean(dat$deg_C),color='red')+
+  coord_cartesian(xlim=c(7.25,11.25),ylim=c(0,15),expand=FALSE)+
+  labs(y='Nombre',x='Températures en °C')+
+  scale_x_continuous(breaks=seq(6,12,0.5),expand=TRUE)+
+  scale_y_continuous(breaks=seq(0,20,2))+
+  facet_grid(.~factor(av_19,levels=c('avant 1900','aprés 1900')))+
+  theme_bw()
+```
+
+
+
+```{r}
+t.test(dat$deg_C,dat$annee<1900)
+```
+
+
+
+
+
+
+```{r}
+t.test(dat$deg_C[which(dat$annee>=2000)],mu=9.14)
+```
+
+
+
