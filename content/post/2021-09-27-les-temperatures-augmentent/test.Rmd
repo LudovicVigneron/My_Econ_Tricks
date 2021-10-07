@@ -8,7 +8,9 @@ tags:
   - GGPLOT2
   - Dataviz
   - Climat
-output: html_document
+output: 
+  html_document: 
+    self_contained: no
 ---
 
 Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l'Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d'images, couleurs rappelant le chaud et le froid...). Dans ce nouveau post, nous continuons ce travail en envisageant des modes alternatifs de présentation des données (autres que le nuage années/températures moyennes).
