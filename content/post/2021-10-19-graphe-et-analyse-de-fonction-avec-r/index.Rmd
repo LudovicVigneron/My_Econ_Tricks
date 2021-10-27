@@ -11,7 +11,6 @@ tags:
   - Mathematic
   - Analysis
   - R
-draft: yes
 ---
 
 **Le premier contact avec une interface de programmation des lycéens de mon époque (le début des années 90) se limitait à la prise en main de calculatrices programmables (TI80 ou Casio Graph...). Nous l'utilisions principalement pour réaliser des tracés de fonctions de manière à vérifier les résultats des calculs que nous effectuions manuellement. Bon,il est vrai que certains y stockaient des antisèches ou y codaient des jeux vidéo rudimentaires (casse-briques, space invaders...). Mais, ce n'était pas mon cas. En fait, l'outil ne m'intéressait pas beaucoup (et c'est encore un peu le cas). Pour l'anecdote, j'ai appris que l'on pouvez y stocker des informations textuelles en déjeunant avec des amis une heure avant d'aller passer l'épreuve de mathématiques du BAC... Il était alors trop tard pour commencer à tricher et heureusement je n'en ai jamais eu besoin. A l'époque, les machines, compte tenue de leur faible puissance, fonctionnaient uniquement avec un langage dédié assez rudimentaire. Les modèles plus récents intègrent des langages script modernes comme Python. Aussi, je me suis demandé récemment si les applications que j'utilisais alors, et que mes étudiants utilisent aujourd'hui en analyse, pouvaient être répliquées avec R. Voyons ce qu'il en est.**
