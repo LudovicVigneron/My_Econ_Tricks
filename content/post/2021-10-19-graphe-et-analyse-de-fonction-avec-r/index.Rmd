@@ -296,12 +296,35 @@ On va bien que la dérivée seconde de g_ est négative avant 0 et positive apr�
 
 Souvent exercices d'étude fonction se complétaient d'établissement de leur valeurs limite. Ryacas permet également de les déterminer très facilement avec la commande **lim()**. Illustrons son utilisation avec la f_.
 
+*
+
+$$\lim_{x \to -\infty} f(x)=?$$
 ```{r}
 x<-ysym('x')
 f_ %>% body() %>% as.expression() %>% ysym() %>% lim('x',-Inf)
+```
+
+$$\lim_{x \to -\infty} f(x)=+\infty$$
+
+*
+
+$$\lim_{x \to 0^+} f(x)=?$$
+```{r}
 f_ %>% body() %>% as.expression() %>% ysym() %>% lim('x',0,from_left=TRUE)
+```
+$$\lim_{x \to 0^+} f(x)=0$$
+
+* 
+
+$$\lim_{x \to 0^-} f(x)=?$$
+```{r}
 f_ %>% body() %>% as.expression() %>% ysym() %>% lim('x',0,from_right=TRUE)
+```
+
+$$\lim_{x \to +\infty} f(x)=0$$
+```{r}
 f_ %>% body() %>% as.expression() %>% ysym() %>% lim('x',+Inf)
 ```
+$$\lim_{x \to +\infty} f(x)=+\infty$$
 _____________________________________________________________
 Quelle Conclusion peut-on tirer de tous cela? On peut réaliser sans grandes difficultés réaliser des exercices d'analyse de seconde avec R, mais qui en doutait? Nous utiliserons ces différentes fonctionnalités dans de prochains post sur des problèmes et applications plus complexes (et intéressants). A suivre...
