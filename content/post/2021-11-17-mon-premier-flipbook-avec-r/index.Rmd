@@ -17,7 +17,7 @@ Pour cela, j'ai repris les données de température du Hadley center sélectionn
 
 Mais, je m'égare. Voici mon premier flipbook. Il détail comment j'ai construit deux graphes à partir de ces données. Je vous laisse dérouler la présentation en cliquant dedans et en utilisant les flèches directionnelles de votre clavier (droite pour aller en avant - gauche pour aller en arrière - attention c'est sensible).
 
-```{r out.width='100%'}
+```{r out.width='100%',out.height='100%'}
 knitr::include_url("images/test_1.html")
 ```
 
