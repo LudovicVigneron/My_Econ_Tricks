@@ -1,0 +1,157 @@
+---
+title: Diagramme à batons GT1
+author: Ludovic Vigneron
+date: '2021-12-07'
+categories:
+  - datavisualisation
+  - R
+tags:
+  - Dataviz
+  - GGPLOT2
+output: html_document
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p><strong>Je propose ici le premier post d’une série inspirée de l’émission <a href="https://www.youtube.com/watch?v=gFFj22kjlZk&amp;list=PLfv89tPxlTiVIrwuSBCISiBaGSH1CJR5-&amp;index=1">“One Chart at a Time”</a> diffusée sur la chaîne Youtude du spécialiste en datavisualisation <a href="https://policyviz.com/about/">John Schwabish</a>. Il s’agira dans chaque édition de décrire un type de graphe particulier, d’en rappeler les principes, de souligner les points importants à retenir les concernant, d’alerter sur ce que l’on devrait faire ou pas faire lorsqu’on les utilise. L’idée est d’aboutir à une lecture critique des graphes présentés et de voir comment on peut les réaliser de manière rigoureuse et esthétique. Bien sûr, l’ensemble sera illustré en utilisant GGPLOT. Pour mieux se repairer dans les différents contenus du site, les textes de la série seront indexés par un code commençant par GT (pour graph type).</strong></p>
+<p>Commençons notre tour d’horizon (non exhaustif) par le très simple et très classique diagrammes à bâtons (en anglais bar chart). Il est mobilisé pour présenter les effectifs des différentes modalités d’une variable qualitative, catégorielle ou ordinale. Il est composé à la base d’une série de lignes ou barres dont la longueur (ou la hauteur) est proportionnelle à l’importance de la modalité exprimée. Les autres dimensions, lorsqu’il s’agit de barres, sont laissées constantes.</p>
+<p>La principale recommandation de forme que l’on peut faire concernant ces diagrammes est de toujours <strong>faire apparaître l’origine dans le graphe</strong>, la valeur zéro à partir de laquelle les lignes représentant les effectifs commencent. Faute de cela, le graphe pourrait présenter pour importantes des différences qui à bien y regarder ne le sont pas.</p>
+<p>Les barres peuvent être présentées verticalement ou horizontalement en fonction de ce qui apparaît le plus adéquate ou esthétique par rapport au document dans lequel elles s’insèrent.</p>
+<p>Si possible, il est recommandé, afin de rendre l’ensemble plus lisible, <strong>d’appliquer une certaine logique à l’ordre des modalités présentées</strong> (de la plus fréquente à la moins fréquente ou inversement, de la plus grave à la moins grave …). Cela est à déterminer en fonction de votre objectif.</p>
+<p>Concernant les couleurs appliquées. Il est recommandé d’utiliser un ensemble neutre et de jouer sur l’intensité pour guider l’attention du lecteur sur les valeurs d’intérêt (celles que vous cherchez à mettre en avant).</p>
+<p>Les étiquettes rappelant les catégories peuvent être intégrées dans les barres plutôt que dans une légende, ou, lorsqu’il y en a beaucoup, elles peuvent être insérées dans les intervalles les séparant. Une possibilité est d’indiquer à une extrémité le nom de la catégorie et de l’autre l’effectif mesuré.</p>
+<p>Tous ceci étant posé, prenons des données afin d’avoir une vue plus directe de ces différents points. Intéressons-nous au Basket-Ball professionnel. Établissons un diagramme indiquant les équipes ayant drafté le plus souvent en première position entre 1983 et 2018.</p>
+<p>Mais, au préalable, chargeons deux packages, le classique tidyverse ainsi que nbastatR, qui va scrapper sur le site basketball-reference.com les informations désirées. Pour plus d’information sur ce package et son installation, je vous renvois sur son <a href="http://asbcllc.com/nbastatR/index.html">site compagnon</a>.</p>
+<pre class="r"><code>library(tidyverse)
+library(nbastatR)</code></pre>
+<p>Utilisons la fonction <strong>drafts()</strong> en indiquant les années recherchées. Limitons la base aux seuls 1er de drafts et voyons ce que l’on obtient.</p>
+<pre class="r"><code>draft_1 &lt;- drafts(draft_years = 1983:2018,
+                    nest_data = FALSE,
+                    return_message = FALSE) %&gt;% 
+           filter(numberPickOverall==1)</code></pre>
+<pre class="r"><code>draft_1</code></pre>
+<pre><code>## # A tibble: 36 x 18
+##     ...1 yearDraft numberPickOverall numberRound numberRoundPick namePlayer     
+##    &lt;dbl&gt;     &lt;dbl&gt;             &lt;dbl&gt;       &lt;dbl&gt;           &lt;dbl&gt; &lt;chr&gt;          
+##  1     1      2018                 1           1               1 Deandre Ayton  
+##  2     2      2017                 1           1               1 Markelle Fultz 
+##  3     3      2016                 1           1               1 Ben Simmons    
+##  4     4      2015                 1           1               1 Karl-Anthony T~
+##  5     5      2014                 1           1               1 Andrew Wiggins 
+##  6     6      2013                 1           1               1 Anthony Bennett
+##  7     7      2012                 1           1               1 Anthony Davis  
+##  8     8      2011                 1           1               1 Kyrie Irving   
+##  9     9      2010                 1           1               1 John Wall      
+## 10    10      2009                 1           1               1 Blake Griffin  
+## # ... with 26 more rows, and 12 more variables: slugTeam &lt;chr&gt;,
+## #   nameOrganizationFrom &lt;chr&gt;, typeOrganizationFrom &lt;chr&gt;, idPlayer &lt;dbl&gt;,
+## #   idTeam &lt;dbl&gt;, nameTeam &lt;chr&gt;, cityTeam &lt;chr&gt;, teamName &lt;chr&gt;,
+## #   PLAYER_PROFILE_FLAG &lt;dbl&gt;, slugOrganizationTypeFrom &lt;chr&gt;,
+## #   locationOrganizationFrom &lt;chr&gt;, nom_eq &lt;chr&gt;</code></pre>
+<p>Maintenant que nous avons les données, nous pouvons nous attaquer à notre graphe. Pour le diagramme à bâtons, nous utilisons le <strong>geom_bar()</strong>. La variable dénombrée et représentée est nameTeam, indiquons-le dans <strong>aes()</strong>.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar() </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Le résultat est peu lisible notamment du fait des noms qui se chevauchent. Retournons l’ensemble pour voir si les choses sont mieux avec des barres horizontales. Utilisons la commande <strong>coord_flip()</strong>.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar() +
+  coord_flip()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>C’est mieux. Réduisons l’épaisseur des barres et colorons-les en rouge.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  coord_flip()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Supprimons les titres des axes qui apparaissent superflus.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  coord_flip()+
+  theme(axis.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Ajoutons un titre et une caption indiquant la source des données.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip()+
+  theme(axis.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Centrons le titre, mettons-le en gras et passons le caption à l’italic.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip()+
+  theme(axis.title = element_blank(),
+        plot.title=element_text(face=&#39;bold&#39;,hjust=0.5),
+        plot.caption=element_text(face=&#39;italic&#39;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Le cadre gris à l’arrière des barres n’est pas particulièrement beau. Passons à thème plus discret. Essayons le <strong>theme_minimal()</strong>.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip()+
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        plot.title=element_text(face=&#39;bold&#39;,hjust=0.5),
+        plot.caption=element_text(face=&#39;italic&#39;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Supprimons la grille à l’arrière du graphe. Encore une fois, elle ne sert pas à grand chose.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip()+
+  theme_minimal() +
+  theme(axis.title = element_blank(),
+        plot.title=element_text(face=&#39;bold&#39;,hjust=0.5),
+        plot.caption=element_text(face=&#39;italic&#39;),
+        panel.grid = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Déplaçons les noms des équipes de manière à ce qu’ils figurent au dessus des barres. Pour cela, utilisons dans notre <strong>element_text()</strong> l’option margin. Ses arguments sont t, pour top,r, pour right, b, pour bottom, et l, pour left. Utilisons r pour déplacer le texte sur la droite d’une valeur de -120. Ajustons l’ensemble en termes d’alignements.</p>
+<pre class="r"><code>ggplot(draft_1, aes(nameTeam)) +
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip() +
+  theme_minimal() +
+  theme(plot.title=element_text(face=&#39;bold&#39;,hjust=0.5),
+        plot.caption=element_text(face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_text(margin = margin( r = -120),
+                                   vjust=-0.5,hjust=0),
+        panel.grid = element_blank()) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Le résultat est intéressant. Mais, on peut améliorer les choses en modifiant l’ordre des équipes de manière à présenter en premier celles qui ont le plus fréquemment drafté en premier. Pour cela, commençons par transformer notre variable nameTeam en facteur en utilisant la fonction <strong>factor()</strong>.</p>
+<pre class="r"><code>draft_1$nameTeam&lt;-factor(draft_1$nameTeam)</code></pre>
+<p>Ceci fait, nous allons l’utiliser dans notre graphe comme esthètique (élément représenté). Mais avant redéfinissons les différents niveaux de la variable en fonction de leur fréquence. Pour cela, nous utilisons la fonction <strong>fct_infreq()</strong> qui fait partie du package <strong>forcats</strong>(lui-même intégré au tidyverse).</p>
+<pre class="r"><code>ggplot(draft_1,aes(fct_infreq(nameTeam)))+
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip() +
+  theme_minimal() +
+  theme(plot.title=element_text(face=&#39;bold&#39;,hjust=0.5),
+        plot.caption=element_text(face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_text(margin = margin( r = -120),
+                                   vjust=-0.5,hjust=0),
+        panel.grid = element_blank()) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>Le résultat est pas mal. Mais, c’est à l’envers par rapport à ce que l’on cherche à obtenir. Il nous faut inverser l’ordre du facteur nameTeam. Pour cela, utilisons la fonction <strong>fct_rev()</strong> qui fait également partie du package forcats.</p>
+<pre class="r"><code>ggplot(draft_1,aes(fct_rev(fct_infreq(nameTeam))))+
+  geom_bar(size=0.5,fill=&#39;red&#39;,width=0.1) +
+  labs(title=&#39;1er choix de draft NBA (1983-2018)&#39;,
+       caption = &#39;Source: Basketball Reference (via nbastatR)&#39;)+
+  coord_flip() +
+  theme_minimal() +
+  theme(plot.title=element_text(face=&#39;bold&#39;,hjust=0.5),
+        plot.caption=element_text(face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_text(margin = margin( r = -120),
+                                   vjust=-0.5,hjust=0),
+        panel.grid = element_blank()) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Et voilà, le tour est joué. On obtient le diagramme à bâtons désiré. Il est à la fois simple et informatif. Cleveland apparaît nettement comme la franchise ayant le plus fréquemment drafté en premier sur la période avec dans l’ordre Brad Daugherty, Lebron James, Kyrie Irving, Anthony Bennett et Andrew Wiggins.</p>
