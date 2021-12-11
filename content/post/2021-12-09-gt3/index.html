@@ -1,0 +1,281 @@
+---
+title: Diagramme en barres empilées GT3
+author: Ludovic Vigneron
+date: '2021-12-09'
+slug: []
+categories:
+  - datavisualisation
+  - R
+tags:
+  - Dataviz
+  - GGPLOT2
+  - R
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p><strong>Pour ce troisième post de la série GT-graphe type, intéressons-nous à un autre type de diagramme à bâtons, celui avec des barres empilées (stacked bar chart).Il s’agit d’un graphe dans lequel les barres ordinaires sont découpées en fonction de l’effectif de sous-catégories. Cela permet de mettre en évidence comment ces dernières contribuent à la valeur décrite par la barre dans laquelle elles sont inclues. On peut ainsi mettre en évidence dans un seul graphe à la fois les proportions relatives des sous-catégories et le totale des effectifs des catégories. Cela multiplie les possibilités comparaisons. C’est là qu’il faut être prudent. S’il y a trop de sous-catégories, le graphe devient vite illisible. On se limitera dans l’idéal à trois ou quatre. Par ailleurs, une seule de ces sous-catégories ne sera accolée à l’origine et donc offrira une base de comparaison rapide et fiable entre les différentes catégories (barres). Il est conseillé d’y placer celle qui vous intéresse le plus. Vous pouvez également jouer sur les couleurs et/ou les valeurs (plus ou moins sombre) pour renforcer sa mise en avant.</strong></p>
+<p>Voyons comment en réaliser un à la fois parlant et élégant avec GGPLOT2. Pour cela, travaillons encore une fois avec la base utilisée dans le post précédent: le décompte de la population rurale et urbaine dans le monde sur différentes zones géographiques. Elles peuvent être téléchargées (ici)[<a href="https://population.un.org/wup/Download/Files/WUP2018-F01-Total_Urban_Rural.xls" class="uri">https://population.un.org/wup/Download/Files/WUP2018-F01-Total_Urban_Rural.xls</a>].</p>
+<p>Mais avant d’aller plus loin, chargeons quelques packages qui seront utiles par la suite: le tidyverser (pour les manipulations de données et GGPLOT), readxl (pour lire le fichier de données), scales (pour la mise en forme des axes), ggtext (pour la mise en forme d’éléments textuels) et formattable (pour la mise en forme de valeurs numériques intégrées au graphe). Si ce n’est pas déjà fait, installez-les.</p>
+<pre class="r"><code>library(tidyverse)
+library(readxl)
+library(scales)
+library(ggtext)
+library(formattable)</code></pre>
+<p>On peut maintenant charger les données et commencer la mise en forme. Limitons la base aux différents continents. Mettons la base dans le bon sens et traduisons en français les éléments textuels en intégrant des alinéas pour les intitulés longs (qui seront intégrés grâce à ggtext).</p>
+<pre class="r"><code>dat &lt;- read_excel(&quot;WUP2018-F01-Total_Urban_Rural.xls&quot;,skip = 16) %&gt;% 
+       select(`Region, subregion, country or area`,Urban,Rural) %&gt;% 
+               rename(Reg=`Region, subregion, country or area`) %&gt;% 
+       filter(Reg%in%c(&#39;AFRICA&#39;,&#39;ASIA&#39;,&#39;EUROPE&#39;,
+                       &#39;LATIN AMERICA AND THE CARIBBEAN&#39;,&#39;NORTHERN AMERICA&#39;,
+                       &#39;OCEANIA&#39;)) %&gt;% 
+    pivot_longer(cols=c(Urban,Rural),names_to=&#39;type&#39;) %&gt;% 
+    mutate(type=ifelse(type==&quot;Rural&quot;,&quot;Rurale&quot;,&quot;Urbaine&quot;),
+                    Reg=ifelse(Reg==&quot;AFRICA&quot;,&quot;Afrique&quot;,
+                        ifelse(Reg==&quot;ASIA&quot;,&quot;Asie&quot;,
+                        ifelse(Reg==&quot;EUROPE&quot;,&quot;Europe&quot;,
+                        ifelse(Reg==&quot;LATIN AMERICA AND THE CARIBBEAN&quot;,
+                               &quot;Amérique latine
+  et Caraïbes&quot;,
+                        ifelse(Reg==&quot;NORTHERN AMERICA&quot;,
+                               &quot;Amérique
+  du nord&quot;,&quot;Océanie&quot;))))))
+dat</code></pre>
+<pre><code>## # A tibble: 12 x 3
+##    Reg                              type       value
+##    &lt;chr&gt;                            &lt;chr&gt;      &lt;dbl&gt;
+##  1 &quot;Afrique&quot;                        Urbaine  547602.
+##  2 &quot;Afrique&quot;                        Rurale   740318.
+##  3 &quot;Asie&quot;                           Urbaine 2266131.
+##  4 &quot;Asie&quot;                           Rurale  2279003.
+##  5 &quot;Europe&quot;                         Urbaine  552911.
+##  6 &quot;Europe&quot;                         Rurale   189737.
+##  7 &quot;Amérique latine\n  et Caraïbes&quot; Urbaine  526057.
+##  8 &quot;Amérique latine\n  et Caraïbes&quot; Rurale   125955.
+##  9 &quot;Amérique\n  du nord&quot;            Urbaine  298987.
+## 10 &quot;Amérique\n  du nord&quot;            Rurale    64857.
+## 11 &quot;Océanie&quot;                        Urbaine   28129.
+## 12 &quot;Océanie&quot;                        Rurale    13132.</code></pre>
+<p>On pourrait à partir de là établir de simples diagrammes à bâtons pour les zonez rurales et urbaines…</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value))+
+  geom_bar(stat = &quot;identity&quot;)+
+  facet_wrap(.~type)+
+  theme(axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>… voir un diagramme pairé.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,position=&#39;dodge&#39;)+
+  theme(axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Mais ce n’est pas ce qui nous intéresse ici. On veut des barres empilées. Une des manières de les envisager est de leurs données une taille commune représentant 100% des observations des catégories considérées. Cela permet de bien distinguer l’importance des sous-groupes (rurale contre urbain) pour chacune d’elles.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,
+           position=&#39;fill&#39;)+
+  theme(axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Néanmoins en procédant de la sorte, nous perdons l’information sur la taille des groupe. Pour la garder, supprimons dans le geom_bar() l’option position.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;)+
+  theme(axis.text.x = element_text(angle=90))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>C’est ce graphe que nous retiendrons comme base de travail. Voyons comment l’améliorer. Commençons par mettre l’ensemble à l’horizontale et optons pour un thème plus neutre.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;)+
+  coord_flip()+
+  theme_minimal()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Modifions les titres des axes et ajoutons un titre générale ainsi qu’une caption pour indiquer la source des données.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip()+
+  theme_minimal()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Réduisons l’épaisseur des barres et changeons leur couleurs pour reprendre celles que nous avons utilisées dans le post précédent (le jaune #F1D739 et le bleu #399CF1).</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip()+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  theme_minimal()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Mettons en forme le titre (centré) et le caption (italic justifié à droite).</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip()+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Ramenons la légende dans le graphe et supprimons son titre.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip()+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Ramenons le titre de l’axe des continents en haut, alignons les noms des continents sur la gauche et réduisons les marges du graphe.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE)+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Mettons en forme les étiquettes de l’axe population en utilisant la fonction <strong>unit_format()</strong> du package scale.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE)+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  scale_y_continuous(labels = unit_format(unit = &quot;M&quot;,scale = 1e-3))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Etendons le graphe de sortie (4.5 pouces de haut et 8.5 pouces de large). Supprimons la grille à l’arrière et ajoutons à l’extrémité des barres les effectifs globaux pour chaque continent. Pour cela, utilisons le <strong>geom_text()</strong>. Indiquons que l’on utilisera comme label une statistique issue des ordonnées y (des abscisses dans le graphe retourné) que cette statistique est descriptive (summary) construit sur la fonction sum (pour somme).</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  geom_text(aes(label =stat(y),group=factor(Reg)),
+            stat = &#39;summary&#39;, fun = sum, hjust = -0.1,
+              size=3)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE,ylim=c(0,5100000))+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  scale_y_continuous(labels = unit_format(unit = &quot;M&quot;,scale = 1e-3))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        panel.grid = element_blank(),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="816" /></p>
+<p>Notez que les valeurs portées à l’extrémité des barres ne sont pas très lisible. Améliorons cela en utilisant la fonction <strong>comma()</strong> sur package formattable. Indiquons que l’on ne veut que des valleurs entière (digits=0) et que le séparateur des milliers (big.mark) sera un simple espace.</p>
+<pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  geom_text(aes(label =comma(stat(y),digits=0,
+                             big.mark = &#39; &#39;),group=factor(Reg)),
+            stat = &#39;summary&#39;, fun = sum, hjust = -0.1,
+              size=3)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE,ylim=c(0,5100000))+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  scale_y_continuous(labels = unit_format(unit = &quot;M&quot;,scale = 1e-3))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        panel.grid = element_blank(),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="816" /></p>
+<p>Le graphe serait plus parlant si la catégorie à l’effective le plus grand venait en premier. Créons une variable (tot) à cette fin et utilisons la pour classer nos continents.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% group_by(Reg) %&gt;% mutate(tot=sum(value))</code></pre>
+<p>Passons la variable Reg en facteur et utilisons la fonctions <strong>reorder()</strong> pour établir l’ordre des valeurs en fonction de tot.</p>
+<pre class="r"><code>ggplot(dat,aes(x=reorder(factor(Reg),tot),y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  geom_text(aes(label =comma(stat(y),digits=0,big.mark = &#39; &#39;),group=Reg),
+            stat = &#39;summary&#39;, fun = sum, hjust = -0.1,size=3)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE,ylim=c(0,5100000))+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  scale_y_continuous(labels = unit_format(unit = &quot;M&quot;,scale = 1e-3))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        panel.grid = element_blank(),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="816" /></p>
+<p>Pour finaliser, le graphe on peut ajouter la part en pourcentage de la population urbaine dans les barres de chaque continent. Calculons cette variable.</p>
+<pre class="r"><code>dat &lt;- dat %&gt;% group_by(Reg) %&gt;% 
+  mutate(perc=round(value/tot*100),
+         perc_urb=ifelse(type==&#39;Urbaine&#39;,paste(perc,&#39;%&#39;),&#39;&#39;))</code></pre>
+<p>Ceci fait. Intégrons un nouveau <strong>geom_text()</strong>.</p>
+<pre class="r"><code>ggplot(dat,aes(x=reorder(factor(Reg),tot),y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  geom_text(aes(label =comma(stat(y),digits=0,big.mark = &#39; &#39;),group=Reg),
+            stat = &#39;summary&#39;, fun = sum, hjust = -0.1,size=3)+
+  geom_text(aes(label = perc_urb), hjust = 1.5,
+            position = position_stack(0.99),size=3,color=&#39;white&#39;)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE,ylim=c(0,5100000))+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  scale_y_continuous(labels = unit_format(unit = &quot;M&quot;,scale = 1e-3))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        panel.grid = element_blank(),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-19-1.png" width="816" /></p>
+<p>Nous avons un soucis avec l’Océanie. La proportion n’apparaît pas parce que la barre qui lui est attribuée est trop petite. Reportant sa valeur (68 %) après le total de la population en Océanie en reprenant le bleu (#399CF1) associé à la fraction urbaine.</p>
+<pre class="r"><code>ggplot(dat,aes(x=reorder(factor(Reg),tot),y=value,fill=type))+
+  geom_bar(stat = &quot;identity&quot;,width = 0.6)+
+  geom_text(aes(label =comma(stat(y),digits=0,big.mark = &#39; &#39;),group=Reg),
+            stat = &#39;summary&#39;, fun = sum, hjust = -0.1,size=3)+
+  geom_text(aes(label = perc_urb), hjust = 1.5,
+            position = position_stack(0.99),size=3,color=&#39;white&#39;)+
+  geom_text(aes(x=&#39;Océanie&#39;,y=500000,label=&#39;68%&#39;),size=3,
+            color=&#39;#399CF1&#39;)+
+  labs(title=&quot;Population urbaine c. rurale par continents en 2018&quot;,
+       caption=&quot;Source: United Nations, Department of Economic and Social Affairs, World Urbanization Prospects&quot;,
+    x=&#39;Régions&#39;,y=&#39;Population (en milliers)&#39;)+
+  coord_flip(expand=FALSE,ylim=c(0,5100000))+
+  scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
+  scale_y_continuous(labels = unit_format(unit = &quot;M&quot;,scale = 1e-3))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5) ,
+        plot.caption = element_text(hjust = 1, face=&#39;italic&#39;,size = 6),
+        axis.title.y=element_text(hjust=1, angle=0,margin = margin(r=-35)),
+        axis.text.y = element_text(hjust=0),
+        panel.grid = element_blank(),
+        legend.position = c(0.85, 0.15),
+        legend.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-20-1.png" width="816" /></p>
+<p>Je pense que l’on peut s’arrêter là sur la mise en forme. Nous avons un graphe à la fois parlant et esthétique. Le tout est obtenu avec un minimum de code. Pour l’écriture de ce dernier, je n’aurais que deux conseils. Le premier est simple progressé étape par étape, transformation par transformation… Le second est de conservé une structure lisible et constante. Pour ma part, il s’agit de données, geom (dans l’ordre de ce qui est important de voir sur le graphe), labs, coordonnées, échelles, thème et éléments de thème.</p>
