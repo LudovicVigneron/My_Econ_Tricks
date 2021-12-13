@@ -326,4 +326,4 @@ ggplot(dat,aes(x=reorder(factor(Reg),tot),y=value,fill=type))+
         legend.title = element_blank())
 ```
 
-Je pense que l'on peut s'arrêter là sur la mise en forme. Nous avons un graphe à la fois parlant et esthétique. Le tout est obtenu avec un minimum de code. Pour l'écriture de ce dernier, je n'aurais que deux conseils. Le premier est simple progressé étape par étape, transformation par transformation... Le second est de conservé une structure lisible et constante. Pour ma part, il s'agit de données, geom (dans l'ordre de ce qui est important de voir sur le graphe), labs, coordonnées, échelles, thème et éléments de thème.
+Je pense que l'on peut s'arrêter là sur la mise en forme. Nous avons un graphe à la fois parlant et esthétique. Le tout est obtenu avec un minimum de code. Pour l'écriture de ce dernier, je n'aurais que deux conseils. Le premier est simple: progresser étape par étape, transformation par transformation... Le second est de conserver une structure lisible et constante. Pour ma part, il s'agit de données, geom (dans l'ordre de ce qui est important de voir sur le graphe), labs, coordonnées, échelles, thème et éléments de thème.
