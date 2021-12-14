@@ -1,0 +1,235 @@
+---
+title: Le diagramme à bâtons divergents GT4
+author: Ludovic Vigneron
+date: '2021-12-13'
+slug: []
+categories:
+  - datavisualisation
+  - R
+tags:
+  - Dataviz
+  - GGPLOT2
+---
+
+**Intéressons-nous, pour ce quatrième post de la série GT, à une autre manière d'illustrer des différences en deux groupes pour une variables catégorielles: le diagramme à bâtons divergents (diverging bars chart). Celui-ci est également connu sous d'autres noms comme le diagramme en tornade ou en papillon. Il consiste à adosser des diagrammes à bâtons représentant la variable étudiée, un pour chacun des deux groupes impliqués dans la comparaison. Le repaire utilisé prend la forme d'un T inversé avec comme axe central l'origine des barres. Cela change par rapport aux représentations vues précédemment qui utilisent le classique repaire en L. L'étendue des valeurs présentées sur l'axe horizontal de chaque coté correspond généralement (sauf si une autre valeur à plus de sens) au maximum de la variable représentée (de la fréquence de la modalité) sur les deux groupes. L'étude de la forme des diagrammes de chaque coté de l'axe centrale (le degré de symétrie) permet de comprendre les similarités ou différence entre les groupes.**
+
+Pour illustrer tout cela, prenons un exemple et traitons-le, comme d'habitude, avec GGPLOT. Répliquons le graphe proposé par Gwedolyn Tan pour le [Make over Monday  W42-15 oct](https://www.makeovermonday.co.uk/data/data-sets-2018/). Il s'agit d'un défi hebdomadaire de datavisualisation. Chaque semaine le lundi, un jeu de donnée ainsi qu'une illustration de base est diffusée et les participants produisent en produise une version améliorée partagée sur les réseaux sociaux (#MakeoverMonday). Les données utilisées sont disponibles sur data.world [ici](https://data.world/makeovermonday/2018w42-total-number-of-women-the-house-of-representatives). L'accès au site est gratuit, mais nécessite une inscription.
+
+Comme à chaque fois, commençons par charger les packages que nous mobiliserons par la suite (le tidyverse,readxl,scales,formattable et ggtext).
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(readxl)
+library(scales)
+library(formattable)
+library(ggtext)
+```
+
+Ceci fait, chargeons les données et regardons ce que la base contient avant commencer le travail.
+
+```{r}
+dat <- read_excel("Women in the House of Representatives.xlsx")
+dat
+```
+
+On 51 observations (une par congrès entre 1917 et 2019) sur 9 variables. Elles présentent pour chaque congrès et pour les deux grands parties aux Etats-Unis le nombre de femmes élues à la chambre des représentants, ainsi que leur proportion d'élus et parmi eux la proportion de femmes. C'est de dernier élément qui va nous intéresser. Nous allons établir une illustration permettant de comparer sur les différentes mandatures la proportion de femmes parmi les élus de chaque partie. L'idée est de documenter la féminisation de la vie politique aux Etats-Unis sur un siècle en comparant les Républicains et les Démocrates.
+
+Commençons par dresser un diagramme à bâtons de la proportion de femmes parmi les élus pour chaque parti. Prenons d'abord les républicains.
+
+```{r}
+ggplot(data=dat,aes(x=Congress,y=`% of party (Rep)`))+
+  geom_bar(stat='identity')
+```
+
+Le graphe brute est illisible. Essayons d'améliorer les choses. Renversons l'orientation du graphe et modifions la taille des caractères de l'axe consacré aux congrès.
+
+```{r}
+ggplot(data=dat,aes(x=Congress,y=`% of party (Rep)`))+
+  geom_bar(stat='identity')+
+  coord_flip()+
+  theme(axis.text.y = element_text(size=4))
+```
+
+Présentons les congrès dans l'ordre chronologique pour cela transformons Congress en facteur et révisons l'ordre des 51 valeurs (avec **reorder()** puis **fct_rev()**). Mettons les titres des axes en français, réduisons les marges (expand=FALSE) et colorons en rouge les barres. Le rouge est la couleur traditionnelle du partie Républicain. Etendons le graphe pour faire apparaît la valeur symbolique de 50% qui serait atteinte s'il y avait parité.
+
+```{r}
+ggplot(data=dat,aes(x=fct_rev(reorder(factor(Congress),1:51)),y=`% of party (Rep)`))+
+  geom_bar(stat='identity',fill='red')+
+  labs(x='Congrés',y='% de femmes parmi les élus du parti Républicain')+
+  coord_flip(expand=FALSE,ylim=c(0,0.5))+
+  theme(axis.text.y = element_text(size=4))
+```
+
+C'est pas mal. Mais on peut faire mieux. Prenons un thème plus discret. Supprimons le quadrillage et le titre de l'axe des pourcentages. Mettons-le en forme pour avoir des valeurs suivie du signe %. Intégrons un titre au graphe indiquant ce qui est représenté avec Républicain dans le même rouge que les barres du graphe et un sous-titre indiquant la période d'analyse.
+
+```{r }
+ggplot(data=dat,aes(x=fct_rev(reorder(factor(Congress),1:51)),y=`% of party (Rep)`))+
+  geom_bar(stat='identity',fill='red')+
+  labs(title="Pourcentage de femmes parmis les élus <span style=color:'red'>Républicains </span>",
+    subtitle='à la chambre de réprésentant sur un sciècle',
+    x='Congrés')+
+  coord_flip(expand=FALSE,ylim=c(0,0.55))+
+  scale_y_continuous(labels=label_percent(accuracy = NULL))+
+  theme_minimal()+
+  theme(plot.title = element_markdown(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face='italic'),
+        axis.title.x=element_blank(),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank())
+```
+
+Le résultat assez parlant. On voit bien une augmentation de la part des femmes sur la période mais on voit également que l'on reste loin de la parité.
+
+Procédons aux mêmes traitements pour les Républicains mais en retenant la couleur bleu (leur couleur habituelle).
+
+```{r }
+ggplot(data=dat,aes(x=fct_rev(reorder(factor(Congress),1:51)), y=`% of party (Dem)`))+
+  geom_bar(stat='identity',fill='blue')+
+  labs(title="Pourcentage de femmes parmis les élus <span style=color:'blue'>Démocrates </span>",
+    subtitle='à la chambre de réprésentant sur un sciècle',
+    x='Congres')+
+  coord_flip(expand=FALSE,ylim=c(0,0.55))+
+  scale_y_continuous(labels=label_percent(accuracy = NULL))+
+  theme_minimal()+
+  theme(plot.title = element_markdown(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face='italic'),
+        axis.title.x=element_blank(),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank())
+```
+
+On voit que a proportion de femmes parmi élus a plus progressé sur la période mais que l'on est toujours loin de la parité.  
+
+Pour que la comparaison soit plus simple mettons les deux graphes côtes à côtes en utilisant **facet_grid()**. Pour cela, il faut au préalable procéder à quelques transformations. Profitons-en pour intégrer la forme de la variable Congress utilisée dans le graphe. Puis faisons basculer la base pour avoir une colonne pourcentage d'élues femmes et une colonne parti qui prendra une forme binaire (Républicains/Démocrates).
+
+```{r}
+dat_<-dat %>% select(Congress,`% of party (Rep)`,`% of party (Dem)`) %>% 
+  mutate(Congress=fct_rev(reorder(factor(Congress),1:51))) %>% 
+  pivot_longer(cols=starts_with("% of party"),
+               values_to = 'pr_fem',
+               names_to = 'parti') %>% 
+  mutate(partie=ifelse(parti=='% of party (Rep)','Républicains','Démocrates'))
+dat_
+```
+
+Ceci fait. Allons-y pour le graphe. Changeons le titre pour quelque chose de plus global puis intégrons **facet_grid(.~parti)** sans oublié de s'assurer que les couleurs seront maintenues (fill et **scale_fill_manual()**).
+
+```{r}
+ggplot(data=dat_,aes(x=Congress,y=pr_fem,fill=parti))+
+  geom_bar(stat='identity')+
+  labs(title='Un sciécle de femmes à la chambre des représentants',
+    x='Congrés')+
+  coord_flip(expand=FALSE,ylim=c(0,0.55))+
+  scale_y_continuous(labels=label_percent(accuracy = NULL))+
+  scale_fill_manual(values=c('blue','red'))+
+  facet_grid(.~parti)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        axis.title.x=element_blank(),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank(),
+        legend.position='none',
+        strip.text.x=element_markdown())
+```
+
+La juxtaposition permet de faciliter la comparaison. La proportion de femmes est globalement plus importante chez les Démocrates que chez les Républicains. Néanmoins, la lecture serait plus facile si le nom des parties apparaissait. Intégrons-les en s'assurant de la cohérence des couleurs pour cela recodons une variables textuelles pour les titres (avec un peu de html pour les couleurs comme le permet le package ggtext). Elle remplacerons partie dans le graphe.
+
+```{r}
+dat_$part<-ifelse(dat_$partie=='Démocrates',"<p style=color:'blue'>Démocrates</p>",
+                  "<p style=color:'red'>Républicains</p>")
+ggplot(data=dat_,aes(x=Congress,y=pr_fem,fill=part))+
+  geom_bar(stat='identity')+
+  labs(title='Un sciécle de femmes à la chambre des représentants',
+    x='Congrés')+
+  coord_flip(expand=FALSE,ylim=c(0,0.55))+
+  scale_y_continuous(labels=label_percent(accuracy = NULL))+
+  scale_fill_manual(values=c('blue','red'))+
+  facet_grid(.~part)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        axis.title.x=element_blank(),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank(),
+        legend.position='none',
+        strip.text.x=element_markdown())
+```
+
+Le graphe obtenu est assez parlant. Mais, les choses seraient encore plus claires si on adoptait la forme d'un **diagramme divergent** (on y arrive enfin...) et donc que l'on renvoyait dos à dos les barres des deux parties. Pour ce faire la première étape consiste à recoder la variable de proportion pour que celle de l'un des parties (les Démocrates) apparaissent à négatif de celle de l'autre. Nommons cette nouvelle variable p_ord.
+
+```{r}
+dat_$p_ord<-ifelse(dat_$partie=='Démocrates',-dat_$pr_fem,dat_$pr_fem)
+```
+
+Établissons un graphe de base en prenant p_ord comme élément y. Etendons le champs du graphe à -55% +55%.
+
+```{r}
+ggplot(data=dat_,aes(x=Congress,y=p_ord,fill=parti))+
+  geom_bar(stat='identity')+
+  labs(title='Un sciécle de femmes à la chambre des représentants',
+       x='Congrés')+
+  coord_flip(expand=FALSE,ylim=c(-0.55,0.55))+
+  scale_fill_manual(values=c('blue','red'))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_text(hjust=1,angle=0,size=6,face='bold'),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank(),
+        legend.position='none')
+```
+
+La juxtaposition apporte vraiment à la comparaison. On peut par exemple assez facilement voir que la proportion de femmes élues sur la dernière mandature est presque quatre fois plus importante chez les Républicains que chez démocrates.
+
+L'axe réservé aux pourcentages est peu lisible. Remettons-le en forme (**scale_y_continuous()** labels abs et **percent()** du package formattable). Profitons-en pour intégrer un sous-titre reprenant le code couleur des parties (en utilisant **element_markdown()** dans le theme).
+
+```{r}
+ggplot(data=dat_,aes(x=Congress,y=p_ord,fill=parti))+
+  geom_bar(stat='identity')+
+  labs(title='Un sciécle de femmes à la chambre des représentants',
+       subtitle = "Plus de femmes sont élues chez les <span style=color:'blue'>Démocrates</span> que chez les <span style=color:'red'>Républicains</span>",
+       x='Congrés')+
+  coord_flip(expand=FALSE,ylim=c(-0.55,0.55))+
+  scale_y_continuous(breaks = percent(seq(-0.5,0.5,0.1)),labels=abs)+
+  scale_fill_manual(values=c('blue','red'))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_markdown(hjust=0.5,face='italic'),
+        axis.title.x=element_blank(),
+        axis.title.y=element_text(hjust=1,angle=0,size=6,face='bold'),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank(),
+        legend.position='none')
+```
+
+Améliorons encore le graphe en annotant deux mandatures importantes celle qui a vu la première femme intégrer la chambre des représentant (la démocrate Jeannette Rankin en 1916) et celle qui est le point de départ d'une forte augmentation (1992 l'année de la femme). Utilisons **geom_richtext()** du package ggtext pour pouvoir mettre le texte en forme et le **geom_segment()** avec la fonction **arrow()** pour établir les flèches pointant les mandatures remarquables. N'oublions pas d'intégrer un caption pour indiquer la sources données.
+
+```{r}
+ggplot(data=dat_,aes(x=Congress,y=p_ord,fill=partie))+
+  geom_bar(stat='identity')+
+  geom_richtext(aes(x=47,y=0.3),label="**La première femme à entrer au congrés** <br> Quand le partie républicain a commencé, les femmes <br> sont au coeur de leur programme. En 1916, Jeannette Rankin <br> a élue sur l'un des deux représentants pour Montana",
+                fill='#DDE6EA', size=2, label.colour='white')+
+  geom_segment(aes(x = 50, y = 0.11, xend = 51, yend = 0.01),colour = "#CFD8DA", 
+             size=0.01,arrow = arrow(length = unit(0.01, "npc"))) +
+  geom_richtext(aes(x=20,y=-0.3),label="**L'année de la femme**<br> En 1992, les électeurs américains élisent<br> plus de femmes au congrés et cela conduit<br> à une série d'avancées pour leur représentation.",
+                fill='#DDE6EA', size=2, label.colour='white')+
+  geom_segment(aes(x = 17, y = -0.15, xend = 14, yend = -0.13),colour = "#CFD8DA", 
+             size=0.01,arrow = arrow(length = unit(0.01, "npc"))) +
+  labs(title='Un sciécle de femmes à la chambre des représentants',
+       subtitle = "Plus de femmes sont élues chez les <span style=color:'blue'>Démocrates</span> que chez les <span style=color:'red'>Républicains</span>",
+       caption='Source: Congres Research Service - Gwedolin Tan Make_over_Monday 2018 W42',
+       x='Congres')+
+  coord_flip(expand=FALSE,ylim=c(-0.55,0.55))+
+  scale_y_continuous(breaks = percent(seq(-0.5,0.5,0.1)), labels=abs)+
+  scale_fill_manual(values=c('blue','red'))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_markdown(hjust=0.5,face='italic'),
+        plot.caption = element_text(hjust=1,face='italic'),
+        axis.title.x=element_blank(),
+        axis.title.y=element_text(hjust=1,angle=0,size=6,face='bold'),
+        axis.text.y = element_text(size=4),
+        panel.grid = element_blank(),
+        legend.position='none')
+```
+
+Le graphe obtenu est à la fois simple, rigoureux et parlant. C'est ce que l'on recherche lorsque l'on fait de la datavisualisation. Cela donne un aperçu des possibilités qu'offre les diagrammes à bâtons divergents. Ici, la valeur centrale est 0 (aucune femme au congrès pour parti, 0%). Même si ce n'est pas le cas pour le graphe que nous venons de faire, il peut parfois être plus parlant de travailler avec une autre référence (la moyenne, la médiane, ou autres établis sur un groupe qui sert à la mise en perspective). Celle-ci sert alors d'élément marquant la séparation entre les groupes comparés et de base à la divergence des barres. Nous y reviendrons sûrement dans un prochain post pour illustrer la procédure.
