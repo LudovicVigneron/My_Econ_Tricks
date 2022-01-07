@@ -266,7 +266,7 @@ ggplot(dat)+aes(y=pays_h_f)+
                size=0.5,color='dark grey')+
   geom_point(aes(x=Women),color='orange',size=0.5)+
   geom_point(aes(x=Men),color='black',size=0.5)+
-  labs(title="En Islande et en Suéde, il y a plus de <span style=color:'orange'>**femmes**</span> de 15 ans et plus que d'**hommes**",
+  labs(title="En Islande et en Suéde, il y a plus de <span style=color:'orange'>**femmes**</span> de 15 ans et plus qui fument que d'**hommes**",
        caption="*Source: OCDE données de santé 2019 <br>
         Adapté d'un graphe d'Anne M. Dzikowska*",
        x="Pourcentage de fumeur.ses dans les pays l'OCDE",
