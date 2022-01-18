@@ -14,7 +14,7 @@ tags:
 
 **Continuons notre exploration des graphes permettant d'illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde. Les séparations entre modalités sont opérées de manière à représenter les effectifs qui les composent. La taille des groupes désignées par l’intersection des variables est ainsi représentée par la surface du petit rectangle qui lui correspond. Cela facilite l'identification des relations entre les variables.**
 
-Tout ceci est un peu abstrait... Prenons un exemple d'utilisation de ce type de graphe et profitons-en pour comparer le rendu avec celui des différentes formes de diagramme à bâtons. Mais, avant de nous lancer, chargeons quelques packages utiles pour la suite.  
+Tout ceci est un peu abstrait... Prenons un exemple d'utilisation de ce type de graphe pour y voir plus clair et profitons-en pour comparer le rendu avec celui des différentes formes de diagramme à bâtons. Mais, avant de nous lancer, chargeons quelques packages utiles pour la suite.  
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
