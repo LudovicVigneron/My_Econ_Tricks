@@ -16,7 +16,7 @@ tags:
 
 
 <p><strong>Continuons notre exploration des graphes permettant d’illustrer la comparaison entre des variables catégorielles avec une autre alternative aux diagrammes à bâtons. Intéressons-nous maintenant aux diagrammes en mosaïque et le graphe de Marimekko (ou Mekko). Ceux-ci mobilisent des éléments rectangulaires que se combinent dans unique rectangle. Chaque dimension de ce dernier est attachée à une des variables. Ainsi, on a sur la largeur (les abscisses) des barres accolées correspondant aux différentes modalités de la première variable et sur la longueur (les ordonnées) empilées les modalité de la seconde variable. Les séparations entre modalités reprises sur chaque dimension sont opérées de manière à représenter les effectifs des éléments qui la compose. La taille des groupes désignées par l’interaction des variables est ainsi reflété par la surface du rectangle qui lui correspond. Cela facilite l’identification des relations entre les variables.</strong></p>
-<p>Tout ceci est un peu abstrait… Prenons un exemple d’utilisation de ce type de graphe et profitons en pour comparer le rendu avec différentes formes de diagramme à bâtons. Mais, avant de nous lancern chargeons quelques packages utiles pour la suite.</p>
+<p>Tout ceci est un peu abstrait… Prenons un exemple d’utilisation de ce type de graphe et profitons en pour comparer le rendu avec différentes formes de diagramme à bâtons. Mais, avant de nous lancer chargeons quelques packages utils pour la suite.</p>
 <pre class="r"><code>library(tidyverse)
 library(patchwork)
 library(rvest)
@@ -37,13 +37,13 @@ dat1</code></pre>
 <p>L’information obtenue doit être retravailler pour permettre son traitement. Vous voudrions simplement une data frame avec une colonne pour le sexe du candidat et une pour son statut (admis ou rejeté). Utilisons la fonction <strong>rep()</strong> pour générer les observations correspondant et vérifions si le résultat est conforme au tableau que nous avons scrappé avec les fonctions <strong>table()</strong> et <strong>addmargins()</strong>.</p>
 <pre class="r"><code>dat1&lt;-data.frame(
   sexe=c(rep(&#39;homme&#39;,8442),rep(&#39;femme&#39;,4321)),
-  statut=c(rep(&#39;admi&#39;,round(8442*0.41)),
+  statut=c(rep(&#39;admis&#39;,round(8442*0.41)),
                   rep(&#39;rejeté&#39;,round(8442*0.59)),
-                  rep(&#39;admi&#39;,round(4321*0.35)),
+                  rep(&#39;admis&#39;,round(4321*0.35)),
                   rep(&#39;rejeté&#39;,round(4321*0.65))))
 addmargins(table(dat1))</code></pre>
 <pre><code>##        statut
-## sexe     admi rejeté   Sum
+## sexe    admis rejeté   Sum
 ##   femme  1512   2809  4321
 ##   homme  3461   4981  8442
 ##   Sum    4973   7790 12763</code></pre>
