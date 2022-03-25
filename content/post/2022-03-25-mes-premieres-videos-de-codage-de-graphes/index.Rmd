@@ -12,47 +12,31 @@ tags:
   - Dataviz
 ---
 
-**Le cours de datavisualisation à l'UPHF que je donne sous la forme d'un module polytechnique (il s'appelle présenter une données) a commencé début février. Il s'organise en distanciel asynchrone. Tous les quinze jours, les étudiants ont accès à de nouveaux contenus (textes, vidéos, données...) que je met à leur disposition via le campus virtuel. L'idée est de les amener assez vite à pouvoir être alaise avec les outils de manière à produire leurs propres graphes. J'y présente R, le tidyverse et surtout ggplot (mais pas que).J'insiste également sur ce qui fait la différence entre une représentation parlante, qui porte un message, et un simple empilement de données agrémenté de formes et de couleurs.**
+**Le cours de datavisualisation à l'UPHF que je donne sous la forme d'un module polytechnique (dont le nom est "présenter une donnée") a commencé début février. Il s'organise en distanciel asynchrone. Tous les quinze jours, les étudiants ont accès à de nouveaux contenus (textes, vidéos, données...) que je met à leur disposition via le campus virtuel. L'idée est de les amener assez vite à pouvoir être alaise avec les outils de manière à produire leurs propres graphes. J'y présente R, le tidyverse et surtout ggplot mais pas que. J'insiste également sur ce qui fait la différence entre une représentation parlante, qui porte un message, et un simple empilement de données agrémenté de formes et de couleurs.**
 
-Dans une partie des vidéos du cours, je code des graphes pas à pas à partir de jeux de données trouvés sur internet sur des sites de type Our World in Data. Ce sont celles-ci que je souhaites partager avec vous ici. Le montage est brute, parfois maladroit, et demanderait sûrement un peu de travail. On est plus sur un style blog mais pour des premières je penses que ce n'est pas si mal.
+Dans une partie des vidéos, je code des graphes pas à pas à partir de jeux de données trouvées sur internet sur des sites de type [Our World in Data](https://ourworldindata.org/). Ce sont celles-ci que je souhaites partager ici avec vous. Le montage est brute, parfois (souvent) maladroit, et demanderait sûrement un peu de travail supplémentaire. On est plus sur un style vlog que sur un vidéo-cours structuré. Néanmoins, pour des premières tentatives, je penses que ce n'est pas si mal.
 
-* Diagramme à bâtons simple
+Vous trouverez ci-dessous un aperçu de chaque graphe réalisé. Pour accéder aux vidéos, il vous suffit simplement de cliquer dessus.
+
+* **Diagramme à bâtons simples**
 
 <a href="https://youtu.be/lhVq-oC_7fQ" >
     <img alt="bar_nba_drft" src="Rplot3.svg"
          width=750" height="350">
 </a>
 
-* Diagramme à bâtons pairés
+* **Diagramme à bâtons pairés**
 
 <a href="https://youtu.be/9yv2Xd0zAFg">
-    <img alt="bp1" src="bp.png"
-         width=650" height="250">
+    <img alt="bp1" src="diag_pair_v1.svg"
+         width=910" height="350">
 </a>
 
-
-* Diagramme à bâtons circulaire
+* **Diagramme à bâtons circulaires**
 
 <a href="https://youtu.be/i5rewIOaweA" >
-    <img alt="spir_bar" src="spirals_charts.png"
-         width=650" height="1050">
+    <img alt="spir_bar" src="spirals_charts1.svg"
+         width=650" height="850">
 </a>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+____________________________________________________
 
