@@ -16,11 +16,7 @@ tags:
 
 Dans une partie des vidéos, je code des graphes pas à pas à partir de jeux de données trouvées sur internet sur des sites de type [Our World in Data](https://ourworldindata.org/). Ce sont celles-ci que je souhaites partager ici avec vous. Le montage est brute, parfois (souvent) maladroit, et demanderait sûrement un peu de travail supplémentaire. On est plus sur un style vlog que sur un vidéo-cours structuré. Néanmoins, pour des premières tentatives, je penses que ce n'est pas si mal.
 
-<<<<<<< HEAD
 Vous trouverez ci-dessous un aperçu de chaque graphe réalisé. Pour accéder aux vidéos, il vous suffit simplement de cliquer dessus.
-=======
-Vous trouverez ci-dessous un aperçu de chaque graphe réalisé. Pour accéder aux vidéos, il vous suffit de cliquer dessus.
->>>>>>> d7f74f1dc858887afc9b81fa56a40f69e62404e7
 
 * **Diagramme à bâtons simples**
 
@@ -29,24 +25,13 @@ Vous trouverez ci-dessous un aperçu de chaque graphe réalisé. Pour accéder a
          width=750" height="350">
 </a>
 
-<<<<<<< HEAD
-=======
-
->>>>>>> d7f74f1dc858887afc9b81fa56a40f69e62404e7
 * **Diagramme à bâtons pairés**
 
 <a href="https://youtu.be/9yv2Xd0zAFg">
     <img alt="bp1" src="diag_pair_v1.svg"
-<<<<<<< HEAD
          width=910" height="350">
 </a>
 
-=======
-         width=650" height="250">
-</a>
-
-
->>>>>>> d7f74f1dc858887afc9b81fa56a40f69e62404e7
 * **Diagramme à bâtons circulaires**
 
 <a href="https://youtu.be/i5rewIOaweA" >
