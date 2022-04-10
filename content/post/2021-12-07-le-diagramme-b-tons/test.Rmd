@@ -1,0 +1,56 @@
+---
+title: Le diagramme à bâtons
+author: Ludovic Vigneron
+date: '2021-12-07'
+slug: []
+categories:
+  - datavisualisation
+  - R
+tags:
+  - Dataviz
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Je propose ici le premier post d'une série inspirée de l'émission ["One Chart at a Time"](https://www.youtube.com/watch?v=gFFj22kjlZk&list=PLfv89tPxlTiVIrwuSBCISiBaGSH1CJR5-&index=1) diffusée sur la chaîne Youtude du spécialiste en datavisualisation [John Schwabish](https://policyviz.com/about/). Il s'agira dans chaque édition de décrire un type de graphe particulier, d'en rappeler les principes, de souligner les points importants à retenir les concernant, d'alerter sur ce que l'on devrait faire ou pas faire lorsqu'on les utilise. L'idée est d'aboutir à une lecture critique des graphes présentés et de voir comment on peut les réaliser de manière rigoureuse et esthétique. Bien sûr, l'ensemble sera illustré en utilisant GGPLOT. Pour mieux se repairer dans les différents contenus du site, les textes de la série seront indexés par un code commençant par GT (pour graph type).**
+
+Commençons notre tour d'horizon (non exhaustif) par le très simple et très classique diagrammes à bâtons (en anglais bar chart). Il est mobilisés pour présenter les effectifs des différentes modalités qualitative, catégorielle ou ordinale. Il est composé à la base d'une série de lignes ou barres dont la longueur (ou la hauteur) est proportionnelle à l'importance de la modalité exprimée. Les autres dimensions, lorsqu'il s'agit de barres, sont laissées constantes.        
+
+La principale recommandation de forme que l'on peut faire concernant ces diagrammes est de toujours **faire apparaître l'origine dans le graphe**, la valeur zéro à partir de laquelle la ligne représentant les effectifs commence. Faute de cela, le graphe pourrait présenter pour importantes des différences qui à bien regarder ne le sont pas. 
+
+Les barres peuvent être présentées verticalement ou horizontalement en fonction de ce qui apparaît le plus adéquate ou esthétique par rapport au document dans lequel elles s’insèrent. 
+
+Si possible, il est recommandé, afin de rendre l'ensemble plus lisible, **d'appliquer une certaine logique à l'ordre des modalités présentées** (de la plus fréquente à la moins fréquente ou inversement, de la plus grave à la moins grave ...). Cela est à déterminer en fonction de ce que représente la variable. 
+
+Concernant les couleurs appliquées. Il est recommandé d'utiliser un ensemble neutre et de jouer sur l'intensité pour guider l'attention du lecteur sur les valeurs d'intérêt (celles que vous cherchez à mettre en avant).
+
+Les étiquettes rappelant les catégories peuvent être intégrées dans les barres plutôt que dans une légende, ou, lorsqu'il y en a beaucoup, elles peuvent être insérées dans les intervalles les séparant. Une possibilité est d'indiquer à une extrémité le nom de la catégorie et de l'autre l'effectif mesuré.
+
+Tous ceci étant posé, prenons des données afin d'avoir une vue plus directe de ces différents points. Intéressons-nous au Basket-Ball professionnel. Établissons un diagramme indiquant les équipes ayant drafté en premier entre 1983 et 2018.
+
+Mais, au préalable, chargeons deux packages, le classique tidyverse ainsi que nbastatR, qui va scrapper dans le site basketball-reference.com les informations désirées. Pour plus d'information sur ce package et son installation, je vous renvois son [site compagnon](http://asbcllc.com/nbastatR/index.html).
+
+```{r , message=FALSE, warning=FALSE, quietly=TRUE}
+library(tidyverse)
+library(nbastatR)
+```
+
+Utilisons la fonction **drafts()** indiquant les années recherchées. 
+
+```{r, message=FALSE, warning=FALSE, quietly=TRUE}
+draft_1 <- drafts(draft_years = 1983:2018,
+                    nest_data = FALSE,
+                    return_message = FALSE) %>% 
+           filter(numberPickOverall==1)
+```
+
+
+```{r}
+draft_1
+```
+
+
+
+
