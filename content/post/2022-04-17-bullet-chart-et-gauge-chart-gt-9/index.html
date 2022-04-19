@@ -1,0 +1,278 @@
+---
+title: Bullet chart et gauge chart GT 9
+author: Ludovic Vigneron
+date: '2022-04-17'
+slug: []
+categories:
+  - datavisualisation
+  - ggplot2
+  - R
+tags:
+  - dataviz
+  - ggplot2
+  - r
+---
+
+<script src="{{< blogdown/postref >}}index_files/htmlwidgets/htmlwidgets.js"></script>
+<script src="{{< blogdown/postref >}}index_files/plotly-binding/plotly.js"></script>
+<script src="{{< blogdown/postref >}}index_files/typedarray/typedarray.min.js"></script>
+<script src="{{< blogdown/postref >}}index_files/jquery/jquery.min.js"></script>
+<link href="{{< blogdown/postref >}}index_files/crosstalk/css/crosstalk.min.css" rel="stylesheet" />
+<script src="{{< blogdown/postref >}}index_files/crosstalk/js/crosstalk.min.js"></script>
+<link href="{{< blogdown/postref >}}index_files/plotly-htmlwidgets-css/plotly-htmlwidgets.css" rel="stylesheet" />
+<script src="{{< blogdown/postref >}}index_files/plotly-main/plotly-latest.min.js"></script>
+
+
+<p><strong>Il s’agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l’on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.</strong></p>
+<p>Pour illustrer leur construction et pour coller à l’actualité en France, nous allons utiliser des données électorales. Nous allons comparer les résultats des principaux parties dans différentes où j’ai habité et/ou j’aimerai habiter pour le premier tour des présidentielles de 2022 et les mettre en regard avec ceux de 2017. Les données sont tirées du site <a href="https://www.data.gouv.fr/fr/pages/donnees-des-elections/">data.gouv.fr</a>. Les fichiers de base ont été charger dans le dossier de travail de manière à faciliter leur traitement.</p>
+<p>Pour entamer le processus, comme à chaque fois, commençons par chargeons les packages mobilisés.</p>
+<pre class="r"><code>library(readr)
+library(readxl)
+library(tidyverse)
+library(scales)
+library(ggtext)
+library(glue)
+library(patchwork)</code></pre>
+<p>Notez que l’on a des fichers dans deux formats différents (csv et xlsx). On utilise donc deux modes d’importation différent et il y a un travail d’harmonisation des données à réaliser. Avant de nous y attaquer chargeons-les.</p>
+<p>Commençons par limiter les bases aux villes qui nous intéresse. Disons, Lille, Strasbourg, Guise (petite ville de l’Aisne) et Rennes (parce que la Bretagne).Limitons-la également en terme de candidats. Retenons ceux associés aux RN, à LFI, à EM , à LR, aux PS et aux NPA. Mettons l’ensemble en forme pour le traitement.</p>
+<pre class="r"><code>dat_17&lt;-dat_17 %&gt;% 
+  filter(Commune%in%c(&#39;Lille&#39;,&#39;Strasbourg&#39;,&#39;Guise&#39;,&#39;Rennes&#39;)) %&gt;% 
+  select(Commune,Abstentions_ins,LE.PEN_ins,MÃ.LENCHON_ins,   
+         MACRON_ins,FILLON_ins,HAMON_ins,POUTOU_ins) %&gt;% 
+  rename(Melenchon_ins=MÃ.LENCHON_ins) %&gt;%
+  pivot_longer(cols=ends_with(&#39;_ins&#39;),names_to = &#39;candidat_17&#39;,
+               values_to = &#39;res_17&#39;) %&gt;% 
+  mutate(parti=ifelse(candidat_17==&#39;Abstentions_ins&#39;,&#39;Abstention&#39;,
+               ifelse(candidat_17==&#39;LE.PEN_ins&#39;,&#39;RN&#39;,
+               ifelse(candidat_17==&#39;Melenchon_ins&#39;,&#39;LFI&#39;,
+               ifelse(candidat_17==&#39;MACRON_ins&#39;,&#39;EM&#39;,
+               ifelse(candidat_17==&#39;FILLON_ins&#39;,&#39;LR&#39;,
+               ifelse(candidat_17==&#39;HAMON_ins&#39;,&#39;PS&#39;,&#39;NPA&#39;)))))))
+dat_22&lt;-dat_22 %&gt;% 
+  rename(Commune=&quot;Libellé de la commune&quot;,
+         Abstentions_ins=&quot;% Abs/Ins&quot;,
+         LE.PEN_ins =&quot;...53&quot;,Melenchon_ins=&quot;...67&quot;,MACRON_ins=&quot;...39&quot;,
+         Precress_ins=&quot;...88&quot;,Idalgo_ins=&quot;...74&quot;,POUTOU_ins=&quot;...96&quot;) %&gt;% 
+  filter(Commune%in%c(&#39;Lille&#39;,&#39;Strasbourg&#39;,&#39;Guise&#39;,&#39;Rennes&#39;)) %&gt;% 
+  select(Commune,Abstentions_ins,LE.PEN_ins,Melenchon_ins,MACRON_ins,
+         Precress_ins,Idalgo_ins,POUTOU_ins) %&gt;%
+  pivot_longer(cols=ends_with(&#39;_ins&#39;),names_to = &#39;candidat_22&#39;,
+               values_to = &#39;res_22&#39;) %&gt;% 
+  mutate(parti=ifelse(candidat_22==&#39;Abstentions_ins&#39;,&#39;Abstention&#39;,
+               ifelse(candidat_22==&#39;LE.PEN_ins&#39;,&#39;RN&#39;,
+               ifelse(candidat_22==&#39;Melenchon_ins&#39;,&#39;LFI&#39;,
+               ifelse(candidat_22==&#39;MACRON_ins&#39;,&#39;EM&#39;,
+               ifelse(candidat_22==&#39;Precress_ins&#39;,&#39;LR&#39;,
+               ifelse(candidat_22==&#39;Idalgo_ins&#39;,&#39;PS&#39;,&#39;NPA&#39;)))))))</code></pre>
+<p>Réalisons un graphe de base limité à une seule ville. Concentrons-nous sur le bullet chart. La forme retenue présentera pour chaque parti une barre rouge dont la taille dépendra du pourcentage d’inscrits ayant voté pour lui. Cette barre sera mis au regard d’une surface blanche dont la longueur représente l’abstention et un segment bleu dont la position rappelle le score réalisé en 2017.</p>
+<pre class="r"><code>ggplot(data=filter(dat_22,parti!=&#39;Abstention&#39;&amp;Commune==&#39;Lille&#39;),
+       aes(x=res_22,
+           y=reorder(factor(parti),res_22)))+
+  geom_col(aes(x=dat_22$res_22[dat_22$parti==&#39;Abstention&#39;&amp;dat_22$Commune==&#39;Lille&#39;]),
+           width=0.7,fill=&#39;white&#39;)+
+  geom_col(width = 0.5,fill=&#39;red&#39;)+
+  geom_linerange(aes(x = filter(dat_17,parti!=&#39;Abstention&#39;&amp;Commune==&#39;Lille&#39;)$res_17,
+    ymin = as.numeric(reorder(factor(filter(dat_17,
+           parti!=&#39;Abstention&#39;&amp;Commune==&#39;Lille&#39;)$parti),
+           filter(dat_22,parti!=&#39;Abstention&#39;&amp;Commune==&#39;Lille&#39;)$res_22))-0.25,
+    ymax = as.numeric(reorder(factor(filter(dat_17,
+           parti!=&#39;Abstention&#39;&amp;Commune==&#39;Lille&#39;)$parti),
+           filter(dat_22,parti!=&#39;Abstention&#39;&amp;Commune==&#39;Lille&#39;)$res_22))+0.25),
+    size = 1, color = &quot;blue&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Pour établir le segment que indique le score à l’élection précédente, nous utilisons le geom_linerange(). Le principal point de difficulté est alors de s’assurer du l’emplacement vertical de l’élément représenté. Il doit correspondre à l’indexation des parties qui est fonction de leur score de 2022 plus et moins une marge de manière à établir le haut et le bas du segment. Ces traitements encombrent le code. Pour clarifier la structure, reportons-les en début de programme et poursuivons l’élaboration de notre graphe avec une mise en forme avancée (titre, fond noir, quadrillage gris, uniquement vertical, suppression des titres des axes, mise en forme des étiquettes des axes, etc.).</p>
+<pre class="r"><code>com&lt;-&#39;Lille&#39;
+ref&lt;-&#39;Abstention&#39;
+dat_red_22&lt;-filter(dat_22,parti!=ref&amp;Commune==com) %&gt;% 
+  mutate(res_22=res_22/100)
+dat_red_17&lt;-filter(dat_17,parti!=ref&amp;Commune==com) %&gt;% 
+  mutate(res_17=res_17/100)
+abst&lt;-dat_22$res_22[dat_22$parti==ref&amp;dat_22$Commune==com]/100
+res_pres&lt;-dat_red_17$res_17
+pres_or&lt;-reorder(factor(dat_red_17$parti),dat_red_22$res_22)
+###
+ggplot(data=dat_red_22,
+       aes(x=res_22,
+           y=reorder(factor(parti),res_22)))+
+  geom_col(aes(x=abst),
+           width=0.7,fill=&#39;white&#39;)+
+  geom_col(width = 0.5,fill=&#39;red&#39;)+
+  geom_linerange(aes(x = res_pres,
+                     ymin = as.numeric(pres_or)-0.25,
+                     ymax = as.numeric(pres_or)+0.25),
+                 size = 1, color = &#39;blue&#39;)+
+  labs(title=glue(&quot;Premier tour de la présidentielle 2022 à *{com}*&quot;))+
+  scale_x_continuous(breaks = seq(0,0.3,0.05),labels=label_percent())+
+  theme_minimal()+
+  theme(
+    plot.title = element_markdown(color=&#39;white&#39;,hjust=0.5),
+    plot.background = element_rect(fill=&#39;black&#39;),
+    axis.title = element_blank(),
+    axis.text.y = element_text(face=&#39;bold&#39;,hjust=0,color=&#39;Wheat&#39;),
+    axis.text.x = element_text(color=&#39;white&#39;),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major = element_line(color=&#39;SlateGray&#39;),
+    panel.grid.minor = element_line(color=&#39;grey&#39;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Notez que pour générer le titre nous avons utilisé la fonction glue du package éponyme. Il permet d’intégrer dans les textes illustratifs d’un graphe les réalisations d’une variable dont le nom est présenté entre accolades. Cela permet d’intégrer de la flexibilité.</p>
+<p>Maintenant que nous avons notre graphe de base, créons une fonction permettant de le répliquer facilement pour les villes de notre choix. Cela nous évitera de le recopier trop souvent.</p>
+<pre class="r"><code>g_bu&lt;-function(com,ref,dat1,dat2){
+       dat_red_22&lt;-filter(dat2,parti!=ref&amp;Commune==com) %&gt;% 
+                   mutate(res_2=res_22/100)
+       dat_red_17&lt;-filter(dat1,parti!=ref&amp;Commune==com) %&gt;% 
+                   mutate(res_17=res_17/100)
+       abst&lt;-dat2$res_22[dat2$parti==ref&amp;dat2$Commune==com]/100
+       res_pres&lt;-dat_red_17$res_17
+       pres_or&lt;-reorder(factor(dat_red_17$parti),dat_red_22$res_22)
+       ####
+       g&lt;-ggplot(data=dat_red_22,
+                 aes(x=res_2,y=reorder(factor(parti),res_2)))+
+          geom_col(aes(x=abst),width=0.7,fill=&#39;white&#39;)+
+          geom_col(width = 0.5,fill=&#39;red&#39;)+
+          geom_linerange(aes(x = res_pres,
+                             ymin = as.numeric(pres_or)-0.25,
+                             ymax = as.numeric(pres_or)+0.25),
+                         size = 1, color = &#39;blue&#39;)+
+          labs(title=glue(&quot;*{com}*&quot;))+
+          scale_x_continuous(breaks = seq(0,0.3,0.05),labels=label_percent())+
+          coord_cartesian(xlim=c(0,0.3))+
+          theme_minimal()+
+          theme(plot.title = element_markdown(color=&#39;white&#39;,hjust=0.5),
+                plot.background = element_rect(fill=&#39;black&#39;),
+                axis.title = element_blank(),
+                axis.text.y = element_text(face=&#39;bold&#39;,hjust=0,color=&#39;Wheat&#39;),
+                axis.text.x = element_text(color=&#39;white&#39;),
+                panel.grid.major.y = element_blank(),
+                panel.grid.major = element_line(color=&#39;SlateGray&#39;),
+                panel.grid.minor = element_line(color=&#39;grey&#39;))
+  return(g)
+}</code></pre>
+<p>Testons notre fonction sur la ville de Strasbourg.</p>
+<pre class="r"><code>g_bu(com=&#39;Strasbourg&#39;,ref=&#39;Abstention&#39;,
+     dat1=dat_17,dat2=dat_22)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Le graphe obtenu est en tout point comparable à notre graphe de base même s’il présente une situation électorale différente. Il y a notamment moins d’abstention à Strasbourg. Créons les graphes pour nos quatre villes, puis arrangeons-les pour les réunir sur une même représentation avec un titre général. Pour cela, utilisons le package patchwork. Il offre une syntaxe simple et flexible ainsi qu’un certain nombre de complément permettant d’améliorer la présentation de l’ensemble compatible avec ggplot.</p>
+<pre class="r"><code>ville&lt;-c(&#39;Lille&#39;,&#39;Strasbourg&#39;,&#39;Guise&#39;,&#39;Rennes&#39;)
+for(i in ville){
+  assign(paste0(&#39;g_&#39;,i),g_bu(com=i,ref=&#39;Abstention&#39;,dat1=dat_17,dat2=dat_22))}
+(g_Guise+g_Lille)/(g_Strasbourg+g_Rennes)+
+   plot_annotation(title=&quot;***1ère* tour de l&#39;élection présidentielle** *2022*&quot;,
+                   theme = theme(plot.title = element_markdown(hjust=0.5,
+                                                               color=&#39;white&#39;),
+                           plot.background = element_rect(fill=&#39;black&#39;,
+                                                          color=&#39;black&#39;)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>L’ensemble est plaisant mais reste difficile à lire sans un texte expliquant ce que représente les différents éléments graphiques proposés . Il est donc utile d’ajouter une légende. Celle-ci ne peut être établi automatiquement. Créons-la donc en répliquant le graphe pour un parti type et en ajoutant des étiquettes guidant le lecteur dans le décryptage des barres (la rouge et la blanche) et le segment.</p>
+<pre class="r"><code>d&lt;-data.frame(x_=0.24,y_=factor(&#39;Sigle
+du parti&#39;))
+ggplot(data=d,aes(x=x_,y=y_))+
+       geom_col(aes(x=0.28),width=0.7,fill=&#39;white&#39;)+
+       geom_col(width = 0.5,fill=&#39;red&#39;)+
+       geom_linerange(aes(x = 0.26,ymin = 1-0.25,ymax = 1+0.25),
+                      size = 1, color = &#39;blue&#39;)+
+       geom_text(aes(x = 0.1, y = 1,label = &quot;Score de 2022
+(% inscrits)&quot;),color = &#39;white&#39;, size = 3,fontface=&#39;bold&#39;) +
+       geom_text(aes(x=0.15,y=1.5,label=&#39;Abstention (% inscrits)&#39;),
+                 color = &#39;white&#39;, size = 3,fontface=&#39;bold&#39;)+
+       geom_richtext(aes(x=0.26,y=0.5,label=&#39;**Score de 2017 (% inscrits)**&#39;),
+                     color = &#39;white&#39;, size = 2.5,fontface=&#39;bold&#39;,
+                     label.colour=&#39;black&#39;,fill=&#39;black&#39;)+
+       labs(title=&#39;Légende&#39;)+
+       scale_x_continuous(breaks = seq(0,0.3,0.05),labels=label_percent())+
+       coord_cartesian(xlim=c(0,0.3))+
+       theme_minimal()+
+       theme(plot.title = element_markdown(color=&#39;Wheat&#39;,hjust=0.5),
+             plot.background = element_rect(fill=&#39;black&#39;),
+             axis.title = element_blank(),
+             axis.text.y = element_text(face=&#39;bold&#39;,hjust=0,color=&#39;Wheat&#39;),
+             axis.text.x = element_text(color=&#39;white&#39;),
+             panel.grid.major.y = element_blank(),
+             panel.grid.major = element_line(color=&#39;SlateGray&#39;),
+             panel.grid.minor = element_line(color=&#39;grey&#39;))-&gt;legend
+legend</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Intégrons cette légende à notre assemblage de graphes. Plaçons-la en tête de l’ensemble sur toute la largeur.</p>
+<pre class="r"><code>legend/(g_Guise+g_Lille)/(g_Strasbourg+g_Rennes)+
+   plot_annotation(title=&quot;***1ère* tour de l&#39;élection présidentielle** *2022*&quot;,
+                   theme = theme(plot.title = element_markdown(hjust=0.5,color=&#39;white&#39;),
+                                 plot.background = element_rect(fill=&#39;black&#39;,color=&#39;black&#39;)))+
+   plot_layout( heights = unit(c(2,5,5), c(&#39;cm&#39;, &#39;cm&#39;,&#39;cm&#39;)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="768" /></p>
+<p>On obtient un bullet chart simple et efficace qui rend compte des résultats du premier tour de l’élection présidentielle dans quatre villes en donnant des points de repères aidant à les analyser. Evidemment, pour faire un travail sérieux, il faudrait reprendre l’ensemble des partis présentant un candidat et non une sélection (au moins ELV). Mais, ce n’est pas le but ici.</p>
+<p>On peut représenter le même type d’information sont la forme d’un gauge chart, autrement-dit d’un cadrant comparable à celui d’un compteur de vitesse ou d’un baromètre. Encore une fois, il faudra travailler nos geom pour obtenir le rendu souhaité. Élaborons donc un graphe de base en nous concentrons sur les résultats de la France Insoumise (LFI) à Lille. Le plus simple ici c’est non pas d’utiliser plotly plutôt que ggplot. Il s’agit d’un package permettant de réaliser des graphes interactifs. Chargeons-le.</p>
+<pre class="r"><code>library(plotly)</code></pre>
+<p>La syntaxe de plotly est un peu moins simple que celle de ggplot. Il existe néanmoins des possibilités de passer des graphes ggplot dans plotly pour les rendre interactifs avec la fonction ggplotly(). Nous ne l’utiliserons pas ici.</p>
+<p>La fonction sur laquelle nous allons travailler est plot_ly(). Le type de représentation est “indicator” et son mode “gauge”. Intégrons le score de LFI à lille comme valeur 28.14%.</p>
+<pre class="r"><code>fig_ &lt;- plot_ly(type = &quot;indicator&quot;,mode = &quot;gauge&quot;,value = 28.14)
+fig_</code></pre>
+<div id="htmlwidget-1" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"visdat":{"56d87ff87390":["function () ","plotlyVisDat"]},"cur_data":"56d87ff87390","attrs":{"56d87ff87390":{"mode":"gauge","value":28.14,"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"indicator"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"hovermode":"closest","showlegend":false},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"mode":"gauge","value":28.14,"type":"indicator","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>On a bien une jauge. Il ne reste plus qu’à l’habiller pour qu’elle permettre de rendre compte des mêmes informations que dans notre série de graphes précédents (pour un partie le score, le score précédent et l’abstention). Ajoutons la valeur représentée ainsi qu’un titre. Les arguments de mis en forme sont ici introduits par des listes.</p>
+<pre class="r"><code>fig_ &lt;- plot_ly(type = &quot;indicator&quot;,mode = &quot;gauge+number&quot;,value = 28.14,
+                title = list(text = &quot;Lille - LFI&quot;))
+fig_</code></pre>
+<div id="htmlwidget-2" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-2">{"x":{"visdat":{"56d83e3c1883":["function () ","plotlyVisDat"]},"cur_data":"56d83e3c1883","attrs":{"56d83e3c1883":{"mode":"gauge+number","value":28.14,"title":{"text":"Lille - LFI"},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"indicator"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"hovermode":"closest","showlegend":false},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"mode":"gauge+number","value":28.14,"title":{"text":"Lille - LFI"},"type":"indicator","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>Ajoutons le score de l’élection précédent 20.1% avec un segment bleu. Pour cela, utilisons l’option threshold.</p>
+<pre class="r"><code>fig_&lt;-plot_ly(type = &quot;indicator&quot;,mode = &quot;gauge+number&quot;,value = 28.14,
+        title = list(text = &quot;Lille - LFI&quot;),
+        gauge = list(
+          threshold = list(line = list(color = &quot;blue&quot;, width = 4),
+                           thickness = 0.75,value = 20.1)))
+fig_</code></pre>
+<div id="htmlwidget-3" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-3">{"x":{"visdat":{"56d83bcf6a70":["function () ","plotlyVisDat"]},"cur_data":"56d83bcf6a70","attrs":{"56d83bcf6a70":{"mode":"gauge+number","value":28.14,"title":{"text":"Lille - LFI"},"gauge":{"threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"indicator"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"hovermode":"closest","showlegend":false},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"mode":"gauge+number","value":28.14,"title":{"text":"Lille - LFI"},"gauge":{"threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"type":"indicator","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>Ajoutons une indication numérique de la différence de score entre les deux élections et travaillons les couleurs de l’ensemble.</p>
+<pre class="r"><code>fig_&lt;-plot_ly(type = &quot;indicator&quot;,mode = &quot;gauge+number+delta&quot;,value = 28.14,
+        title = list(text = &quot;Lille - LFI&quot;),
+        delta = list(reference = 20.1),
+        gauge = list(
+          bar = list(color = &quot;red&quot;),
+          bgcolor = &quot;black&quot;,
+          borderwidth = 2,
+          bordercolor = &quot;gray&quot;,
+          threshold = list(line = list(color = &quot;blue&quot;, width = 4),
+                           thickness = 0.75,value = 20.1)))
+fig_</code></pre>
+<div id="htmlwidget-4" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-4">{"x":{"visdat":{"56d84e2e4ddd":["function () ","plotlyVisDat"]},"cur_data":"56d84e2e4ddd","attrs":{"56d84e2e4ddd":{"mode":"gauge+number+delta","value":28.14,"title":{"text":"Lille - LFI"},"delta":{"reference":20.1},"gauge":{"bar":{"color":"red"},"bgcolor":"black","borderwidth":2,"bordercolor":"gray","threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"indicator"}},"layout":{"margin":{"b":40,"l":60,"t":25,"r":10},"hovermode":"closest","showlegend":false},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"mode":"gauge+number+delta","value":28.14,"title":{"text":"Lille - LFI"},"delta":{"reference":20.1},"gauge":{"bar":{"color":"red"},"bgcolor":"black","borderwidth":2,"bordercolor":"gray","threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"type":"indicator","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>Pour obtenir un fond noir, il faut travailler le layout. Faisons-le mais avant ajoutons la représentation de l’abstention (29,45%).</p>
+<pre class="r"><code>fig_&lt;-plot_ly(type = &quot;indicator&quot;,mode = &quot;gauge+number+delta&quot;,value = 28.14,
+        title = list(text = &quot;Lille - LFI&quot;,font = list(color=&#39;Wheat&#39;)),
+        delta = list(reference = 20.1),
+        gauge = list(
+          bar = list(color = &quot;red&quot;),
+          bgcolor = &quot;black&quot;,
+          borderwidth = 2,
+          bordercolor = &quot;gray&quot;,
+          steps = list(list(range = c(0, 29.45), color = &quot;white&quot;)),
+          threshold = list(line = list(color = &quot;blue&quot;, width = 4),
+                           thickness = 0.75,value = 20.1)))
+fig_%&gt;%layout(margin = list(l=20,r=30,t=40,b=5),
+              paper_bgcolor = &quot;black&quot;,
+              font = list(color = &quot;White&quot;, family = &quot;Arial&quot;)) </code></pre>
+<div id="htmlwidget-5" style="width:672px;height:480px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-5">{"x":{"visdat":{"56d862ee464a":["function () ","plotlyVisDat"]},"cur_data":"56d862ee464a","attrs":{"56d862ee464a":{"mode":"gauge+number+delta","value":28.14,"title":{"text":"Lille - LFI","font":{"color":"Wheat"}},"delta":{"reference":20.1},"gauge":{"bar":{"color":"red"},"bgcolor":"black","borderwidth":2,"bordercolor":"gray","steps":[{"range":[0,29.45],"color":"white"}],"threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"indicator"}},"layout":{"margin":{"b":5,"l":20,"t":40,"r":30},"paper_bgcolor":"black","font":{"color":"White","family":"Arial"},"hovermode":"closest","showlegend":false},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"mode":"gauge+number+delta","value":28.14,"title":{"text":"Lille - LFI","font":{"color":"Wheat"}},"delta":{"reference":20.1},"gauge":{"bar":{"color":"red"},"bgcolor":"black","borderwidth":2,"bordercolor":"gray","steps":[{"range":[0,29.45],"color":"white"}],"threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"type":"indicator","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>Passons le delta en blanc et limitons l’étendu à 50% (49.99% pour des raisons de mise en page).</p>
+<pre class="r"><code>fig_&lt;-plot_ly(type = &quot;indicator&quot;,mode = &quot;gauge+number+delta&quot;,value = 28.14,
+        title = list(text = &quot;Lille - LFI&quot;,font = list(color=&#39;Wheat&#39;)),
+        delta = list(reference = 20.1,increasing =  list(color=&#39;white&#39;),
+                     font=list(size=24)),
+        gauge = list(
+          axis = list(range = list(NULL, 49.99), tickwidth = 2, tickcolor = &quot;gray&quot;),
+          bar = list(color = &quot;red&quot;),
+          bgcolor = &quot;black&quot;,
+          borderwidth = 2,
+          bordercolor = &quot;gray&quot;,
+          steps = list(list(range = c(0, 29.45), color = &quot;white&quot;)),
+          threshold = list(line = list(color = &quot;blue&quot;, width = 4),
+                           thickness = 0.75,value = 20.1)))
+
+fig_%&gt;%layout(margin = list(l=20,r=30,t=40,b=10),
+              paper_bgcolor = &quot;black&quot;,
+              font = list(color = &quot;White&quot;, family = &quot;Arial&quot;)) </code></pre>
+<div id="htmlwidget-6" style="width:960px;height:576px;" class="plotly html-widget"></div>
+<script type="application/json" data-for="htmlwidget-6">{"x":{"visdat":{"56d81a0b4810":["function () ","plotlyVisDat"]},"cur_data":"56d81a0b4810","attrs":{"56d81a0b4810":{"mode":"gauge+number+delta","value":28.14,"title":{"text":"Lille - LFI","font":{"color":"Wheat"}},"delta":{"reference":20.1,"increasing":{"color":"white"},"font":{"size":24}},"gauge":{"axis":{"range":[null,49.99],"tickwidth":2,"tickcolor":"gray"},"bar":{"color":"red"},"bgcolor":"black","borderwidth":2,"bordercolor":"gray","steps":[{"range":[0,29.45],"color":"white"}],"threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"alpha_stroke":1,"sizes":[10,100],"spans":[1,20],"type":"indicator"}},"layout":{"margin":{"b":10,"l":20,"t":40,"r":30},"paper_bgcolor":"black","font":{"color":"White","family":"Arial"},"hovermode":"closest","showlegend":false},"source":"A","config":{"modeBarButtonsToAdd":["hoverclosest","hovercompare"],"showSendToCloud":false},"data":[{"mode":"gauge+number+delta","value":28.14,"title":{"text":"Lille - LFI","font":{"color":"Wheat"}},"delta":{"reference":20.1,"increasing":{"color":"white"},"font":{"size":24}},"gauge":{"axis":{"range":[[],49.99],"tickwidth":2,"tickcolor":"gray"},"bar":{"color":"red"},"bgcolor":"black","borderwidth":2,"bordercolor":"gray","steps":[{"range":[0,29.45],"color":"white"}],"threshold":{"line":{"color":"blue","width":4},"thickness":0.75,"value":20.1}},"type":"indicator","frame":null}],"highlight":{"on":"plotly_click","persistent":false,"dynamic":false,"selectize":false,"opacityDim":0.2,"selected":{"opacity":1},"debounce":0},"shinyEvents":["plotly_hover","plotly_click","plotly_selected","plotly_relayout","plotly_brushed","plotly_brushing","plotly_clickannotation","plotly_doubleclick","plotly_deselect","plotly_afterplot","plotly_sunburstclick"],"base_url":"https://plot.ly"},"evals":[],"jsHooks":[]}</script>
+<p>Le plus simple pour obtenir un fichier image de type png à partir de là, c’est d’utiliser l’interface créée par plotly en cliquant sur l’appareil photo. Le fichier apparaîtra dans vos téléchargements. D’autres solutions existent. Mais, elles nécessitent soit une inscription à l’API de plotly, soit d’installer orca.</p>
+<p>Dans tout les cas, le gauge chart est une façon originale de présenter les données. Elle fonctions plutôt bien sur nos résultats d’élection. Même si on peut difficilement traiter de cette manière sur peu d’espace autant d’informations qu’avec les barres horizontales des bullet charts.</p>
+<p>Plotly permet des réalisations intéressantes. Je suis loin de le maîtriser. C’est donc à creuser. Je pense que j’aurai pu obtenir un résultat comparable avec ggplot mais au prix de beaucoup d’efforts. Suite au prochain numéro…</p>
