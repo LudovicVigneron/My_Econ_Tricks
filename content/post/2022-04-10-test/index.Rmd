@@ -3,10 +3,10 @@ title: Les heatmap et les calendar heatmap GT8
 author: Ludovic Vigneron
 date: '2022-04-10'
 categories:
+  - datavisualisation
   - dataviz
   - ggplot2
   - r
-  - datavisualisation
 tags:
   - Climat
   - dataviz
