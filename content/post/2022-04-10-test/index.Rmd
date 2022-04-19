@@ -2,16 +2,16 @@
 title: Les heatmap et les calendar heatmap GT8
 author: Ludovic Vigneron
 date: '2022-04-10'
-slug: []
 categories:
-  - r
-  - ggplot2
   - dataviz
+  - ggplot2
+  - r
+  - datavisualisation
 tags:
   - Climat
-  - r
+  - dataviz
   - ggplot2
-  - dataviz  
+  - r
 ---
 
 **Dans ce nouveau post, nous allons traiter d'une forme de visualisation hybride entre le tableau et le graphe: la heatmap (ou en français carte thermique). Elle permet de présenter en un unique visuel une grande quantité de données ce qui autorise la réalisation de comparaisons multiples entre leur valeur. Le point de départ est un tableau à deux dimensions établis pour stocké les valeurs d'une variable. Il s'agit alors de communiquer une information quasi complète sur la répartition de ces valeurs sur ces deux dimensions. Cela serait possible juste en fournissant le tableau mais la lecture en serait laborieuse d'autant ne serait que du fait de sa taille. Pour simplifier les choses, la heatmap propose de le faire en attribuant des couleurs aux différentes cases dont les nuances varies en fonction de la valeur de la variable représentée. Les contrastes établis permettent de mettre en évidence des tendances.**
