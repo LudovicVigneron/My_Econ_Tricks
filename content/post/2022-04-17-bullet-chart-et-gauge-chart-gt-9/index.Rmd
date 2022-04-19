@@ -10,6 +10,7 @@ categories:
 tags:
   - dataviz
   - ggplot2
+  - plotly
   - r
 ---
 
