@@ -301,7 +301,7 @@ fig_%>%layout(margin = list(l=20,r=30,t=40,b=5),
 
 Passons le delta en blanc et limitons l'étendu à 50% (49.99% pour des raisons de mise en page).
 
-```{r fig.height=6, fig.width=10}
+```{r fig.height=6, fig.width=9}
 fig_<-plot_ly(type = "indicator",mode = "gauge+number+delta",value = 28.14,
         title = list(text = "Lille - LFI",font = list(color='Wheat')),
         delta = list(reference = 20.1,increasing =  list(color='white'),
