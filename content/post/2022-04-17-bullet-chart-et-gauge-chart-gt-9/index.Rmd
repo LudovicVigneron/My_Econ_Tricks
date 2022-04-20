@@ -1,5 +1,5 @@
 ---
-title: Bullet chart et gauge chart GT 9
+title: Bullet chart et gauge chart GT9
 author: Ludovic Vigneron
 date: '2022-04-17'
 slug: []
