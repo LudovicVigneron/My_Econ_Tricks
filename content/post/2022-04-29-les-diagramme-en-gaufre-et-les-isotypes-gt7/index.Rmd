@@ -1,0 +1,235 @@
+---
+title: Les diagrammes en gaufre et les isotypes GT7
+author: Ludovic Vigneron
+date: '2022-04-29'
+slug: []
+categories:
+  - ggplot2
+  - dataviz
+  - datavisualisation
+  - r
+tags:
+  - dataviz
+  - Dataviz
+  - ggplot2
+  - GGPLOT2
+  - r
+---
+
+
+**Pour ce nouveau post de la série GT, qui propose d'illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos [one chart at a time](https://www.youtube.com/playlist?list=PLfv89tPxlTiVIrwuSBCISiBaGSH1CJR5-), nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d'un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s'agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d'observations. Le lecteur les comptes pour inférer les valeurs représentées. Ils ont l'avantage d'être possiblement moins abstraits que les graphes classiques.**
+
+Dans le diagramme de Wilkinson, la distribution d'une variable est figurée par des empilement de ronds. Leur nombre sur une valeur, ou un interval, informe sur l'effectif qui lui est associé. Dans les graphes que nous allons travailler ici, nous nous focaliserons sur la représentation des parties d'un tout. A la manière d'un camembert (ou pie chart) où l'angle d'une part rend compte de l'importance d'une catégorie sur l'ensemble, ils indiquent l'importance d'une catégorie par le nombre d'items de même forme et/ou de même couleur qui s'y rattache par rapport au nombre total d'items qui représente l'ensemble. Cet alternative apparaît plus rigoureuse dans la mesure où elle ne souffre pas de la dissonance angle/surface des camemberts. Pour les diagrammes en gaufre, les formes sont des carrés articulés/empilés. Pour les diagrammes isotypes, les formes sont des iconnes issues du système éponyme (international system of typographic pictures for education).
+
+La principale règle de graphe est simple si une icône/un carré représente un individu alors deux icônes/carrés représente deux individus. Il n'est pas question ici de jouer sur la taille de ces éléments. Pour exprimer un nombre plus grand, on utilise un plus grand nombre de symboles. Ceux-ci doivent être choisi avec attention pour ne pas induire d'erreurs d'interprétation. Quand les quantités à représenter sont grandes un symbole peu représenter un grand nombre d'individus.
+
+Pour illustrer l'utilisation de ces graphes, nous allons travailler sur le mix énergétique de la France pour l'année 2020. Les données sont extraites du site [Our World in Data](https://ourworldindata.org/grapher/primary-sub-energy-source).
+
+Commençons par charger les packages que nous allons utiliser. On y retrouve les classiques (tidyverse...), mais aussi un particulier qu'il sera nécessaire d'installer à partir d'un répertoire différent du CRAN: le package waffle. Pour en avoir la version la plus récente, exécuter la commande suivante:
+
+```{r eval=FALSE}
+install.packages("waffle",repos="https://cinc.rud.is")
+```
+
+Vérifiez que la version installée est suffisamment avancée avec packcageVersion().
+
+```{r }
+packageVersion("waffle")
+```
+Elle doit être supérieure à 1, ce qui est le cas ici.
+
+```{r message=FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+library(ggtext)
+library(waffle)
+library(showtext)
+```
+
+Ceci fait, chargeons les données dans R. Nous avons au préalable déposé le fichier csv correspondant charger à partir de [Our World in Data](https://ourworldindata.org/grapher/primary-sub-energy-source) dans le dossier de travail.
+
+```{r}
+dat <- read_csv("energy-consumption-by-source-and-region.csv")
+glimpse(dat)
+```
+
+La base est trés large. Limitons-la aux seules données que nous utiliserons.
+
+```{r}
+dat <- dat %>% filter(Year==2020&Entity=='France') %>% 
+               select(-Entity,-Code,-Year)
+```
+
+Intégrons des noms de variables plus faciles à manipuler pour la suite.
+
+```{r}
+names(dat)<-c('Bio_carburant','Solaire','Eolienne','Hydro',
+              'Nucléaire','Gaz','Charbon','Pétrole','autre_biomass')
+```
+
+Restructurons le base pour l'organiser en longueur et créons la variable gr reprenons les différents types d'énergie en regroupant au sein d'une seule catégorie les énergies renouvelables.
+
+```{r}
+dat <- dat %>% pivot_longer(cols=names(dat),
+                            names_to='Energie',
+                            values_to='TW_h') %>%
+               mutate(gr=ifelse(Energie%in%c('Bio_carburant','Solaire',
+                                             'Eolienne','Hydro',
+                                             'autre_biomass'),
+                                'Renouvelable',Energie)) 
+```
+
+Pour finaliser le travail de préparation des données, établissons la part des différentes énergies (gr) dans le mix.
+
+```{r}
+dat_red <- dat %>% group_by(gr) %>% 
+                   summarise(TW_h_c=sum(TW_h)) %>% 
+                   ungroup() %>% 
+                   mutate(part=round(TW_h_c/sum(TW_h_c)*100,digits=2))
+dat_red
+```
+
+Maintenant que les données sont prêtes, nous pouvons travailler sur nos graphes. Commençons par un diagramme en gaufre classique. Nous utilisons ainsi le geom_waffle() avec deux esthétiques les valeurs représentées part et les différentes énergies pour l'application des couleurs.
+
+```{r}
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle()
+```
+
+Le résultat de base peut être facilement amélioré en s'assurant que les éléments représentés prennent bien la forme de carrés et en adoptant un thème plus léger. 
+
+```{r}
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle()+
+  coord_equal()+
+  theme_void()
+```
+
+Pour rendre l'ensemble encore plus lisible, limitons le nombre de carré par ligne à un maximum de 8, basculons le repère pour avoir le carré seul en haut, marquons la séparation entre les carrés par une ligne blanche assez épaisse et intégrons un léger arrondi sur les angles.
+
+```{r}
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour='white',size=0.5,
+              radius=unit(3,'pt'))+
+  coord_equal()+
+  theme_void()
+```
+
+Ajoutons des éléments textuels pour expliciter l'ensemble: un titre, un sous-titre (indiquant la quantité totale d'énergie représenté - TWH et la quantité représentée par un carré), le titre de la légende. Nous procédons à une mise en forme pour renforcer les points importants et nous utilisons la police de caractère Montserrat proposée par google font.
+
+```{r fig.width=10}
+font_add_google("Montserrat","Montserrat")
+showtext_auto()
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour='white',size=0.5,
+              radius=unit(3,'pt'))+
+  labs(title = "Mix énergétique en *2020* pour **France** <img src='drapeau.png',
+       width='10'/>",
+       subtitle = "(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)",
+       caption = "Source: Statistical Review of World Energy via Our World in Data",
+       fill='Energie')+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = "Montserrat"),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=14),
+        plot.caption = element_text(face = 'italic',hjust=1,size=12),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=12))
+```
+
+Les couleurs attribuées par défaut paraissent ici assez inadéquate. On a du vert pour le gaz et le nucléaire et du violet pour les énergies renouvelables. Changeons cela pour avoir du gris foncé pour le charbon, du gris plus clair pour le gaz, du jaune pour le nucléaire, du bleu foncé pour le pétrole et du vert pour les renouvelables. Pour ce faire, utilisons un échec manuelle scale_fill_manual().
+
+```{r fig.width=10, warning=FALSE}
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour='white',size=0.5,
+              radius=unit(3,'pt'))+
+  labs(title = "Mix énergétique en *2020* pour **France** <img src='drapeau.png',
+       width='10'/>",
+       subtitle = "(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)",
+       caption = "Source: Statistical Review of World Energy via Our World in Data",
+       fill='Energie')+
+  scale_fill_manual(values=c('DimGray','grey','Gold','MidnightBlue',
+                             'MediumSpringGreen'))+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = "Montserrat"),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=14),
+        plot.caption = element_text(face = 'italic',hjust=1,size=12),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=12))
+```
+
+Cela nous donne un diagramme simple est expressif. L'empilement des carrés permet d'avoir à la fois l'information sur le total de l’énergie consommée et le détail par type. 
+
+On peut sur le même modèle envisager de présenter les groupes de carrés sous une forme non empilée en utilisant la commande facet_wap(). Mettons les sur une ligne et assurons-nous que l'étiquette des catégories soit sous les blocs. Faisons également sauter la légende qui ne sert plus à rien.
+
+```{r fig.height=2, fig.width=10, warning=FALSE}
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour='white',size=0.5,
+              radius=unit(3,'pt'))+
+  facet_wrap(~gr,nrow = 1,strip.position = 'bottom')+
+  labs(title = "Mix énergétique en *2020* pour **France** <img src='drapeau.png',
+       width='10'/>",
+       subtitle = "(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)",
+       caption = "Source: Statistical Review of World Energy via Our World in Data")+
+  scale_fill_manual(values=c('DimGray','grey','Gold','MidnightBlue',
+                             'MediumSpringGreen'))+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = "Montserrat"),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=18),
+        plot.caption = element_text(face = 'italic',hjust=1,size=14),
+        legend.position='none',
+        strip.text=element_text(size=14))
+```
+
+Une autre alternative à notre diagramme en gaufres empilés consiste à utiliser des iconnes à la place des carrés. Le graphe devient alors isotype. Pour ce faire, il est nécessaire au préalable de télécharger une série de polices complémentaires. Il s'agit des polices Awesome qui sont gérées par le package waffle. Vous les trouverez en suivant les liens suivant:
+
+* [solid 900](https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/webfonts/fa-solid-900.ttf)
+
+* [regular 400](https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/webfonts/fa-regular-400.ttf)
+
+* [brands 400](https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/webfonts/fa-brands-400.ttf)
+
+Une fois charger, appelons-les dans notre environnement de travail. Profitons-en pour en faire autant avec une nouvelle police google, la police Nunito.
+
+```{r warning=FALSE}
+font_add_google("Nunito","Nunito")
+font_add(family="FontAwesome5Free-Solid",
+         regular='fa-solid-900.ttf')
+font_add(family="FontAwesome5Free-Regular",
+         regular='fa-regular-400.ttf')
+font_add(family="FontAwesome5Brands-Regular",
+         regular='fa-brands-400.ttf')
+showtext_auto()
+```
+
+Vous pouvez chercher les icônes à retenir en utilisant l'applet associée. Celle-ci est mobilisée en saisissant fa_list() dans la console. Nous retenons ici une montagne pour le charbon (cela rappel les terriles), une flamme pour gaz, un symbole radiation pour le nucléaire, une pompe à essence pour le pétrole, et un arbre pour les énergies renouvelable. Elles sont introduites par le geom_pictogram() et les esthétiques label et color. Leur liste est précisée dans une échelle dédiée scale_label_pictogram().
+
+```{r fig.width=10}
+ggplot(data=dat_red,aes(values=part,label=gr,color=gr))+
+  geom_pictogram(n_rows=8,flip=TRUE)+
+  labs(title = "Mix énergétique en *2020* pour **France** <img src='drapeau.png',
+       width='10'/>",
+       subtitle = "(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)",
+       caption = "Source: Statistical Review of World Energy via Our World in Data",
+       label='Energie',color='Energie')+
+  scale_label_pictogram(values=c('mountain','fire-alt','radiation',
+                                 'gas-pump','tree'))+
+  scale_color_manual(values=c('DimGray','grey','Gold','MidnightBlue',
+                             'MediumSpringGreen'))+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = "Nunito"),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=14),
+        plot.caption = element_text(face = 'italic',hjust=1,size=12),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=12))
+```
+
+Ce nouveau graphe est, je pense, le plus parlant des trois. De nombreuses variations peuvent être envisagées en jouons sur les icônes, leurs couleurs, le nombre sur une lignes, l'empilement ou non, etc. Utiliser des éléments autres que les formes classiques (points, courbes, lignes, barres) ouvre un champs d'outils de communications importants. Ils faudra néanmoins veiller à rester rigoureux dans leur utilisation.
+
