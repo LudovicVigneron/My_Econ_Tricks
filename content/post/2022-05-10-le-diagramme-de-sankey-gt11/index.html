@@ -1,0 +1,173 @@
+---
+title: Le diagramme de Sankey GT11
+author: Ludovic Vigneron
+date: '2022-05-10'
+slug: []
+categories:
+  - datavisualisation
+  - ggplot2
+  - r
+tags:
+  - dataviz
+  - ggplot2
+  - r
+---
+
+
+
+<p><strong>Nous allons ici nous pencher sur un type graphe unique (ou du moins présentant moins de différentes formes que ceux présentés jusqu’ici). Il permet de montrer à la fois comment les effectifs de différentes catégories se comparent entre eux dans un état et comment elles se transforment, se recombinent, pour former d’autres catégories dans un autre état voir plusieurs autres états. Il s’agit du diagramme de Sankey inventé par un ingénieur irlandais qui lui a donné son nom en 1898. Les transitions sont marquées par des flèches ou des bandes dont la largeurs reflètent l’importance des effectifs déplacés d’un état à l’autre. Le résultat illustre bien les relations en cascade entre variables qualitatives. La logique qui préside à l’ordre de présentation des états peut être soit chronologique, soit guider par les comparaisons qui vous voulez réaliser. Il y aura donc dans ce dernier cas une réflexion à mener afin que le message porté par le graphe corresponde en toute rigueur à celui que vous désirez transmettre. Il sera par ailleurs important de veiller à ce que le nombre de catégories par état ainsi que le nombre de croisements de lignes lors des transferts ne soient pas trop important pour que l’ensemble reste lisible.</strong></p>
+<p>Illustrons cela à partir de quelques exemples composés à partir de ggplot et de ses dérivées. Nous utiliserons ici un package particulier ggsankey. Attention celui-ci (au moment où j’écris ce poste) n’est pas disponible sur le CRAN. Il faudra le charger à partir de github via devtools.</p>
+<p>devtools::install_github(“davidsjoberg/ggsankey”)</p>
+<p>Une fois celui-ci installé, on peut appeler les packages dans notre environnement de travail.</p>
+<pre class="r"><code>library(tidyverse)
+library(ggsankey)</code></pre>
+<p>Avant d’utiliser un jeu de données réelles pour illustrer la construction d’un diagramme de Sankey, travaillons à partir d’éléments que l’on définit nous-même. Commençons donc par les établir. Considérons un système avec deux états nommés A et B. Au sein de l’état A, il y a trois catégories dont les effectifs se répartissent de la manière suivante: 20% de “chi”, 50% de “fou” et 30% de “mi”. Au sein de l’état B, il y a quatre catégories qui se répartissent comme suit: 10% de “tra”, 20% de “lala”, 40% de “la” et 30% de “lère”. On a donc:</p>
+<pre class="r"><code>dat_sim&lt;-data.frame(Etat=c(rep(&#39;A&#39;,3),rep(&#39;B&#39;,4)),
+                    cat=c(&#39;chi&#39;,&#39;fou&#39;,&#39;mi&#39;,&#39;tra&#39;,&#39;lala&#39;,&#39;la&#39;,&#39;lère&#39;),
+                    eff=c(0.2,0.5,0.3,0.3,0.4,0.1,0.2))
+dat_sim</code></pre>
+<pre><code>##   Etat  cat eff
+## 1    A  chi 0.2
+## 2    A  fou 0.5
+## 3    A   mi 0.3
+## 4    B  tra 0.3
+## 5    B lala 0.4
+## 6    B   la 0.1
+## 7    B lère 0.2</code></pre>
+<p>L’ensemble peut être représenté par deux diagrammes à bâtons empilés mis en paralèlle.</p>
+<pre class="r"><code>ggplot(data=dat_sim,
+       aes(x=Etat,y=eff,fill=cat))+
+  geom_bar(stat=&#39;identity&#39;,position = &#39;fill&#39;,width=0.5,colour=&#39;black&#39;)+
+  geom_text(aes(label=cat,y=c(0.9,0.6,0.15,0.15,0.70,0.95,0.40)))+
+  theme_minimal()+
+  theme(axis.title= element_blank(),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>La représentation est intéressante mais elle ne dit rien sur le passage des individus de l’état A à l’état B. Le diagramme de Sankey nous permet d’intégrer cette information à la représentation. Intégrons les éléments suivants. Sur une centaine d’individu au totale. Parmi ceux appartement à la catégorie “chi” dans l’état A, 10 passent à la catégorie “tra” dans l’état B, 5 à la catégorie “lala”, 5 à la catégorie “la”. Pour l’instant, considérons que les autres ne bougent pas.</p>
+<pre class="r"><code>dat_sank1&lt;-data.frame(x=factor(c(rep(&#39;A&#39;,100),rep(&#39;B&#39;,100))),
+                     node=c(rep(&#39;chi&#39;,20),rep(&#39;fou&#39;,50),rep(&#39;mi&#39;,30),
+                            rep(&#39;tra&#39;,30),rep(&#39;lala&#39;,40),rep(&#39;la&#39;,10),
+                            rep(&#39;lère&#39;,20)),
+                     next_x=c(rep(2,20),rep(NA,180)),
+                     next_node=c(rep(&#39;tra&#39;,10),rep(&#39;lala&#39;,5),rep(&#39;la&#39;,5),
+                                 rep(NA,180)))</code></pre>
+<p>Établissons un graphe de base à partir de là, en utilisant uniquement le <strong>geom_sankey()</strong> sans mise en forme.</p>
+<pre class="r"><code>ggplot(dat_sank1, 
+       aes(x = x, next_x = next_x, node = node, next_node = next_node,
+           fill = factor(node))) +
+  geom_sankey()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Le résultat est peu convainquant. Mais, il peut facilement être amélioré. Ajoutons de la transparence sur les flux et entourons les nœuds d’un liseré noir.</p>
+<pre class="r"><code>ggplot(dat_sank1, 
+       aes(x = x, next_x = next_x, node = node, next_node = next_node,
+           fill = factor(node))) +
+  geom_sankey(flow.alpha = 0.6,node.color = &quot;black&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Ajoutons des étiquettes pour le nom des nœuds en utilisant le <strong>geom_sankey_label()</strong> et un titre à l’ensemble. Passons aussi par un thème dédié (le <strong>theme_sankey()</strong>).</p>
+<pre class="r"><code>ggplot(dat_sank1, 
+       aes(x = x, next_x = next_x, node = node, next_node = next_node,
+           fill = factor(node),label = node)) +
+  geom_sankey(flow.alpha = 0.6,node.color = &quot;black&quot;)+
+  geom_sankey_label(size = 3, color = &quot;white&quot;, fill = &quot;gray40&quot;) +
+  labs(title=&#39;Transferts de chi&#39;)+
+  theme_sankey(base_size = 18) +
+  theme(plot.title = element_text(hjust=0.5),
+        axis.title = element_blank(),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Le résultat est bien plus convaincant. Voyons ce qu’il en est si on intègre le devenir des catégories ‘fou’ et ‘mi’. Ceux-ci se composent comme suit: sur les 50 ‘fou’, 20 deviennent ‘tra’, 10 ‘lala’, 5 ‘la’ et 15 ‘lère’; sur les 30 ‘mi’, 25 deviennent ‘lala’ et 5 ‘lère’.</p>
+<pre class="r"><code>dat_sank&lt;-data.frame(x=factor(c(rep(&#39;A&#39;,100),rep(&#39;B&#39;,100))),
+                     node=c(rep(&#39;chi&#39;,20),rep(&#39;fou&#39;,50),rep(&#39;mi&#39;,30),
+                            rep(&#39;tra&#39;,30),rep(&#39;lala&#39;,40),rep(&#39;la&#39;,10),
+                            rep(&#39;lère&#39;,20)),
+                     next_x=c(rep(2,100),rep(NA,100)),
+                     next_node=c(rep(&#39;tra&#39;,10),rep(&#39;lala&#39;,5),rep(&#39;la&#39;,5),
+                                 rep(&#39;tra&#39;,20),rep(&#39;lala&#39;,10),rep(&#39;la&#39;,5),
+                                 rep(&#39;lère&#39;,15),
+                                 rep(&#39;lala&#39;,25),rep(&#39;lère&#39;,5),
+                                 rep(NA,100)))
+ggplot(dat_sank, 
+       aes(x = x, next_x = next_x, node = node, next_node = next_node,
+           fill = factor(node),label = node)) +
+  geom_sankey(flow.alpha = 0.6,
+              node.color = &quot;black&quot;)+
+  geom_sankey_label(size = 3, color = &quot;white&quot;, fill = &quot;gray40&quot;) +
+  labs(title=&#39;Devenir de chi, fou, mi&#39;)+
+  theme_sankey(base_size = 18) +
+  theme(plot.title = element_text(hjust=0.5),
+        axis.title = element_blank(),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Voyons maintenant comment faire de même à partir de données réelles. Reprenons les données d’admissions à Berkley pour l’automne 1973 que nous avions utilisées pour illustrer le diagramme en mosaïque et le paradoxe de Simpson. Celles-ci sont issues d’un tableau sur la page wikipédia (US) sur ce dernier. Nous les avons scrapper à l’aide du code suivant:</p>
+<pre class="r"><code>library(rvest)</code></pre>
+<pre><code>## 
+## Attachement du package : &#39;rvest&#39;</code></pre>
+<pre><code>## L&#39;objet suivant est masqué depuis &#39;package:readr&#39;:
+## 
+##     guess_encoding</code></pre>
+<pre class="r"><code>url&lt;-&quot;https://en.wikipedia.org/wiki/Simpson%27s_paradox&quot;
+dat&lt;-url %&gt;% 
+    read_html() %&gt;%
+    html_nodes(xpath=&#39;//*[@id=&quot;mw-content-text&quot;]/div[1]/table[2]&#39;) %&gt;%
+    html_table() %&gt;% 
+    as.data.frame()</code></pre>
+<p>Puis, nous avons établi une data frame correspondant à ces informations établis au niveau individuel.</p>
+<pre class="r"><code>dat2&lt;-data.frame(sexe=c(rep(&#39;homme&#39;,2691),rep(&#39;femme&#39;,1835)),
+                 dep=c(rep(&#39;A&#39;,825),rep(&#39;B&#39;,560),rep(&#39;C&#39;,325),
+                       rep(&#39;D&#39;,417),rep(&#39;E&#39;,191),rep(&#39;F&#39;,373),
+                       rep(&#39;A&#39;,108),rep(&#39;B&#39;,25),rep(&#39;C&#39;,593),
+                       rep(&#39;D&#39;,375),rep(&#39;E&#39;,393),rep(&#39;F&#39;,341)),
+                 statut=c(rep(&#39;admis&#39;,round(825*0.62)-1),rep(&#39;rejeté&#39;,round(825*0.38)),
+                       rep(&#39;admis&#39;,round(560*0.63)),rep(&#39;rejeté&#39;,round(560*0.37)),
+                       rep(&#39;admis&#39;,round(325*0.37)),rep(&#39;rejeté&#39;,round(325*0.63)),
+                       rep(&#39;admis&#39;,round(417*0.33)),rep(&#39;rejeté&#39;,round(417*0.67)),
+                       rep(&#39;admis&#39;,round(191*0.28)),rep(&#39;rejeté&#39;,round(191*0.72)),
+                       rep(&#39;admis&#39;,round(373*0.06)),rep(&#39;rejeté&#39;,round(373*0.94)),
+                       rep(&#39;admis&#39;,round(108*0.82)),rep(&#39;rejeté&#39;,round(108*0.18)),
+                       rep(&#39;admis&#39;,round(25*0.68)),rep(&#39;rejeté&#39;,round(25*0.32)),
+                       rep(&#39;admis&#39;,round(593*0.34)),rep(&#39;rejeté&#39;,round(593*0.66)),
+                       rep(&#39;admis&#39;,round(375*0.35)),rep(&#39;rejeté&#39;,round(375*0.65)),
+                       rep(&#39;admis&#39;,round(393*0.24)),rep(&#39;rejeté&#39;,round(393*0.76)),
+                       rep(&#39;admis&#39;,round(341*0.07)),rep(&#39;rejeté&#39;,round(341*0.93))))
+glimpse(dat2)</code></pre>
+<pre><code>## Rows: 4,526
+## Columns: 3
+## $ sexe   &lt;chr&gt; &quot;homme&quot;, &quot;homme&quot;, &quot;homme&quot;, &quot;homme&quot;, &quot;homme&quot;, &quot;homme&quot;, &quot;homme&quot;, ~
+## $ dep    &lt;chr&gt; &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;, &quot;A&quot;~
+## $ statut &lt;chr&gt; &quot;admis&quot;, &quot;admis&quot;, &quot;admis&quot;, &quot;admis&quot;, &quot;admis&quot;, &quot;admis&quot;, &quot;admis&quot;, ~</code></pre>
+<p>Les données articulées de la sorte ne permettent pas de réaliser directement un diagramme de Sankey. Le package prévoit une fonction pour réaliser les transformations nécessaires sans efforts. Il s’agit de <strong>make_long()</strong> dans la laquelle on indique le nom de la data frame et celui des variables à re-coder en suivant l’ordre des états qu’elles marquent. Choisissons ici pour commencer de mettre la variable sexe au milieu.</p>
+<pre class="r"><code>dat_l&lt;-make_long(dat2,dep,sexe,statut)</code></pre>
+<p>Cela permet de bien voir comment cette éléments impactes les deux autres, autrement-dit comment les candidatures dans les différents départements se répartissent en fonction du sexe des individus et comment la réussite ou l’échec des candidatures se répartissent en fonction du sexe.</p>
+<pre class="r"><code>ggplot(dat_l, 
+       aes(x = x, next_x = next_x, node = node, next_node = next_node,
+           fill = factor(node),label = node)) +
+  geom_sankey(flow.alpha = 0.6,
+              node.color = &quot;black&quot;)+
+  geom_sankey_label(size = 3, color = &quot;white&quot;, fill = &quot;gray40&quot;) +
+  labs(title=&#39;Admissions à Berkley 1973&#39;,
+       caption=&quot;Source: wikipedia US - Simpson&#39;s paradox&quot;)+
+  theme_sankey(base_size = 18) +
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,size=6,face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>On voit que certains département attirent plus de femmes que d’homme et que globalement elles sont en proportion plus souvent rejetées. Cela pourrait être le fruit d’un traitement inégalitaire. Néanmoins, les choses sont plus compliquées. Les femmes sont plus nombreuses à postuler dans les départements les plus sélectifs. Le problème est donc plus structurelle. Les choses sont plus claires si on place la variable sexe en premier.</p>
+<pre class="r"><code>dat_l2&lt;-make_long(dat2,sexe,dep,statut)</code></pre>
+<p>Le diagramme est alors plus parlant.</p>
+<pre class="r"><code>ggplot(dat_l2, 
+       aes(x = x, next_x = next_x, node = node, next_node = next_node,
+           fill = factor(node),label = node)) +
+  geom_sankey(flow.alpha = 0.6,
+              node.color = &quot;black&quot;)+
+  geom_sankey_label(size = 3, color = &quot;white&quot;, fill = &quot;gray40&quot;) +
+  labs(title=&#39;Admissions à Berkley 1973&#39;,
+       caption=&quot;Source: wikipedia US - Simpson&#39;s paradox&quot;)+
+  theme_sankey(base_size = 18) +
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,size=6,face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>On voit clairement que les femmes s’orientent principalement sur les départements les plus sélectifs et donc sont plus fréquemment rejetées que les hommes.</p>
+<p>Il y a bien d’autres manières de réaliser un diagramme de Sankey en mobilisant d’autres packages (comme plotly, networkd3,PantaRhei) ou d’autres logiciels (Tableau, Python, Java, même Excel…), certains sites permettent de le faire en ligne (comme (Sankeymatic)[<a href="https://sankeymatic.com/build/" class="uri">https://sankeymatic.com/build/</a>]). Nous reviendrons dessus avec des applications plus variées. Ce type de diagramme marquant les liens entre variables qualitatives me donne pas mal d’idées.</p>
