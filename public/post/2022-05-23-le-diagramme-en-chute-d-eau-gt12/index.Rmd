@@ -1,0 +1,134 @@
+---
+title: "Le diagramme en chute d'eau GT12"
+author: "Ludovic Vigneron"
+date: '2022-05-23'
+slug: []
+categories:
+- ggplot2
+- R
+- datavisualisation
+tags:
+- dataviz
+- ggplot2
+- r
+---
+
+**Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d'eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d'illustrer comment une valeur de départ devient une valeur finale au travers d'une série d'étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale. Les changements positifs viennent généralement en premier et se voient affecter une couleur particulière (souvent du vert). Les changements négatifs viennent en second et se voient attribués une autre couleur (souvent du rose). Dans sa version la plus courante, les catégories indiquant la sources des changements sont reprises en abscisses et les valeurs en ordonnées. Les montants les plus importants en valeur absolue sont généralement mis en premier suivi en ordre par les moins importants. On fait parfois apparaître les montants cumulés des mouvements dans un sens ou dans l'autre dans une version plus sombre de la couleur qui leur est attribuée.**
+
+Le décalage des segments présentant les évolutions (positif ou négatif) par rapport à l'origine de l'axe portant les valeurs peut rendre la lecture de l'amplitude des mouvements qu'ils représentent compliquée. Aussi, il est conseillé d'inclure leur montant dans de graphe (dans les barres associées ou à côté) et/ou d'intégrer une grille en arrière plan pour offrir des points de repères visuels permettant de les inférer. Ce type de graphe peut également souffrir de problèmes d'échelle. S'il intègre des mouvements de petite ampleur, les segments correspondant peuvent est difficile à appréhender surtout s'ils co-habitent avec ces mouvements plus importants. Il est alors conseillé de procéder à des regroupements afin de garantir la lisibilité de l'ensemble.
+
+Tout cela peut paraître abstrait. Utilisons un exemple pour donner du corps à ces considérations. Prenons une version simplifiée de celui développé par Meagan Longoria dans la vidéo de la série [one chart at time](https://www.youtube.com/watch?v=e8K-mx195tM&t=137s) consacrée à ce type de graphe. Il s'agit de représenter l'évolution des avoirs d'une association durant le mois de décembre 2014. Le montant de départ ainsi que les flux intermédiaires sont repris dans la data frame suivante:
+
+```{r}
+dat<-data.frame(
+  label=c('montant de départ 1 déc.','revenus opérationnels budgetés',
+          'revenus non budgetés exceptionels','revenus non budgetés réguliers',
+          'Dépences fixes','Dépences variables',
+          'Dépences variables additionnelles'),
+  valeur=c(23119,86465,37684,8750,-60837,-45628,-25517))
+dat
+```
+
+Pour réaliser le diagramme, commençons par charger les packages à mobiliser: le tidyverse, scales pour la mise en forme des axes et surtout waterfalls qui permet de réaliser un diagramme en chute d'eau compatible avec ggplot. Ce dernier package est disponible sur le CRAN. Si vous le téléchargez, veuillez à ne pas le confondre avec son équivalent sans 's' qui est basé sur le package graphique lattice (une alternative à ggplot).
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+library(waterfalls)
+```
+
+Une fois l'ensemble chargé, nous pouvons utiliser la fonction **waterfall()** sur la data frame. Ici, nous n'avons que deux variables les labels et les valeurs. La fonction les identifie et les mobilise directement. Si vous avez plus de variable, il faudra renseigner les options values et labels.
+
+```{r}
+waterfall(dat)
+```
+
+Ce graphe de base nécessite quelque ajustement. Commençons par modifier les étiquettes de l'axe des abscisses pour les rendre lisibles grâce à des alinéas.
+
+```{r}
+dat<-data.frame(
+  label=c('montant
+de départ
+1 déc.','revenus
+opérationnels
+budgetés','revenus
+non budgetés
+exceptionels','revenus
+non budgetés
+réguliers
+',
+'Dépences
+fixes','Dépences
+variables',
+          'Dépences
+variables
+additionnelles'),
+  valeur=c(23119,86465,37684,8750,-60837,-45628,-25517))
+waterfall(dat)
+```
+
+C'est mieux mais on peut aller plus loin. Ajoutons le total des mouvements (le montant d'arrivé). Pour cela, validons l'option calc_total et ajoutons un texte indicatif de la nature de ce total avec l'option total_axis_text.
+
+```{r}
+waterfall(dat,calc_total = TRUE,total_axis_text = "Montant
+final
+31 dec.")
+```
+
+Maintenant que toutes les informations sont sur le graphe, nous pouvons travailler la forme. Commençons par retravailler les couleurs. Affectons une même couleurs à la valeur de départ et à la valeur d'arrivé différente de celles des mouvements positifs ou négatifs. Harmonisons également la couleur des caractères utilisés.
+
+```{r}
+waterfall(dat,calc_total = TRUE,
+          fill_by_sign = FALSE,
+          fill_colours = c('#ABB3E8','#ABE8CA','#ABE8CA','#ABE8CA',
+                           'pink','pink','pink'),
+          total_rect_color ='#ABB3E8',
+          total_rect_text_color ='black',
+          total_axis_text = "Montant
+final
+31 dec.")
+```
+
+Passons au thème minimal et retravaillons l'axe des ordonnées pour avoir un espace comme séparateur des milliers.
+
+```{r}
+waterfall(dat,calc_total = TRUE,
+          fill_by_sign = FALSE,
+          fill_colours = c('#ABB3E8','#ABE8CA','#ABE8CA','#ABE8CA',
+                           'pink','pink','pink'),
+          total_rect_color ='#ABB3E8',
+          total_rect_text_color ='black',
+          total_axis_text = "Montant
+final
+31 dec.")+
+  scale_y_continuous(label=label_dollar(prefix = "",suffix = " Euros",
+                                        big.mark = " "))+
+  theme_minimal()
+```
+
+Supprimons les titres des axes et ajoutons titre, sous-titre et caption.
+
+```{r}
+waterfall(dat,
+          calc_total = TRUE,
+          fill_by_sign = FALSE,
+          fill_colours = c('#ABB3E8','#ABE8CA','#ABE8CA','#ABE8CA',
+                           'pink','pink','pink'),
+          total_rect_color ='#ABB3E8',
+          total_rect_text_color ='black',
+          total_axis_text = "Montant
+final
+31 dec.")+
+  labs(title="Diagramme en chute d'eau des flux financiers de l'association A",
+       subtitle='(sur décembre 2014)',
+       caption='Source: exemple fictif "one graph at a time"')+
+  scale_y_continuous(label=label_dollar(prefix = "",suffix = " Euros",
+                                        big.mark = " "))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    plot.caption = element_text(hjust=1,face='italic',size=6),
+    axis.title = element_blank(),
+    axis.text = element_text(size=6))
+```

@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Le diagramme en chute d&#39;eau GT12" />
+<meta property="og:description" content="Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d’eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d’illustrer comment une valeur de départ devient une valeur finale au travers d’une série d’étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-05-23T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-05-23T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Le diagramme en chute d&#39;eau GT12"/>
+<meta name="twitter:description" content="Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d’eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d’illustrer comment une valeur de départ devient une valeur finale au travers d’une série d’étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Le diagramme en chute d&#39;eau GT12 | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d’eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d’illustrer comment une valeur de départ devient une valeur finale au travers d’une série d’étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Le diagramme en chute d&#39;eau GT12</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;May 23, 2022&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/r/'>r</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-05-23-le-diagramme-en-chute-d-eau-gt12%2f&text=Le%20diagramme%20en%20chute%20d%27eau%20GT12&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-05-23-le-diagramme-en-chute-d-eau-gt12%2f&t=Le%20diagramme%20en%20chute%20d%27eau%20GT12" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-05-23-le-diagramme-en-chute-d-eau-gt12%2f&title=Le%20diagramme%20en%20chute%20d%27eau%20GT12&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+
+
+<p><strong>Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d’eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d’illustrer comment une valeur de départ devient une valeur finale au travers d’une série d’étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale. Les changements positifs viennent généralement en premier et se voient affecter une couleur particulière (souvent du vert). Les changements négatifs viennent en second et se voient attribués une autre couleur (souvent du rose). Dans sa version la plus courante, les catégories indiquant la sources des changements sont reprises en abscisses et les valeurs en ordonnées. Les montants les plus importants en valeur absolue sont généralement mis en premier suivi en ordre par les moins importants. On fait parfois apparaître les montants cumulés des mouvements dans un sens ou dans l’autre dans une version plus sombre de la couleur qui leur est attribuée.</strong></p>
+<p>Le décalage des segments présentant les évolutions (positif ou négatif) par rapport à l’origine de l’axe portant les valeurs peut rendre la lecture de l’amplitude des mouvements qu’ils représentent compliquée. Aussi, il est conseillé d’inclure leur montant dans de graphe (dans les barres associées ou à côté) et/ou d’intégrer une grille en arrière plan pour offrir des points de repères visuels permettant de les inférer. Ce type de graphe peut également souffrir de problèmes d’échelle. S’il intègre des mouvements de petite ampleur, les segments correspondant peuvent est difficile à appréhender surtout s’ils co-habitent avec ces mouvements plus importants. Il est alors conseillé de procéder à des regroupements afin de garantir la lisibilité de l’ensemble.</p>
+<p>Tout cela peut paraître abstrait. Utilisons un exemple pour donner du corps à ces considérations. Prenons une version simplifiée de celui développé par Meagan Longoria dans la vidéo de la série <a href="https://www.youtube.com/watch?v=e8K-mx195tM&amp;t=137s">one chart at time</a> consacrée à ce type de graphe. Il s’agit de représenter l’évolution des avoirs d’une association durant le mois de décembre 2014. Le montant de départ ainsi que les flux intermédiaires sont repris dans la data frame suivante:</p>
+<pre class="r"><code>dat&lt;-data.frame(
+  label=c(&#39;montant de départ 1 déc.&#39;,&#39;revenus opérationnels budgetés&#39;,
+          &#39;revenus non budgetés exceptionels&#39;,&#39;revenus non budgetés réguliers&#39;,
+          &#39;Dépences fixes&#39;,&#39;Dépences variables&#39;,
+          &#39;Dépences variables additionnelles&#39;),
+  valeur=c(23119,86465,37684,8750,-60837,-45628,-25517))
+dat</code></pre>
+<pre><code>##                               label valeur
+## 1          montant de départ 1 déc.  23119
+## 2    revenus opérationnels budgetés  86465
+## 3 revenus non budgetés exceptionels  37684
+## 4    revenus non budgetés réguliers   8750
+## 5                    Dépences fixes -60837
+## 6                Dépences variables -45628
+## 7 Dépences variables additionnelles -25517</code></pre>
+<p>Pour réaliser le diagramme, commençons par charger les packages à mobiliser: le tidyverse, scales pour la mise en forme des axes et surtout waterfalls qui permet de réaliser un diagramme en chute d’eau compatible avec ggplot. Ce dernier package est disponible sur le CRAN. Si vous le téléchargez, veuillez à ne pas le confondre avec son équivalent sans ‘s’ qui est basé sur le package graphique lattice (une alternative à ggplot).</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(waterfalls)</code></pre>
+<p>Une fois l’ensemble chargé, nous pouvons utiliser la fonction <strong>waterfall()</strong> sur la data frame. Ici, nous n’avons que deux variables les labels et les valeurs. La fonction les identifie et les mobilise directement. Si vous avez plus de variable, il faudra renseigner les options values et labels.</p>
+<pre class="r"><code>waterfall(dat)</code></pre>
+<p><img src="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Ce graphe de base nécessite quelque ajustement. Commençons par modifier les étiquettes de l’axe des abscisses pour les rendre lisibles grâce à des alinéas.</p>
+<pre class="r"><code>dat&lt;-data.frame(
+  label=c(&#39;montant
+de départ
+1 déc.&#39;,&#39;revenus
+opérationnels
+budgetés&#39;,&#39;revenus
+non budgetés
+exceptionels&#39;,&#39;revenus
+non budgetés
+réguliers
+&#39;,
+&#39;Dépences
+fixes&#39;,&#39;Dépences
+variables&#39;,
+          &#39;Dépences
+variables
+additionnelles&#39;),
+  valeur=c(23119,86465,37684,8750,-60837,-45628,-25517))
+waterfall(dat)</code></pre>
+<p><img src="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>C’est mieux mais on peut aller plus loin. Ajoutons le total des mouvements (le montant d’arrivé). Pour cela, validons l’option calc_total et ajoutons un texte indicatif de la nature de ce total avec l’option total_axis_text.</p>
+<pre class="r"><code>waterfall(dat,calc_total = TRUE,total_axis_text = &quot;Montant
+final
+31 dec.&quot;)</code></pre>
+<p><img src="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Maintenant que toutes les informations sont sur le graphe, nous pouvons travailler la forme. Commençons par retravailler les couleurs. Affectons une même couleurs à la valeur de départ et à la valeur d’arrivé différente de celles des mouvements positifs ou négatifs. Harmonisons également la couleur des caractères utilisés.</p>
+<pre class="r"><code>waterfall(dat,calc_total = TRUE,
+          fill_by_sign = FALSE,
+          fill_colours = c(&#39;#ABB3E8&#39;,&#39;#ABE8CA&#39;,&#39;#ABE8CA&#39;,&#39;#ABE8CA&#39;,
+                           &#39;pink&#39;,&#39;pink&#39;,&#39;pink&#39;),
+          total_rect_color =&#39;#ABB3E8&#39;,
+          total_rect_text_color =&#39;black&#39;,
+          total_axis_text = &quot;Montant
+final
+31 dec.&quot;)</code></pre>
+<p><img src="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Passons au thème minimal et retravaillons l’axe des ordonnées pour avoir un espace comme séparateur des milliers.</p>
+<pre class="r"><code>waterfall(dat,calc_total = TRUE,
+          fill_by_sign = FALSE,
+          fill_colours = c(&#39;#ABB3E8&#39;,&#39;#ABE8CA&#39;,&#39;#ABE8CA&#39;,&#39;#ABE8CA&#39;,
+                           &#39;pink&#39;,&#39;pink&#39;,&#39;pink&#39;),
+          total_rect_color =&#39;#ABB3E8&#39;,
+          total_rect_text_color =&#39;black&#39;,
+          total_axis_text = &quot;Montant
+final
+31 dec.&quot;)+
+  scale_y_continuous(label=label_dollar(prefix = &quot;&quot;,suffix = &quot; Euros&quot;,
+                                        big.mark = &quot; &quot;))+
+  theme_minimal()</code></pre>
+<p><img src="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Supprimons les titres des axes et ajoutons titre, sous-titre et caption.</p>
+<pre class="r"><code>waterfall(dat,
+          calc_total = TRUE,
+          fill_by_sign = FALSE,
+          fill_colours = c(&#39;#ABB3E8&#39;,&#39;#ABE8CA&#39;,&#39;#ABE8CA&#39;,&#39;#ABE8CA&#39;,
+                           &#39;pink&#39;,&#39;pink&#39;,&#39;pink&#39;),
+          total_rect_color =&#39;#ABB3E8&#39;,
+          total_rect_text_color =&#39;black&#39;,
+          total_axis_text = &quot;Montant
+final
+31 dec.&quot;)+
+  labs(title=&quot;Diagramme en chute d&#39;eau des flux financiers de l&#39;association A&quot;,
+       subtitle=&#39;(sur décembre 2014)&#39;,
+       caption=&#39;Source: exemple fictif &quot;one graph at a time&quot;&#39;)+
+  scale_y_continuous(label=label_dollar(prefix = &quot;&quot;,suffix = &quot; Euros&quot;,
+                                        big.mark = &quot; &quot;))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;,size=6),
+    axis.title = element_blank(),
+    axis.text = element_text(size=6))</code></pre>
+<p><img src="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-05-23-le-diagramme-en-chute-d-eau-gt12%2f&text=Le%20diagramme%20en%20chute%20d%27eau%20GT12&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-05-23-le-diagramme-en-chute-d-eau-gt12%2f&t=Le%20diagramme%20en%20chute%20d%27eau%20GT12" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-05-23-le-diagramme-en-chute-d-eau-gt12%2f&title=Le%20diagramme%20en%20chute%20d%27eau%20GT12&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>
