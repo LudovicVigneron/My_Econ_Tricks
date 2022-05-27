@@ -1,17 +1,18 @@
 ---
-title: "Le diagramme en chute d'eau GT12"
-author: "Ludovic Vigneron"
+title: Le diagramme en chute d'eau GT12
+author: Ludovic Vigneron
 date: '2022-05-23'
-output: pdf_document
 categories:
-- ggplot2
-- R
-- datavisualisation
+  - datavisualisation
+  - ggplot2
+  - GT
+  - R
 tags:
-- dataviz
-- ggplot2
-- r
-slug: []
+  - dataviz
+  - ggplot2
+  - r
+  - GT
+output: pdf_document
 ---
 
 **Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d'eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d'illustrer comment une valeur de départ devient une valeur finale au travers d'une série d'étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale. Les changements positifs viennent généralement en premier et se voient affecter une couleur particulière (souvent du vert). Les changements négatifs viennent en second et se voient attribués une autre couleur (souvent du rose). Dans sa version la plus courante, les catégories indiquant la sources des changements sont reprises en abscisses et les valeurs en ordonnées. Les montants les plus importants en valeur absolue sont généralement mis en premier suivi en ordre par les moins importants. On fait parfois apparaître les montants cumulés des mouvements dans un sens ou dans l'autre dans une version plus sombre de la couleur qui leur est attribuée.**
