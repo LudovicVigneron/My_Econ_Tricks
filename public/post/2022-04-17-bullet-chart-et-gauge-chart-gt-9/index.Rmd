@@ -1,0 +1,329 @@
+---
+title: Bullet chart et gauge chart GT9
+author: Ludovic Vigneron
+date: '2022-04-17'
+slug: []
+categories:
+  - datavisualisation
+  - ggplot2
+  - R
+tags:
+  - dataviz
+  - ggplot2
+  - plotly
+  - r
+---
+
+**Il s'agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l'on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.**
+
+Pour illustrer leur construction et pour coller à l'actualité en France, nous allons utiliser des données électorales. Nous allons comparer les résultats des principaux parties dans différentes où j'ai habité et/ou j'aimerai habiter pour le premier tour des présidentielles de 2022 et les mettre en regard avec ceux de 2017. Les données sont tirées du site  [data.gouv.fr](https://www.data.gouv.fr/fr/pages/donnees-des-elections/). Les fichiers de base ont été charger dans le dossier de travail de manière à faciliter leur traitement.
+
+Pour entamer le processus, comme à chaque fois, commençons par chargeons les packages mobilisés.
+
+```{r message=FALSE, warning=FALSE}
+library(readr)
+library(readxl)
+library(tidyverse)
+library(scales)
+library(ggtext)
+library(glue)
+library(patchwork)
+
+```
+
+Notez que l'on a des fichers dans deux formats différents (csv et xlsx). On utilise donc deux modes d'importation différent et il y a un travail d'harmonisation des données à réaliser. Avant de nous y attaquer chargeons-les.
+
+```{r message=FALSE, warning=FALSE,echo=FALSE,include=FALSE}
+dat_17<-read.csv("Presidentielle_2017_Resultats_Communes_T1_clean.csv")
+dat_22<-read_excel("resultats-par-niveau-subcom-t1-france-entiere.xlsx")
+```
+
+Commençons par limiter les bases aux villes qui nous intéresse. Disons, Lille, Strasbourg, Guise (petite ville de l'Aisne) et Rennes (parce que la Bretagne).Limitons-la également en terme de candidats. Retenons ceux associés aux RN, à LFI, à EM , à LR, aux PS et aux NPA. Mettons l'ensemble en forme pour le traitement.
+
+```{r}
+dat_17<-dat_17 %>% 
+  filter(Commune%in%c('Lille','Strasbourg','Guise','Rennes')) %>% 
+  select(Commune,Abstentions_ins,LE.PEN_ins,MÃ.LENCHON_ins,   
+         MACRON_ins,FILLON_ins,HAMON_ins,POUTOU_ins) %>% 
+  rename(Melenchon_ins=MÃ.LENCHON_ins) %>%
+  pivot_longer(cols=ends_with('_ins'),names_to = 'candidat_17',
+               values_to = 'res_17') %>% 
+  mutate(parti=ifelse(candidat_17=='Abstentions_ins','Abstention',
+               ifelse(candidat_17=='LE.PEN_ins','RN',
+               ifelse(candidat_17=='Melenchon_ins','LFI',
+               ifelse(candidat_17=='MACRON_ins','EM',
+               ifelse(candidat_17=='FILLON_ins','LR',
+               ifelse(candidat_17=='HAMON_ins','PS','NPA')))))))
+dat_22<-dat_22 %>% 
+  rename(Commune="Libellé de la commune",
+         Abstentions_ins="% Abs/Ins",
+         LE.PEN_ins ="...53",Melenchon_ins="...67",MACRON_ins="...39",
+         Precress_ins="...88",Idalgo_ins="...74",POUTOU_ins="...96") %>% 
+  filter(Commune%in%c('Lille','Strasbourg','Guise','Rennes')) %>% 
+  select(Commune,Abstentions_ins,LE.PEN_ins,Melenchon_ins,MACRON_ins,
+         Precress_ins,Idalgo_ins,POUTOU_ins) %>%
+  pivot_longer(cols=ends_with('_ins'),names_to = 'candidat_22',
+               values_to = 'res_22') %>% 
+  mutate(parti=ifelse(candidat_22=='Abstentions_ins','Abstention',
+               ifelse(candidat_22=='LE.PEN_ins','RN',
+               ifelse(candidat_22=='Melenchon_ins','LFI',
+               ifelse(candidat_22=='MACRON_ins','EM',
+               ifelse(candidat_22=='Precress_ins','LR',
+               ifelse(candidat_22=='Idalgo_ins','PS','NPA')))))))
+```
+
+Réalisons un graphe de base limité à une seule ville. Concentrons-nous sur le bullet chart. La forme retenue présentera pour chaque parti une barre rouge dont la taille dépendra du pourcentage d'inscrits ayant voté pour lui. Cette barre sera mis au regard d'une surface blanche dont la longueur représente l'abstention et un segment bleu dont la position rappelle le score réalisé en 2017.
+
+```{r}
+ggplot(data=filter(dat_22,parti!='Abstention'&Commune=='Lille'),
+       aes(x=res_22,
+           y=reorder(factor(parti),res_22)))+
+  geom_col(aes(x=dat_22$res_22[dat_22$parti=='Abstention'&dat_22$Commune=='Lille']),
+           width=0.7,fill='white')+
+  geom_col(width = 0.5,fill='red')+
+  geom_linerange(aes(x = filter(dat_17,parti!='Abstention'&Commune=='Lille')$res_17,
+    ymin = as.numeric(reorder(factor(filter(dat_17,
+           parti!='Abstention'&Commune=='Lille')$parti),
+           filter(dat_22,parti!='Abstention'&Commune=='Lille')$res_22))-0.25,
+    ymax = as.numeric(reorder(factor(filter(dat_17,
+           parti!='Abstention'&Commune=='Lille')$parti),
+           filter(dat_22,parti!='Abstention'&Commune=='Lille')$res_22))+0.25),
+    size = 1, color = "blue")
+```
+
+Pour établir le segment que indique le score à l'élection précédente, nous utilisons le geom_linerange(). Le principal point de difficulté est alors de s'assurer du l'emplacement vertical de l'élément représenté. Il doit correspondre à l'indexation des parties qui est fonction de leur score de 2022 plus et moins une marge de manière à établir le haut et le bas du segment. Ces traitements encombrent le code. Pour clarifier la structure, reportons-les en début de programme et poursuivons l'élaboration de notre graphe avec une mise en forme avancée (titre, fond noir, quadrillage gris, uniquement vertical, suppression des titres des axes, mise en forme des étiquettes des axes, etc.). 
+
+```{r}
+com<-'Lille'
+ref<-'Abstention'
+dat_red_22<-filter(dat_22,parti!=ref&Commune==com) %>% 
+  mutate(res_22=res_22/100)
+dat_red_17<-filter(dat_17,parti!=ref&Commune==com) %>% 
+  mutate(res_17=res_17/100)
+abst<-dat_22$res_22[dat_22$parti==ref&dat_22$Commune==com]/100
+res_pres<-dat_red_17$res_17
+pres_or<-reorder(factor(dat_red_17$parti),dat_red_22$res_22)
+###
+ggplot(data=dat_red_22,
+       aes(x=res_22,
+           y=reorder(factor(parti),res_22)))+
+  geom_col(aes(x=abst),
+           width=0.7,fill='white')+
+  geom_col(width = 0.5,fill='red')+
+  geom_linerange(aes(x = res_pres,
+                     ymin = as.numeric(pres_or)-0.25,
+                     ymax = as.numeric(pres_or)+0.25),
+                 size = 1, color = 'blue')+
+  labs(title=glue("Premier tour de la présidentielle 2022 à *{com}*"))+
+  scale_x_continuous(breaks = seq(0,0.3,0.05),labels=label_percent())+
+  theme_minimal()+
+  theme(
+    plot.title = element_markdown(color='white',hjust=0.5),
+    plot.background = element_rect(fill='black'),
+    axis.title = element_blank(),
+    axis.text.y = element_text(face='bold',hjust=0,color='Wheat'),
+    axis.text.x = element_text(color='white'),
+    panel.grid.major.y = element_blank(),
+    panel.grid.major = element_line(color='SlateGray'),
+    panel.grid.minor = element_line(color='grey'))
+```
+
+Notez que pour générer le titre nous avons utilisé la fonction glue du package éponyme. Il permet d'intégrer dans les textes illustratifs d'un graphe les réalisations d'une variable dont le nom est présenté entre accolades. Cela permet d'intégrer de la flexibilité.
+
+Maintenant que nous avons notre graphe de base, créons une fonction permettant de le répliquer facilement pour les villes de notre choix. Cela nous évitera de le recopier trop souvent.
+
+```{r}
+g_bu<-function(com,ref,dat1,dat2){
+       dat_red_22<-filter(dat2,parti!=ref&Commune==com) %>% 
+                   mutate(res_2=res_22/100)
+       dat_red_17<-filter(dat1,parti!=ref&Commune==com) %>% 
+                   mutate(res_17=res_17/100)
+       abst<-dat2$res_22[dat2$parti==ref&dat2$Commune==com]/100
+       res_pres<-dat_red_17$res_17
+       pres_or<-reorder(factor(dat_red_17$parti),dat_red_22$res_22)
+       ####
+       g<-ggplot(data=dat_red_22,
+                 aes(x=res_2,y=reorder(factor(parti),res_2)))+
+          geom_col(aes(x=abst),width=0.7,fill='white')+
+          geom_col(width = 0.5,fill='red')+
+          geom_linerange(aes(x = res_pres,
+                             ymin = as.numeric(pres_or)-0.25,
+                             ymax = as.numeric(pres_or)+0.25),
+                         size = 1, color = 'blue')+
+          labs(title=glue("*{com}*"))+
+          scale_x_continuous(breaks = seq(0,0.3,0.05),labels=label_percent())+
+          coord_cartesian(xlim=c(0,0.3))+
+          theme_minimal()+
+          theme(plot.title = element_markdown(color='white',hjust=0.5),
+                plot.background = element_rect(fill='black'),
+                axis.title = element_blank(),
+                axis.text.y = element_text(face='bold',hjust=0,color='Wheat'),
+                axis.text.x = element_text(color='white'),
+                panel.grid.major.y = element_blank(),
+                panel.grid.major = element_line(color='SlateGray'),
+                panel.grid.minor = element_line(color='grey'))
+  return(g)
+}
+```
+
+Testons notre fonction sur la ville de Strasbourg.
+
+```{r}
+g_bu(com='Strasbourg',ref='Abstention',
+     dat1=dat_17,dat2=dat_22)
+```
+
+Le graphe obtenu est en tout point comparable à notre graphe de base même s'il présente une situation électorale différente. Il y a notamment moins d'abstention à Strasbourg. Créons les graphes pour nos quatre villes, puis arrangeons-les pour les réunir sur une même représentation avec un titre général. Pour cela, utilisons le package patchwork. Il offre une syntaxe simple et flexible ainsi qu'un certain nombre de complément permettant d'améliorer la présentation de l'ensemble compatible avec ggplot. 
+
+```{r}
+ville<-c('Lille','Strasbourg','Guise','Rennes')
+for(i in ville){
+  assign(paste0('g_',i),g_bu(com=i,ref='Abstention',dat1=dat_17,dat2=dat_22))}
+(g_Guise+g_Lille)/(g_Strasbourg+g_Rennes)+
+   plot_annotation(title="***1ère* tour de l'élection présidentielle** *2022*",
+                   theme = theme(plot.title = element_markdown(hjust=0.5,
+                                                               color='white'),
+                           plot.background = element_rect(fill='black',
+                                                          color='black')))
+```
+
+L'ensemble est plaisant mais reste difficile à lire sans un texte expliquant ce que représente les différents éléments graphiques proposés . Il est donc utile d'ajouter une légende.  Celle-ci ne peut être établi automatiquement. Créons-la donc en répliquant le graphe pour un parti type et en ajoutant des étiquettes guidant le lecteur dans le décryptage des barres (la rouge et la blanche) et le segment.
+
+```{r}
+d<-data.frame(x_=0.24,y_=factor('Sigle
+du parti'))
+ggplot(data=d,aes(x=x_,y=y_))+
+       geom_col(aes(x=0.28),width=0.7,fill='white')+
+       geom_col(width = 0.5,fill='red')+
+       geom_linerange(aes(x = 0.26,ymin = 1-0.25,ymax = 1+0.25),
+                      size = 1, color = 'blue')+
+       geom_text(aes(x = 0.1, y = 1,label = "Score de 2022
+(% inscrits)"),color = 'white', size = 3,fontface='bold') +
+       geom_text(aes(x=0.15,y=1.5,label='Abstention (% inscrits)'),
+                 color = 'white', size = 3,fontface='bold')+
+       geom_richtext(aes(x=0.26,y=0.5,label='**Score de 2017 (% inscrits)**'),
+                     color = 'white', size = 2.5,fontface='bold',
+                     label.colour='black',fill='black')+
+       labs(title='Légende')+
+       scale_x_continuous(breaks = seq(0,0.3,0.05),labels=label_percent())+
+       coord_cartesian(xlim=c(0,0.3))+
+       theme_minimal()+
+       theme(plot.title = element_markdown(color='Wheat',hjust=0.5),
+             plot.background = element_rect(fill='black'),
+             axis.title = element_blank(),
+             axis.text.y = element_text(face='bold',hjust=0,color='Wheat'),
+             axis.text.x = element_text(color='white'),
+             panel.grid.major.y = element_blank(),
+             panel.grid.major = element_line(color='SlateGray'),
+             panel.grid.minor = element_line(color='grey'))->legend
+legend
+```
+
+Intégrons cette légende à notre assemblage de graphes. Plaçons-la en tête de l'ensemble sur toute la largeur.
+
+```{r fig.height=7, fig.width=8}
+legend/(g_Guise+g_Lille)/(g_Strasbourg+g_Rennes)+
+   plot_annotation(title="***1ère* tour de l'élection présidentielle** *2022*",
+                   theme = theme(plot.title = element_markdown(hjust=0.5,color='white'),
+                                 plot.background = element_rect(fill='black',color='black')))+
+   plot_layout( heights = unit(c(2,5,5), c('cm', 'cm','cm')))
+```
+
+On obtient un bullet chart simple et efficace qui rend compte des résultats du premier tour de l'élection présidentielle dans quatre villes en donnant des points de repères aidant à les analyser. Evidemment, pour faire un travail sérieux, il faudrait reprendre l'ensemble des partis présentant un candidat et non une sélection (au moins ELV). Mais, ce n'est pas le but ici.
+
+On peut représenter le même type d'information sont la forme d'un gauge chart, autrement-dit d'un cadrant comparable à celui d'un compteur de vitesse ou d'un baromètre. Encore une fois, il faudra travailler nos geom pour obtenir le rendu souhaité. Élaborons donc un graphe de base en nous concentrons sur les résultats de la France Insoumise (LFI) à Lille. Le plus simple ici c'est non pas d'utiliser plotly plutôt que ggplot. Il s'agit d'un package permettant de réaliser des graphes interactifs. Chargeons-le.
+
+```{r message=FALSE, warning=FALSE}
+library(plotly)
+```
+
+La syntaxe de plotly est un peu moins simple que celle de ggplot. Il existe néanmoins des possibilités de passer des graphes ggplot dans plotly pour les rendre interactifs avec la fonction ggplotly(). Nous ne l'utiliserons pas ici.  
+
+La fonction sur laquelle nous allons travailler est plot_ly(). Le type de représentation est "indicator" et son mode "gauge". Intégrons le score de LFI à lille comme valeur 28.14%.
+
+```{r}
+fig_ <- plot_ly(type = "indicator",mode = "gauge",value = 28.14)
+fig_
+```
+
+On a bien une jauge. Il ne reste plus qu'à l'habiller pour qu'elle permettre de rendre compte des mêmes informations que dans notre série de graphes précédents (pour un partie le score, le score précédent et l'abstention). Ajoutons la valeur représentée ainsi qu'un titre. Les arguments de mis en forme sont ici introduits par des listes.
+
+```{r}
+fig_ <- plot_ly(type = "indicator",mode = "gauge+number",value = 28.14,
+                title = list(text = "Lille - LFI"))
+fig_
+```
+
+Ajoutons le score de l'élection précédent 20.1% avec un segment bleu. Pour cela, utilisons l'option threshold.
+
+```{r}
+fig_<-plot_ly(type = "indicator",mode = "gauge+number",value = 28.14,
+        title = list(text = "Lille - LFI"),
+        gauge = list(
+          threshold = list(line = list(color = "blue", width = 4),
+                           thickness = 0.75,value = 20.1)))
+fig_
+```
+
+Ajoutons une indication numérique de la différence de score entre les deux élections et travaillons les couleurs de l'ensemble.
+
+```{r}
+fig_<-plot_ly(type = "indicator",mode = "gauge+number+delta",value = 28.14,
+        title = list(text = "Lille - LFI"),
+        delta = list(reference = 20.1),
+        gauge = list(
+          bar = list(color = "red"),
+          bgcolor = "black",
+          borderwidth = 2,
+          bordercolor = "gray",
+          threshold = list(line = list(color = "blue", width = 4),
+                           thickness = 0.75,value = 20.1)))
+fig_
+```
+
+Pour obtenir un fond noir, il faut travailler le layout. Faisons-le mais avant ajoutons la représentation de l'abstention (29,45%).
+
+```{r}
+fig_<-plot_ly(type = "indicator",mode = "gauge+number+delta",value = 28.14,
+        title = list(text = "Lille - LFI",font = list(color='Wheat')),
+        delta = list(reference = 20.1),
+        gauge = list(
+          bar = list(color = "red"),
+          bgcolor = "black",
+          borderwidth = 2,
+          bordercolor = "gray",
+          steps = list(list(range = c(0, 29.45), color = "white")),
+          threshold = list(line = list(color = "blue", width = 4),
+                           thickness = 0.75,value = 20.1)))
+fig_%>%layout(margin = list(l=20,r=30,t=40,b=5),
+              paper_bgcolor = "black",
+              font = list(color = "White", family = "Arial")) 
+```
+
+Passons le delta en blanc et limitons l'étendu à 50% (49.99% pour des raisons de mise en page).
+
+```{r fig.height=6, fig.width=9}
+fig_<-plot_ly(type = "indicator",mode = "gauge+number+delta",value = 28.14,
+        title = list(text = "Lille - LFI",font = list(color='Wheat')),
+        delta = list(reference = 20.1,increasing =  list(color='white'),
+                     font=list(size=24)),
+        gauge = list(
+          axis = list(range = list(NULL, 49.99), tickwidth = 2, tickcolor = "gray"),
+          bar = list(color = "red"),
+          bgcolor = "black",
+          borderwidth = 2,
+          bordercolor = "gray",
+          steps = list(list(range = c(0, 29.45), color = "white")),
+          threshold = list(line = list(color = "blue", width = 4),
+                           thickness = 0.75,value = 20.1)))
+
+fig_%>%layout(margin = list(l=20,r=30,t=40,b=10),
+              paper_bgcolor = "black",
+              font = list(color = "White", family = "Arial")) 
+```
+
+Le plus simple pour obtenir un fichier image de type png à partir de là, c'est d'utiliser l'interface créée par plotly en cliquant sur l'appareil photo. Le fichier apparaîtra dans vos téléchargements. D'autres solutions existent. Mais, elles nécessitent soit une inscription à l'API de plotly, soit d'installer orca.
+
+Dans tout les cas, le gauge chart est une façon originale de présenter les données. Elle fonctions plutôt bien sur nos résultats d'élection. Même si on peut difficilement traiter de cette manière sur peu d'espace autant d'informations qu'avec les barres horizontales des bullet charts.  
+
+Plotly permet des réalisations intéressantes. Je suis loin de le maîtriser. C'est donc à creuser. Je pense que j'aurai pu obtenir un résultat comparable avec ggplot mais au prix de beaucoup d'efforts. Suite au prochain numéro...
