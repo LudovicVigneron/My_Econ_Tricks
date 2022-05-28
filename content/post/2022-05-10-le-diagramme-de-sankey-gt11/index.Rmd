@@ -7,15 +7,17 @@ categories:
   - datavisualisation
   - ggplot2
   - r
+  - GT
 tags:
   - dataviz
   - ggplot2
   - r
+  - GT
 ---
 
-**Nous allons ici nous pencher sur un type graphe unique (ou du moins présentant moins de différentes formes que ceux présentés jusqu'ici). Il permet de montrer à la fois comment les effectifs de différentes catégories se comparent entre eux dans un état et comment elles se transforment, se recombinent, pour former d'autres catégories dans un autre état voir plusieurs autres états. Il s'agit du diagramme de Sankey inventé par un ingénieur irlandais qui lui a donné son nom en 1898. Les transitions sont marquées par des flèches ou des bandes dont la largeurs reflètent l'importance des effectifs déplacés d'un état à l'autre. Le résultat illustre bien les relations en cascade entre variables qualitatives. La logique qui préside à l'ordre de présentation des états peut être soit chronologique, soit guider par les comparaisons qui vous voulez réaliser. Il y aura donc dans ce dernier cas une réflexion à mener afin que le message porté par le graphe corresponde en toute rigueur à celui que vous désirez transmettre. Il sera par ailleurs important de veiller à ce que le nombre de catégories par état ainsi que le nombre de croisements de lignes lors des transferts ne soient pas trop important pour que l'ensemble reste lisible.**
+**Nous allons ici nous pencher sur un type graphe unique (ou du moins présentant moins de différentes formes que ceux présentés jusqu'ici). Il permet de montrer à la fois comment les effectifs de différentes catégories se comparent entre eux dans un état et comment elles se transforment, se recombinent, pour former d'autres catégories dans un autre état voir plusieurs autres états. Il s'agit du diagramme de Sankey inventé en 1898 par un ingénieur irlandais du même nom. Les transitions sont marquées par des flèches ou des bandes dont la largeurs reflètent l'importance des effectifs déplacés d'un état à l'autre. Le résultat illustre bien les relations en cascade entre variables qualitatives. La logique qui préside à l'ordre de présentation des états peut être soit chronologique, soit guider par les comparaisons que l'on veut réaliser. Il y a dans ce dernier cas une réflexion à mener afin que le message porté par le graphe corresponde en toute rigueur à celui que l'on désir transmettre. Il sera, par ailleurs, pour que l'ensemble reste lisible, important de veiller à ce que le nombre de catégories par état ainsi que le nombre de croisements de lignes lors des transferts ne soient pas trop nombreux.**
 
-Illustrons cela à partir de quelques exemples composés à partir de ggplot et  de ses dérivées. Nous utiliserons ici un package particulier ggsankey. Attention celui-ci (au moment où j'écris ce poste) n'est pas disponible sur le CRAN. Il faudra le charger à partir de github via devtools.
+Illustrons cela à partir de quelques exemples composés à partir de ggplot et de ses dérivées. Nous utiliserons ici un package particulier ggsankey. Attention, celui-ci (au moment où j'écris ce poste) n'est pas disponible sur le CRAN. Il faudra le charger à partir de github via devtools.
 
 devtools::install_github("davidsjoberg/ggsankey")
 
@@ -26,7 +28,7 @@ library(tidyverse)
 library(ggsankey)
 ```
 
-Avant d'utiliser un jeu de données réelles pour illustrer la construction d'un diagramme de Sankey, travaillons à partir d'éléments que l'on définit nous-même. Commençons donc par les établir. Considérons un système avec deux états nommés A et B. Au sein de l'état A, il y a trois catégories dont les effectifs se répartissent de la manière suivante: 20% de "chi", 50% de "fou" et 30% de "mi". Au sein de l'état B, il y a quatre catégories qui se répartissent comme suit: 10% de "tra", 20% de "lala", 40% de "la" et 30% de "lère". On a donc:
+Avant d'utiliser un jeu de données réelles pour illustrer la construction d'un diagramme de Sankey, travaillons à partir d'éléments définis nous-même. Commençons donc par les établir. Considérons un système avec deux états nommés A et B. Au sein de l'état A, il y a trois catégories dont les effectifs se répartissent de la manière suivante: 20% de "chi", 50% de "fou" et 30% de "mi". Au sein de l'état B, il y a quatre catégories qui se répartissent comme suit: 10% de "tra", 20% de "lala", 40% de "la" et 30% de "lère". On a donc:
 
 ```{r}
 dat_sim<-data.frame(Etat=c(rep('A',3),rep('B',4)),
@@ -35,7 +37,7 @@ dat_sim<-data.frame(Etat=c(rep('A',3),rep('B',4)),
 dat_sim
 ```
 
-L'ensemble peut être représenté par deux diagrammes à bâtons empilés mis en paralèlle. 
+L'ensemble peut être représenté par deux diagrammes à bâtons empilés mis en parallèle. 
 
 ```{r}
 ggplot(data=dat_sim,
@@ -47,7 +49,7 @@ ggplot(data=dat_sim,
         legend.position = 'none')
 ```
 
-La représentation est intéressante mais elle ne dit rien sur le passage des individus de l'état A à l'état B. Le diagramme de Sankey nous permet d'intégrer cette information à la représentation. Intégrons les éléments suivants. Sur une centaine d'individu au totale. Parmi ceux appartement à la catégorie "chi" dans l'état A, 10 passent à la catégorie "tra" dans l'état B, 5 à la catégorie "lala", 5 à la catégorie "la". Pour l'instant, considérons que les autres ne bougent pas. 
+La représentation est intéressante, mais elle ne dit rien sur le passage des individus de l'état A à l'état B. Le diagramme de Sankey nous permet d'intégrer cette information. Ajoutons les éléments suivants. Sur une centaine d'individu au totale. Parmi ceux appartement à la catégorie "chi" dans l'état A, 10 passent à la catégorie "tra" dans l'état B, 5 à la catégorie "lala", 5 à la catégorie "la". Pour l'instant, considérons que les autres ne bougent pas. 
 
 ```{r}
 dat_sank1<-data.frame(x=factor(c(rep('A',100),rep('B',100))),
@@ -118,7 +120,7 @@ ggplot(dat_sank,
         legend.position = 'none')
 ```
 
-Voyons maintenant comment faire de même à partir de données réelles. Reprenons les données d'admissions à Berkley pour l'automne 1973 que nous avions utilisées pour illustrer le diagramme en mosaïque et le paradoxe de Simpson. Celles-ci sont issues d'un tableau sur la page wikipédia (US) sur ce dernier. Nous les avons scrapper à l'aide du code suivant:
+Voyons maintenant comment faire de même à partir de données réelles. Reprenons les données d'admissions à Berkley pour l'automne 1973 que nous avions utilisées pour illustrer le diagramme en mosaïque (GT 6) et le paradoxe de Simpson. Celles-ci sont issues d'un tableau sur la page wikipédia (US) sur ce dernier. Nous les avons scraper à l'aide du code suivant:
 
 ```{r}
 library(rvest)
@@ -130,7 +132,7 @@ dat<-url %>%
     as.data.frame()
 ```
 
-Puis, nous avons établi une data frame correspondant à ces informations établis au niveau individuel.
+Puis, nous avons créé une data frame correspondant à ces informations en retenu une répartition individuelle.
 
 ```{r}
 dat2<-data.frame(sexe=c(rep('homme',2691),rep('femme',1835)),
@@ -203,5 +205,5 @@ ggplot(dat_l2,
 
 On voit clairement que les femmes s'orientent principalement sur les départements les plus sélectifs et donc sont plus fréquemment rejetées que les hommes.
 
-Il y a bien d'autres manières de réaliser un diagramme de Sankey en mobilisant d'autres packages (comme plotly, networkd3,PantaRhei) ou d'autres logiciels (Tableau, Python, Java, même Excel...), certains sites permettent de le faire en ligne (comme (Sankeymatic)[https://sankeymatic.com/build/]). Nous reviendrons dessus avec des applications plus variées. Ce type de diagramme marquant les liens entre variables qualitatives me donne pas mal d'idées.
+Il y a bien d'autres manières de réaliser un diagramme de Sankey en mobilisant d'autres packages (comme plotly, networkd3,PantaRhei) ou d'autres logiciels (Tableau, Python, Java, même Excel...), certains sites permettent de le faire en ligne (comme [Sankeymatic](https://sankeymatic.com/build/)). Nous reviendrons dessus avec des applications plus variées. Ce type de diagramme marquant les liens entre variables qualitatives me donne pas mal d'idées.
 
