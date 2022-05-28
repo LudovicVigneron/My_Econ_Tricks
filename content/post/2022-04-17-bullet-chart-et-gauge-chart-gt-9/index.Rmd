@@ -45,9 +45,9 @@ Commençons par limiter les bases aux villes qui nous intéressent. Disons, Lill
 ```{r}
 dat_17<-dat_17 %>% 
   filter(Commune%in%c('Lille','Strasbourg','Guise','Rennes')) %>% 
-  select(Commune,Abstentions_ins,LE.PEN_ins,MÃ.LENCHON_ins,   
+  select(Commune,Abstentions_ins,LE.PEN_ins,MÉLENCHON_ins,   
          MACRON_ins,FILLON_ins,HAMON_ins,POUTOU_ins) %>% 
-  rename(Melenchon_ins=MÃ.LENCHON_ins) %>%
+  rename(Melenchon_ins=MÉLENCHON_ins) %>%
   pivot_longer(cols=ends_with('_ins'),names_to = 'candidat_17',
                values_to = 'res_17') %>% 
   mutate(parti=ifelse(candidat_17=='Abstentions_ins','Abstention',
