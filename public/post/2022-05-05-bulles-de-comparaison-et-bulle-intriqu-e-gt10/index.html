@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Bulles de comparaison et bulle intriquée GT10" />
+<meta property="og:description" content="Il n’est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d’un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d’avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s’agit dans un graphe d’associé la valeur à un marqueur visuel et d’offrir des marqueurs de même forme mais de tailles différentes pour d’autres valeurs qui vont servir de points de références." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-05-05T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-05-05T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Bulles de comparaison et bulle intriquée GT10"/>
+<meta name="twitter:description" content="Il n’est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d’un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d’avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s’agit dans un graphe d’associé la valeur à un marqueur visuel et d’offrir des marqueurs de même forme mais de tailles différentes pour d’autres valeurs qui vont servir de points de références."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Bulles de comparaison et bulle intriquée GT10 | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Il n’est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d’un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d’avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s’agit dans un graphe d’associé la valeur à un marqueur visuel et d’offrir des marqueurs de même forme mais de tailles différentes pour d’autres valeurs qui vont servir de points de références.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Bulles de comparaison et bulle intriquée GT10</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;May 5, 2022&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/r/'>r</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10%2f&text=Bulles%20de%20comparaison%20et%20bulle%20intriqu%c3%a9e%20GT10&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10%2f&t=Bulles%20de%20comparaison%20et%20bulle%20intriqu%c3%a9e%20GT10" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10%2f&title=Bulles%20de%20comparaison%20et%20bulle%20intriqu%c3%a9e%20GT10&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+
+
+<p><strong>Il n’est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d’un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d’avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s’agit dans un graphe d’associé la valeur à un marqueur visuel et d’offrir des marqueurs de même forme mais de tailles différentes pour d’autres valeurs qui vont servir de points de références. Il est alors nécessaire de choisir éléments qui font eux sens soit au regard de la valeur illustrée, soit en eux-même pour le lecteur voir les deux.</strong></p>
+<p>Dans ce nouveau post, nous nous intéressons à l’utilisation des bulles pour porter ces comparaisons, que ces bulles soient juxtaposées ou intriquées. D’autres formes peuvent bien sûr être mobilisées (carrés, rectangles…). L’idée est ici de faire varier l’aire des figures en fonction des valeurs. Pour illustrer notre propos, nous travaillerons sur les morts du COVID 19 en France depuis le début de l’épidémie en comparant leur nombre celui de la population d’une série de villes. Evidemment, cette présentation est par essence critiquable. On devrait surement se focaliser sur la sur mortalité plutôt que sur le nombre brute des décès. De plus, comparer un cumul sur 2-3 ans avec un stock de population n’est pas ce qui est le plus rigoureux. Néanmoins, l’objectif ici est juste rendre plus concret un ordre de grandeur. Il reviendra alors au lecteur intrigué d’approfondir les choses.</p>
+<p>Commençons donc par établir une data frame contenant les données. Celles-ci ont été collectées manuellement à partir des sites de Santé Publique France et de l’INSEE. A la date où j’écris ce post (le 4 mai 2022) le nombre de morts du COVID en France depuis le début de l’épidémie est de 146 376. Concernant les villes retenues nous avons la plus grandes Paris 2 175 601 habitants, la seconde en terme de taille Marseille 868 277, une grande ville Lille 233 098 et deux villes moyennes Clermont-Ferrand 146 734 et Poitiers 88 665. Marquons l’observation correspondant à la valeur que nous voulons illustrer.</p>
+<pre class="r"><code>dat&lt;-data.frame(cat=c(&#39;Décés&#39;,&#39;Paris&#39;,&#39;Marseille&#39;,&#39;Lille&#39;,
+                      &#39;Clermont-Ferrand&#39;,&#39;Poitiers&#39;),
+                nb=c(146376,2175601,868277,233098,146734,88665),
+                ref=c(&#39;1&#39;,&#39;0&#39;,&#39;0&#39;,&#39;0&#39;,&#39;0&#39;,&#39;0&#39;))
+dat</code></pre>
+<pre><code>##                cat      nb ref
+## 1            Décés  146376   1
+## 2            Paris 2175601   0
+## 3        Marseille  868277   0
+## 4            Lille  233098   0
+## 5 Clermont-Ferrand  146734   0
+## 6         Poitiers   88665   0</code></pre>
+<p>Ceci étant fait, chargeons les parckages que nous utiliserons pour réaliser nos graphes.</p>
+<pre class="r"><code>library(tidyverse)
+library(ggtext)
+library(showtext)
+library(formattable)</code></pre>
+<p>Le plus simple lorsque l’on envisage un bubble comparaison chart juxtaposé, c’est d’utiliser le <strong>geom_point()</strong> et de faire jouer l’esthétique <em>size</em> pour s’assurer de la variation des tailles des cercles représentant les valeurs. Réalisons un graphe de base.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
+  geom_point()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Le résultat est loin d’être convainquant. Voyons comment améliorer les choses. Commençons revoir la taille du graphe. Disons 11 de longueur pour 4 de largeur. Puis, travaillons l’échelle de taille des cercles avec scale_size_area(). Efin, supprimons la légende.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
+  geom_point()+
+  scale_size_area(max_size=85)+
+  theme(legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-4-1.png" width="1056" /></p>
+<p>C’est mieux, mais on peut faire mieux. Intégrons un texte dans chaque cercle pour indique le nom de la catégorie et le nombre représenté. Créons l’étiquette correspondant.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% mutate(lab=paste0(cat,&#39;&lt;br&gt;&#39;,comma(nb,digits=0,big.mark = &#39; &#39;)))</code></pre>
+<p>Créons le graphe.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
+  geom_point()+
+  geom_richtext(aes(label=lab),hjust=0.5,vjust=0.5)+
+  scale_size_area(max_size=85)+
+  theme(legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-6-1.png" width="1056" /></p>
+<p>Revoyons la taille des caractères. Assurons-nous qu’elle soit proportionnelle à celle des cercles pour s’y intégrer. Profitons-en pour supprimer les éléments du thème (axes, grille, textes associés…) en utilisant le theme_void().</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% mutate(tail=c(3,10,6,4,2.5,3))</code></pre>
+<pre class="r"><code>ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
+  geom_point()+
+  geom_richtext(aes(label=lab),hjust=0.5,vjust=0.5,
+                size=dat$tail)+
+  scale_size_area(max_size=85)+
+  theme_void()+
+  theme(legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-8-1.png" width="1056" /></p>
+<p>Réordonnons les bulles dans l’ordre des valeurs (x) de manière ce qu’elles apparaissent toute clairement. Profitons-en pour nous assurer que Clermont-Ferrand soit écrit sur deux lignes et ajuster la fenêtre du graphe.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% mutate(pos=c(0.15,1,0.65,0.45,0.3,0.05))
+dat$lab[which(dat$cat==&#39;Clermont-Ferrand&#39;)]&lt;-&#39;Clermont-&lt;br&gt;Ferrand &lt;br&gt; 146 734&#39; </code></pre>
+<pre class="r"><code>ggplot(data=dat,aes(x=pos,y=1,size=nb,color=ref))+
+  geom_point()+
+  geom_richtext(aes(label=lab),hjust=0.5,vjust=0.5,size=dat$tail)+
+  scale_size_area(max_size=85)+
+  coord_cartesian(xlim=c(0,1.15))+
+  theme_void()+
+  theme(legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-10-1.png" width="1056" /></p>
+<p>Supprimons la mise en forme de type étiquette. Passons les caractères en blanc et modifions le geom_point() pour avoir des ronds avec un liseré noire.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=pos,y=1,size=nb,fill=ref))+
+  geom_point(shape=21,color=&#39;black&#39;)+
+  geom_richtext(aes(label=lab),hjust=0.5,vjust=0.5,size=dat$tail,
+                color=&#39;white&#39;,fontface=&#39;bold&#39;,
+                fill = NA, label.color = NA)+
+  scale_size_area(max_size=85)+
+  coord_cartesian(xlim=c(0,1.15))+
+  theme_void()+
+  theme(legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-11-1.png" width="1056" /></p>
+<p>Ajoutons des guides pour faciliter les comparaisons visuelles ainsi qu’un titre, un sous-titre et un caption pour compléter l’ensemble.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=pos,y=1,size=nb,fill=ref))+
+  geom_point(shape=21,color=&#39;black&#39;)+
+  geom_richtext(aes(label=lab),
+            size=dat$tail,hjust=0.5,vjust=0.5,
+            color=&#39;white&#39;,fontface=&#39;bold&#39;,
+            fill = NA, label.color = NA)+
+  labs(title=&quot;Le nombre de morts du COVID 19 en France (au 5 mai 2022) est équivalant de la population de Clermont-Ferrand&quot;,
+       subtitle = &quot;(décés depuis le début de l&#39;épidémie vs. recenncement 2018)&quot;,
+       caption = &quot;Source: Santé Publique France et INSEE&quot;)+
+  scale_size_area(max_size=85)+
+  coord_cartesian(xlim=c(0,1.15))+
+  theme_void()+
+  theme(plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+        plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+        plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+        axis.title=element_blank(),
+        panel.grid.major.y = element_line(color=&#39;black&#39;),
+        panel.background = element_rect(colour = &#39;black&#39;),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-12-1.png" width="1056" /></p>
+<p>On obtient un graphe qui tient finalement la route. Voyons maintenant comment faire pour obtenir des bulles intriquées. Ici,le geom_point() est difficilement mobilisable. La solution qui m’apparaît la plus simple est d’utiliser le geom_polygon() et quelque souvenir de trigonométrie qui date du lycée.</p>
+<p>Il s’agit de créer la figure en signant les coordonnées d’une série de points (x et y) qui reliés forment le périmètre de la figure. Illustrons son utilisation à partir d’un quadrilatère quelcounque.</p>
+<pre class="r"><code>df &lt;- data.frame(x = c(1:3,2,1), y = c(4, 1, 9,7.5,4))
+ggplot(df, aes(x, y))+
+  geom_polygon()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Notre objectif est de faire de même mais avec un rond. Autrement-dit, il va falloir déterminer les coordonnées de suffisamment de points pour s’assurer que la figure y ressemble. Pour cela, nous utiliserons les relations suivantes qui assurent que des points soit sur le périmètre d’un cercle centré sur l’origine de repaire (x=0 et y=0). Considérant un angle défini en radian, l’abscisse du point situé sur la périphérie correspondant est égale au rayon du cercle multiplié par le cosinus de l’angle et l’ordonnée est égale au rayon multiplié par le sinus de l’angle.</p>
+<p>On a ainsi pour un cercle défini par cents points (des angles allant de 0 à 2 <span class="math inline">\(\pi\)</span>) et un rayon de 2 unités. Pour rendre les choses plus facile à visualiser dans cet étape de construction utilisant le geom_path() qui fonction de la même manière que le geom_polygon() mais sans colorer l’intérieur de la figure.</p>
+<pre class="r"><code>angle&lt;-seq(0,2*pi,length.out=100)
+rayon&lt;-2
+df1&lt;-data.frame(x=c(rayon*cos(angle)),
+                y=c(rayon*sin(angle)))
+ggplot(df1,aes(x=x,y=y))+
+  geom_path()+
+  coord_equal()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Ajoutons un second cercle de rayon plus petit. Disons de rayon 1.</p>
+<pre class="r"><code>angle&lt;-seq(0,2*pi,length.out=100)
+rayon1&lt;-2
+rayon2&lt;-1
+df1&lt;-data.frame(x=c(rayon1*cos(angle)),
+                y=c(rayon1*sin(angle)))
+df2&lt;-data.frame(x=c(rayon2*cos(angle)),
+                y=c(rayon2*sin(angle)))
+ggplot(df1,aes(x=x,y=y))+
+  geom_path()+
+  geom_path(data=df2,aes(x=x,y=y))+
+  coord_equal()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>Etalonner la taille des cercles en fonction des valeurs n’est pas une bonne idée. Les aires figures ne sont pas proportionnelles à leur rayon.</p>
+<pre class="r"><code>air1&lt;-pi*rayon1^2
+air2&lt;-pi*rayon2^2
+c(air1,air2)</code></pre>
+<pre><code>## [1] 12.566371  3.141593</code></pre>
+<p>Pour obtenir une aire pour le rond 2 correspondant à la moitié de celle du rond 1, il faut appliquer au rayon du rond 2 un facteur tel que:</p>
+<p><span class="math display">\[aire2= \frac{aire1}{2}=(rayon2)^2\times{\pi}\]</span></p>
+<p><span class="math display">\[\frac{aire2}{\pi}=(rayon2)^2\]</span></p>
+<p><span class="math display">\[rayon2=\sqrt{\frac{aire2}{\pi}}\]</span></p>
+<pre class="r"><code>air2&lt;-air1/2
+sqrt(air2/pi)</code></pre>
+<pre><code>## [1] 1.414214</code></pre>
+<p>On a ainsi pour un rayon de 2 pour le rond 1 un rayon de 1.414214 pour le rond 2.</p>
+<pre class="r"><code>angle&lt;-seq(0,2*pi,length.out=100)
+rayon1&lt;-2
+rayon2&lt;-1.414214
+df1&lt;-data.frame(x=c(rayon1*cos(angle)),
+                y=c(rayon1*sin(angle)))
+df2&lt;-data.frame(x=c(rayon2*cos(angle)),
+                y=c(rayon2*sin(angle)))
+ggplot(df1,aes(x=x,y=y))+
+  geom_path()+
+  geom_path(data=df2,aes(x=x,y=y))+
+  coord_equal()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>Le différence est notable. Maintenant que les aires sont réglées, décalons le rond sur la droite pour avoir des bulles juxtaposées.</p>
+<pre class="r"><code>angle&lt;-seq(0,2*pi,length.out=100)
+rayon1&lt;-2
+rayon2&lt;-1.414214
+df1&lt;-data.frame(x=c(rayon1*cos(angle)),
+                y=c(rayon1*sin(angle)))
+df2&lt;-data.frame(x=c(rayon2*cos(angle)+(rayon1+rayon2)*1.25),
+                y=c(rayon2*sin(angle)))
+ggplot(df1,aes(x=x,y=y))+
+  geom_path()+
+  geom_path(data=df2,aes(x=x,y=y))+
+  coord_equal()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>On peut aussi s’assurer que le plus petit cercle touche le périmètre du plus grand en bas pour obtenir des cercles intriquées.</p>
+<pre class="r"><code>angle&lt;-seq(0,2*pi,length.out=100)
+rayon1&lt;-2
+rayon2&lt;-1.414214
+df1&lt;-data.frame(x=c(rayon1*cos(angle)),
+                y=c(rayon1*sin(angle)))
+df2&lt;-data.frame(x=c(rayon2*cos(angle)),
+                y=c(rayon2*sin(angle)-(rayon1-rayon2)))
+ggplot(df1,aes(x=x,y=y))+
+  geom_path()+
+  geom_path(data=df2,aes(x=x,y=y))+
+  coord_equal()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>Voyons ce que cela donne si on met en regard les morts du COVID et la population Parisienne. Ce dernier représente 6,7% de cette dernière. Les aires doivent être ajustées en conséquences.</p>
+<pre class="r"><code>val1&lt;-2175601
+val2&lt;-146376
+rap&lt;-val2/val1
+angle&lt;-seq(0,2*pi,length.out=100)
+rayon1&lt;-2
+air1&lt;-rayon1^2*pi
+air2&lt;-air1*rap
+rayon2&lt;-sqrt(air2/pi)
+df1&lt;-data.frame(x=c(rayon1*cos(angle)),
+                y=c(rayon1*sin(angle)))
+df2&lt;-data.frame(x=c(rayon2*cos(angle)),
+                y=c(rayon2*sin(angle)-(rayon1-rayon2)))
+ggplot(df1,aes(x=x,y=y))+
+  geom_path()+
+  geom_path(data=df2,aes(x=x,y=y))+
+  coord_equal()</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-21-1.png" width="672" /></p>
+<p>Maintenant que nous avons quelque chose qui se tient. Créons une fonction permettant de générer un graphe simplement en intégrant les valeurs à comparer et quelques éléments de mise en forme.</p>
+<pre class="r"><code>bubble_c&lt;-function(v1,v2,col1,col2,label1=&#39;cercle1&#39;,
+                   label2=&#39;cercle2&#39;,type=c(&quot;nested&quot;,&quot;dodge&quot;)){
+   rap&lt;-v2/v1
+   angle&lt;-seq(0,2*pi,length.out=100)
+   rayon1&lt;-2
+   air1&lt;-rayon1^2*pi
+   air2&lt;-air1*rap
+   rayon2&lt;-sqrt(air2/pi)
+   df1&lt;-data.frame(x=c(rayon1*cos(angle)),
+                y=c(rayon1*sin(angle)))
+   if(type==&quot;nested&quot;){
+   df2&lt;-data.frame(x=c(rayon2*cos(angle)),
+                y=c(rayon2*sin(angle)-(rayon1-rayon2)))
+   g_n&lt;-ggplot(df1,aes(x=x,y=y))+
+               geom_polygon(fill=col1)+
+               geom_polygon(data=df2,aes(x=x,y=y),fill=col2)+
+               geom_richtext(aes(x=0,y=1.75,label=label1),
+                             hjust=0.5,vjust=0.5,
+                             color=&#39;white&#39;,fontface=&#39;bold&#39;,
+                             fill = NA, label.color = NA)+
+               geom_richtext(aes(x=0,y=-(rayon1-rayon2),label=label2),
+                             hjust=0.5,vjust=0.5,
+                             color=&#39;white&#39;,fontface=&#39;bold&#39;,
+                             fill = NA, label.color = NA)+
+               coord_equal()+
+               theme_void()+
+               theme(plot.title=element_text(hjust=0.5,face=&#39;bold&#39;),
+                     plot.subtitle=element_text(hjust=0.5,face=&#39;italic&#39;),
+                     plot.caption = element_text(hjust=1,face=&#39;italic&#39;))
+    return(g_n)}
+    if(type==&quot;dodge&quot;){
+     df2&lt;-data.frame(x=c(rayon2*cos(angle)+(rayon1+rayon2)*1.25),
+                y=c(rayon2*sin(angle)))
+     g_d&lt;-ggplot(df1,aes(x=x,y=y))+
+                 geom_polygon(fill=col1)+
+                 geom_polygon(data=df2,aes(x=x,y=y),
+                                   fill=col2)+
+                 geom_richtext(aes(x=0,y=0,label=label1),
+                               hjust=0.5,vjust=0.5,
+                               color=&#39;white&#39;,fontface=&#39;bold&#39;,
+                               fill = NA, label.color = NA)+
+                 geom_richtext(aes(x=(rayon1+rayon2)*1.25,
+                                   y=0,label=label2),
+                               hjust=0.5,vjust=0.5,
+                               color=&#39;white&#39;,fontface=&#39;bold&#39;,
+                               fill = NA, label.color = NA)+
+                 coord_equal()+
+                 theme_void()+
+                 theme(plot.title=element_text(hjust=0.5,face=&#39;bold&#39;),
+                       plot.subtitle=element_text(hjust=0.5,face=&#39;italic&#39;),
+                       plot.caption = element_text(hjust=1,face=&#39;italic&#39;))
+     return(g_d)}
+}</code></pre>
+<p>Notez que comme la fonction génère un graphe de type ggplot tous les ajouts et complément de mise en forme sont possible en respectant la synthaxe associée.</p>
+<p>Testons notre fonction avec la mise en regard de la population de Lille avec le nombre de décès.</p>
+<pre class="r"><code>bubble_c(233098,146376,&#39;grey&#39;,&#39;blue&#39;,type=&#39;nested&#39;,label1 = &#39;Lille &lt;br&gt; 233 098&#39;, label2=&#39;Décés &lt;br&gt; 146 376&#39;)+
+  labs(title = &quot;Mise en regard du nombre de décés du COVID par rapport à la population de Lille&quot;,
+       subtitle = &quot;Décés en France au 4 mai 2022 depuis le début de lépidémie&quot;,
+       caption = &quot;Source: Santé Publique France et INSEE&quot;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
+<p>On peut également à partir de notre fonction réaliser un graphe accollé juste en sélectionnant l’option dodge.</p>
+<pre class="r"><code>bubble_c(233098,146376,&#39;grey&#39;,&#39;blue&#39;,type=&#39;dodge&#39;,label1 = &#39;Lille &lt;br&gt; 233 098&#39;, label2=&#39;Décés &lt;br&gt; 146 376&#39;)+
+  labs(title = &quot;Mise en regard du nombre de décés du COVID par rapport à la population de Lille&quot;,
+       subtitle = &quot;Décés en France au 4 mai 2022 depuis le début de lépidémie&quot;,
+       caption = &quot;Source: Santé Publique France et INSEE&quot;)</code></pre>
+<p><img src="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/index_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p>Des variations peuvent être envisage de manière à intégrer plus de bulle dans les graphes soit en en assemblant plusieurs avec le package patchwork ou simplement en modifiant la fonction que nous venons de construire.</p>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10%2f&text=Bulles%20de%20comparaison%20et%20bulle%20intriqu%c3%a9e%20GT10&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10%2f&t=Bulles%20de%20comparaison%20et%20bulle%20intriqu%c3%a9e%20GT10" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10%2f&title=Bulles%20de%20comparaison%20et%20bulle%20intriqu%c3%a9e%20GT10&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>
