@@ -1,5 +1,5 @@
 ---
-title: Bulles de comparaison et bulle intriquée GT10
+title: Bulles de comparaison et bulles intriquées GT10
 author: Ludovic Vigneron
 date: '2022-05-05'
 slug: []
