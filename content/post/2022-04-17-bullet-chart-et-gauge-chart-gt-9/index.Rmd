@@ -7,16 +7,16 @@ categories:
   - datavisualisation
   - ggplot2
   - R
-  - GT
+  - gt
 tags:
   - dataviz
   - ggplot2
   - plotly
   - r
-  - GT
+  - gt
 ---
 
-**Il s'agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l'on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.**
+**Il s'agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le "bullet chart", et une plus imagée répliquant une jauge comme celle que l'on peut trouver pour les compteurs de vitesse de véhicule, le "gauge chart".**
 
 Pour illustrer leur construction et pour coller à l'actualité en France, nous allons utiliser des données électorales. Nous allons comparer les résultats des principaux parties dans différentes villes où j'ai habité et/ou j'aimerai habiter pour le premier tour des présidentielles de 2022 et les mettre en regard avec ceux de 2017. Les données sont tirées du site  [data.gouv.fr](https://www.data.gouv.fr/fr/pages/donnees-des-elections/). Les fichiers de base ont été chargés dans le dossier de travail de manière à faciliter leur traitement.
 
