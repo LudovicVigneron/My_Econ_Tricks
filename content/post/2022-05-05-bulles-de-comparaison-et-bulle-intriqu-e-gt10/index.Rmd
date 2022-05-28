@@ -15,11 +15,11 @@ tags:
   - GT
 ---
 
-**Il n'est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d'un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d'avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s'agit dans un graphe d'associer la valeur à un marqueur visuel et d'offrir des marqueurs de même forme mais de tailles différentes pour d'autres valeurs qui vont servir de points de références. Il est alors nécessaire de choisir des éléments qui font eux sens soit au regard de la valeur illustrée, soit en eux-même pour le lecteur voir les deux.**
+**Il n'est pas toujours facile de donner du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d'un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d'avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s'agit dans un graphe d'associer la valeur à un marqueur visuel et d'offrir des marqueurs de même forme mais de tailles différentes pour d'autres valeurs qui vont servir de points de références. Il est alors nécessaire de choisir des éléments qui font eux sens soit au regard de la valeur illustrée, soit en eux-même pour le lecteur voir les deux.**
 
 Dans ce nouveau post, nous nous intéressons à l'utilisation des bulles pour porter ces comparaisons, que ces bulles soient juxtaposées ou intriquées. D'autres formes peuvent bien sûr être mobilisées (carrés, rectangles...). L'idée est ici de faire varier l'aire des figures en fonction des valeurs. Pour illustrer notre propos, nous travaillerons sur les morts du COVID 19 en France depuis le début de l'épidémie en comparant leur nombre à celui de la population d'une série de villes. Evidemment, cette présentation est par essence critiquable. On devrait surement se focaliser sur la surmortalité plutôt que sur le nombre brute des décès. De plus, comparer un cumul sur 2-3 ans avec un stock de population n'est pas ce qui est le plus rigoureux. Néanmoins, l'objectif ici est juste rendre plus concret un ordre de grandeur. Il reviendra alors au lecteur intrigué d'approfondir les choses.
 
-Commençons donc par établir une data frame contenant les données. Celles-ci ont été collectées manuellement à partir des sites de Santé Publique France et de l'INSEE. A la date où j'écris ce post (le 4 mai 2022) le nombre de morts du COVID en France depuis le début de l’épidémie est de 146 376. Concernant les villes retenues nous avons la plus grandes Paris 2 175 601 habitants, la seconde en terme de taille Marseille 868 277, une grande ville Lille 233 098 et deux villes moyennes Clermont-Ferrand 146 734 et Poitiers 88 665. Marquons l'observation correspondant à la valeur que nous voulons illustrer.
+Commençons donc par établir une data frame contenant les données. Celles-ci ont été collectées manuellement à partir des sites de Santé Publique France et de l'INSEE. A la date où j'écris ce post (le 4 mai 2022) le nombre de morts du COVID en France depuis le début de l’épidémie est de 146 376. Concernant les villes retenues, nous avons la plus grandes Paris 2 175 601 habitants, la seconde en terme de taille Marseille 868 277, une grande ville Lille 233 098 et deux villes moyennes Clermont-Ferrand 146 734 et Poitiers 88 665. Marquons l'observation correspondant à la valeur que nous voulons illustrer.
 
 ```{r}
 dat<-data.frame(cat=c('Décés','Paris','Marseille','Lille',
@@ -29,7 +29,7 @@ dat<-data.frame(cat=c('Décés','Paris','Marseille','Lille',
 dat
 ```
 
-Ceci étant fait, chargeons les parckages que nous utiliserons pour réaliser nos graphes.
+Ceci étant fait, chargeons les packages que nous utiliserons pour réaliser nos graphes.
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -45,7 +45,7 @@ ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
   geom_point()
 ```
 
-Le résultat est loin d'être convainquant. Voyons comment améliorer les choses. Commençons revoir la taille du graphe. Disons  11 de longueur pour 4 de largeur. Puis, travaillons l'échelle de taille des cercles avec scale_size_area(). Efin, supprimons la légende.
+Le résultat est loin d'être convainquant. Voyons comment améliorer les choses. Commençons par revoir la taille du graphe. Disons  11 de longueur pour 4 de largeur. Puis, travaillons l'échelle de taille des cercles avec scale_size_area(). Enfin, supprimons la légende.
 
 ```{r fig.height=4, fig.width=11}
 ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
@@ -54,7 +54,7 @@ ggplot(data=dat,aes(x=cat,y=1,size=nb,color=ref))+
   theme(legend.position='none')
 ```
 
-C'est mieux, mais on peut faire mieux. Intégrons un texte dans chaque cercle pour indique le nom de la catégorie et le nombre représenté. Créons l'étiquette correspondant.
+C'est mieux, mais on peut faire encore mieux. Intégrons un texte dans chaque cercle pour indiquer le nom de la catégorie et le nombre représenté. Créons l'étiquette correspondant.
 
 ```{r}
 dat<-dat %>% mutate(lab=paste0(cat,'<br>',comma(nb,digits=0,big.mark = ' ')))
@@ -141,9 +141,9 @@ ggplot(data=dat,aes(x=pos,y=1,size=nb,fill=ref))+
         legend.position = 'none')
 ```
 
-On obtient un graphe qui tient finalement la route. Voyons maintenant comment faire pour obtenir des bulles intriquées. Ici,le geom_point() est difficilement mobilisable. La solution qui m'apparaît la plus simple est d'utiliser le geom_polygon() et quelque souvenir de trigonométrie qui date du lycée.
+On obtient un graphe qui tient finalement la route. Voyons maintenant comment faire pour obtenir des bulles intriquées. Ici,le **geom_point()** est difficilement mobilisable. La solution qui m'apparaît la plus simple est d'utiliser le **geom_polygon()** et quelques souvenirs de trigonométrie qui datent du lycée.
 
-Il s'agit de créer la figure en signant les coordonnées d'une série de points (x et y) qui reliés forment le périmètre de la figure. Illustrons son utilisation à partir d'un quadrilatère quelcounque.
+Il s'agit de créer la figure en signant les coordonnées d'une série de points (x et y), qui, reliés, forment le périmètre de la figure. Illustrons son utilisation à partir d'un quadrilatère quelconque.
 
 ```{r}
 df <- data.frame(x = c(1:3,2,1), y = c(4, 1, 9,7.5,4))
@@ -151,9 +151,9 @@ ggplot(df, aes(x, y))+
   geom_polygon()
 ```
 
-Notre objectif est de faire de même mais avec un rond. Autrement-dit, il va falloir déterminer les coordonnées de suffisamment de points pour s'assurer que la figure y ressemble. Pour cela, nous utiliserons les relations suivantes qui assurent que des points soit sur le périmètre d'un cercle centré sur l'origine de repaire (x=0 et y=0). Considérant un angle défini en radian, l'abscisse du point situé sur la périphérie correspondant est égale au rayon du cercle multiplié par le cosinus de l'angle et l'ordonnée est égale au rayon multiplié par le sinus de l'angle. 
+Notre objectif est de faire de même mais avec un rond. Autrement-dit, il va falloir déterminer les coordonnées de suffisamment de points pour s'assurer que la figure y ressemble. Pour cela, nous utiliserons les relations suivantes qui assurent que des points soit sur le périmètre d'un cercle centré sur l'origine de repaire (x=0 et y=0). Considérant un angle défini en radians, l'abscisse du point situé sur la périphérie correspondant est égale au rayon du cercle multiplié par le cosinus de l'angle et l'ordonnée est égale au rayon multiplié par le sinus de l'angle. 
 
-On a ainsi pour un cercle défini par cents points (des angles allant de 0 à 2 $\pi$) et un rayon de 2 unités. Pour rendre les choses plus facile à visualiser dans cet étape de construction utilisant le geom_path() qui fonction de la même manière que le geom_polygon() mais sans colorer l'intérieur de la figure.
+On a ainsi pour un cercle défini par cents points (des angles allant de 0 à 2 $\pi$) et un rayon de 2 unités. Pour rendre les choses plus faciles à visualiser dans cette étape de construction utilisant le **geom_path()** qui fonctionne de la même manière que le **geom_polygon()** mais sans colorer l'intérieur de la figure.
 
 ```{r}
 angle<-seq(0,2*pi,length.out=100)
@@ -181,13 +181,14 @@ ggplot(df1,aes(x=x,y=y))+
   coord_equal()
 ```
 
-Etalonner la taille des cercles en fonction des valeurs n'est pas une bonne idée. Les aires figures ne sont pas proportionnelles à leur rayon.
+Etalonner la taille des cercles en fonction des valeurs n'est pas une bonne idée. Les aires des figures ne sont pas proportionnelles à leur rayon.
 
 ```{r}
 air1<-pi*rayon1^2
 air2<-pi*rayon2^2
 c(air1,air2)
 ```
+
 Pour obtenir une aire pour le rond 2 correspondant à la moitié de celle du rond 1, il faut appliquer au rayon du rond 2 un facteur tel que:
 
 $$aire2= \frac{aire1}{2}=(rayon2)^2\times{\pi}$$
@@ -201,7 +202,7 @@ air2<-air1/2
 sqrt(air2/pi)
 ```
 
-On a ainsi pour un rayon de 2 pour le rond 1 un rayon de 1.414214 pour le rond 2.
+On a ainsi, pour un rayon de 2 pour le rond 1, un rayon de 1.414214 pour le rond 2.
 
 ```{r}
 angle<-seq(0,2*pi,length.out=100)
@@ -217,7 +218,7 @@ ggplot(df1,aes(x=x,y=y))+
   coord_equal()
 ```
 
-Le différence est notable. Maintenant que les aires sont réglées, décalons le rond sur la droite pour avoir des bulles juxtaposées.
+La différence est notable. Maintenant que le problèmes des aires est réglé, décalons le rond sur la droite pour avoir des bulles juxtaposées.
 
 ```{r}
 angle<-seq(0,2*pi,length.out=100)
@@ -327,7 +328,7 @@ bubble_c<-function(v1,v2,col1,col2,label1='cercle1',
      return(g_d)}
 }
 ```
-Notez que comme la fonction génère un graphe de type ggplot tous les ajouts et complément de mise en forme sont possible en respectant la synthaxe associée.
+Notez que comme la fonction génère un graphe de type ggplot tous les ajouts et compléments de mise en forme sont possibles en respectant la synthaxe associée.
 
 Testons notre fonction avec la mise en regard de la population de Lille avec le nombre de décès.
 
@@ -338,7 +339,7 @@ bubble_c(233098,146376,'grey','blue',type='nested',label1 = 'Lille <br> 233 098'
        caption = "Source: Santé Publique France et INSEE")
 ```
 
-On peut également à partir de notre fonction réaliser un graphe accollé juste en sélectionnant l'option dodge.
+On peut également à partir de notre fonction réaliser un graphe accolé juste en sélectionnant l'option dodge.
 
 ```{r}
 bubble_c(233098,146376,'grey','blue',type='dodge',label1 = 'Lille <br> 233 098', label2='Décés <br> 146 376')+
@@ -347,5 +348,5 @@ bubble_c(233098,146376,'grey','blue',type='dodge',label1 = 'Lille <br> 233 098',
        caption = "Source: Santé Publique France et INSEE")
 ```
 
-Des variations peuvent être envisage de manière à intégrer plus de bulle dans les graphes soit en en assemblant plusieurs avec le package patchwork ou simplement en modifiant la fonction que nous venons de construire.
+Des variations peuvent être envisagé de manière à intégrer plus de bulles dans les graphes soit en en assemblant plusieurs avec le package patchwork ou simplement en modifiant la fonction que nous venons de construire.
 
