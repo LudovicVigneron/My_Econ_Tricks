@@ -7,18 +7,20 @@ categories:
   - datavisualisation
   - ggplot2
   - R
+  - GT
 tags:
   - dataviz
   - ggplot2
   - plotly
   - r
+  - GT
 ---
 
 **Il s'agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l'on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.**
 
-Pour illustrer leur construction et pour coller à l'actualité en France, nous allons utiliser des données électorales. Nous allons comparer les résultats des principaux parties dans différentes où j'ai habité et/ou j'aimerai habiter pour le premier tour des présidentielles de 2022 et les mettre en regard avec ceux de 2017. Les données sont tirées du site  [data.gouv.fr](https://www.data.gouv.fr/fr/pages/donnees-des-elections/). Les fichiers de base ont été charger dans le dossier de travail de manière à faciliter leur traitement.
+Pour illustrer leur construction et pour coller à l'actualité en France, nous allons utiliser des données électorales. Nous allons comparer les résultats des principaux parties dans différentes villes où j'ai habité et/ou j'aimerai habiter pour le premier tour des présidentielles de 2022 et les mettre en regard avec ceux de 2017. Les données sont tirées du site  [data.gouv.fr](https://www.data.gouv.fr/fr/pages/donnees-des-elections/). Les fichiers de base ont été chargés dans le dossier de travail de manière à faciliter leur traitement.
 
-Pour entamer le processus, comme à chaque fois, commençons par chargeons les packages mobilisés.
+Pour entamer le processus, comme à chaque fois, commençons par charger les packages mobilisés.
 
 ```{r message=FALSE, warning=FALSE}
 library(readr)
@@ -31,14 +33,14 @@ library(patchwork)
 
 ```
 
-Notez que l'on a des fichers dans deux formats différents (csv et xlsx). On utilise donc deux modes d'importation différent et il y a un travail d'harmonisation des données à réaliser. Avant de nous y attaquer chargeons-les.
+Notez que l'on a des fichers dans deux formats différents (csv et xlsx). On utilise donc deux modes d'importation différents et on procède à un travail d'harmonisation. Avant de nous y attaquer, chargeons-les.
 
 ```{r message=FALSE, warning=FALSE,echo=FALSE,include=FALSE}
 dat_17<-read.csv("Presidentielle_2017_Resultats_Communes_T1_clean.csv")
 dat_22<-read_excel("resultats-par-niveau-subcom-t1-france-entiere.xlsx")
 ```
 
-Commençons par limiter les bases aux villes qui nous intéresse. Disons, Lille, Strasbourg, Guise (petite ville de l'Aisne) et Rennes (parce que la Bretagne).Limitons-la également en terme de candidats. Retenons ceux associés aux RN, à LFI, à EM , à LR, aux PS et aux NPA. Mettons l'ensemble en forme pour le traitement.
+Commençons par limiter les bases aux villes qui nous intéressent. Disons, Lille, Strasbourg, Guise (petite ville de l'Aisne) et Rennes (parce que la Bretagne).Limitons-les également en terme de candidats. Retenons ceux associés aux RN, à LFI, à EM , à LR, aux PS et aux NPA. Mettons l'ensemble en forme pour le traitement.
 
 ```{r}
 dat_17<-dat_17 %>% 
@@ -91,7 +93,7 @@ ggplot(data=filter(dat_22,parti!='Abstention'&Commune=='Lille'),
     size = 1, color = "blue")
 ```
 
-Pour établir le segment que indique le score à l'élection précédente, nous utilisons le geom_linerange(). Le principal point de difficulté est alors de s'assurer du l'emplacement vertical de l'élément représenté. Il doit correspondre à l'indexation des parties qui est fonction de leur score de 2022 plus et moins une marge de manière à établir le haut et le bas du segment. Ces traitements encombrent le code. Pour clarifier la structure, reportons-les en début de programme et poursuivons l'élaboration de notre graphe avec une mise en forme avancée (titre, fond noir, quadrillage gris, uniquement vertical, suppression des titres des axes, mise en forme des étiquettes des axes, etc.). 
+Pour établir le segment qui indique le score à l'élection précédente, nous utilisons le geom_linerange(). Le principal point de difficulté est alors de s'assurer de l'emplacement vertical de l'élément représenté. Il doit correspondre à l'indexation des parties qui est fonction de leur score de 2022 plus et moins une marge de manière à établir le haut et le bas du segment. Ces traitements encombrent le code. Pour en clarifier la structure, reportons-les en début de programme et poursuivons l'élaboration de notre graphe avec une mise en forme avancée (titre, fond noir, quadrillage gris, uniquement vertical, suppression des titres des axes, mise en forme des étiquettes des axes, etc.). 
 
 ```{r}
 com<-'Lille'
@@ -173,7 +175,7 @@ g_bu(com='Strasbourg',ref='Abstention',
      dat1=dat_17,dat2=dat_22)
 ```
 
-Le graphe obtenu est en tout point comparable à notre graphe de base même s'il présente une situation électorale différente. Il y a notamment moins d'abstention à Strasbourg. Créons les graphes pour nos quatre villes, puis arrangeons-les pour les réunir sur une même représentation avec un titre général. Pour cela, utilisons le package patchwork. Il offre une syntaxe simple et flexible ainsi qu'un certain nombre de complément permettant d'améliorer la présentation de l'ensemble compatible avec ggplot. 
+Le graphe obtenu est en tout point comparable à notre graphe de base même s'il présente une situation électorale différente. Il y a notamment moins d'abstentions à Strasbourg. Créons les graphes pour nos quatre villes, puis arrangeons-les pour les réunir sur une même représentation avec un titre général. Pour cela, utilisons le package patchwork. Celui-ci offre une syntaxe simple et flexible ainsi qu'un certain nombre de compléments permettant d'améliorer la présentation de l'ensemble. Le tout est compatible avec ggplot. 
 
 ```{r}
 ville<-c('Lille','Strasbourg','Guise','Rennes')
@@ -187,7 +189,7 @@ for(i in ville){
                                                           color='black')))
 ```
 
-L'ensemble est plaisant mais reste difficile à lire sans un texte expliquant ce que représente les différents éléments graphiques proposés . Il est donc utile d'ajouter une légende.  Celle-ci ne peut être établi automatiquement. Créons-la donc en répliquant le graphe pour un parti type et en ajoutant des étiquettes guidant le lecteur dans le décryptage des barres (la rouge et la blanche) et le segment.
+L'ensemble est plaisant mais reste difficile à lire sans un texte expliquant ce que représente les différents éléments graphiques proposés . Il est donc utile d'ajouter une légende. Celle-ci ne peut être établie automatiquement. Créons-la donc en répliquant le graphe pour un parti type et en ajoutant des étiquettes guidant le lecteur dans le décryptage des barres (la rouge et la blanche) et du segment.
 
 ```{r}
 d<-data.frame(x_=0.24,y_=factor('Sigle
@@ -229,24 +231,24 @@ legend/(g_Guise+g_Lille)/(g_Strasbourg+g_Rennes)+
    plot_layout( heights = unit(c(2,5,5), c('cm', 'cm','cm')))
 ```
 
-On obtient un bullet chart simple et efficace qui rend compte des résultats du premier tour de l'élection présidentielle dans quatre villes en donnant des points de repères aidant à les analyser. Evidemment, pour faire un travail sérieux, il faudrait reprendre l'ensemble des partis présentant un candidat et non une sélection (au moins ELV). Mais, ce n'est pas le but ici.
+On obtient un bullet chart simple et efficace qui rend compte des résultats du premier tour de l'élection présidentielle dans quatre villes en donnant des points de repères aidant à les analyser. Evidemment, pour faire un travail sérieux, il faudrait reprendre l'ensemble des partis présentant un candidat et non une sélection (il faudrait au moins ajouter ELV). Mais, ce n'est pas le but ici.
 
-On peut représenter le même type d'information sont la forme d'un gauge chart, autrement-dit d'un cadrant comparable à celui d'un compteur de vitesse ou d'un baromètre. Encore une fois, il faudra travailler nos geom pour obtenir le rendu souhaité. Élaborons donc un graphe de base en nous concentrons sur les résultats de la France Insoumise (LFI) à Lille. Le plus simple ici c'est non pas d'utiliser plotly plutôt que ggplot. Il s'agit d'un package permettant de réaliser des graphes interactifs. Chargeons-le.
+On peut représenter le même type d'informations sont la forme d'un gauge chart, autrement-dit d'un cadrant comparable à celui d'un compteur de vitesse ou d'un baromètre. Encore une fois, il faudra travailler nos geom pour obtenir le rendu souhaité. Élaborons donc un graphe de base en nous concentrons sur les résultats de la France Insoumise (LFI) à Lille. Le plus simple ici c'est d'utiliser plotly plutôt que ggplot. Il s'agit d'un package permettant de réaliser des graphes interactifs. Chargeons-le.
 
 ```{r message=FALSE, warning=FALSE}
 library(plotly)
 ```
 
-La syntaxe de plotly est un peu moins simple que celle de ggplot. Il existe néanmoins des possibilités de passer des graphes ggplot dans plotly pour les rendre interactifs avec la fonction ggplotly(). Nous ne l'utiliserons pas ici.  
+La syntaxe de plotly est un peu moins simple que celle de ggplot. Il existe néanmoins des possibilités de passer des graphes ggplot dans plotly pour les rendre interactifs avec la fonction **ggplotly()**. Nous ne l'utiliserons pas ici.  
 
-La fonction sur laquelle nous allons travailler est plot_ly(). Le type de représentation est "indicator" et son mode "gauge". Intégrons le score de LFI à lille comme valeur 28.14%.
+La fonction sur laquelle nous allons travailler est **plot_ly()**. Le type de représentation est "indicator" et son mode "gauge". Intégrons le score de LFI à lille comme valeur 28,14%.
 
 ```{r}
 fig_ <- plot_ly(type = "indicator",mode = "gauge",value = 28.14)
 fig_
 ```
 
-On a bien une jauge. Il ne reste plus qu'à l'habiller pour qu'elle permettre de rendre compte des mêmes informations que dans notre série de graphes précédents (pour un partie le score, le score précédent et l'abstention). Ajoutons la valeur représentée ainsi qu'un titre. Les arguments de mis en forme sont ici introduits par des listes.
+On a bien une jauge. Il ne reste plus qu'à l'habiller pour qu'elle permettre de rendre compte des mêmes informations que dans notre série de graphes précédents (pour un parti le score, le score précédent et l'abstention). Ajoutons la valeur représentée ainsi qu'un titre. Les arguments de mis en forme sont ici introduits par des listes.
 
 ```{r}
 fig_ <- plot_ly(type = "indicator",mode = "gauge+number",value = 28.14,
@@ -254,7 +256,7 @@ fig_ <- plot_ly(type = "indicator",mode = "gauge+number",value = 28.14,
 fig_
 ```
 
-Ajoutons le score de l'élection précédent 20.1% avec un segment bleu. Pour cela, utilisons l'option threshold.
+Ajoutons le score de l'élection précédent 20,1% avec un segment bleu. Pour cela, utilisons l'option *threshold*.
 
 ```{r}
 fig_<-plot_ly(type = "indicator",mode = "gauge+number",value = 28.14,
@@ -300,7 +302,7 @@ fig_%>%layout(margin = list(l=20,r=30,t=40,b=5),
               font = list(color = "White", family = "Arial")) 
 ```
 
-Passons le delta en blanc et limitons l'étendu à 50% (49.99% pour des raisons de mise en page).
+Passons le delta en blanc et limitons l'étendue à 50% (49,99% pour des raisons de mise en page).
 
 ```{r fig.height=6, fig.width=9}
 fig_<-plot_ly(type = "indicator",mode = "gauge+number+delta",value = 28.14,
@@ -324,6 +326,6 @@ fig_%>%layout(margin = list(l=20,r=30,t=40,b=10),
 
 Le plus simple pour obtenir un fichier image de type png à partir de là, c'est d'utiliser l'interface créée par plotly en cliquant sur l'appareil photo. Le fichier apparaîtra dans vos téléchargements. D'autres solutions existent. Mais, elles nécessitent soit une inscription à l'API de plotly, soit d'installer orca.
 
-Dans tout les cas, le gauge chart est une façon originale de présenter les données. Elle fonctions plutôt bien sur nos résultats d'élection. Même si on peut difficilement traiter de cette manière sur peu d'espace autant d'informations qu'avec les barres horizontales des bullet charts.  
+Dans tout les cas, le gauge chart est une façon originale de présenter les données. Elle fonctionne plutôt bien sur nos résultats d'élection. Même si on ne peut difficilement traiter de cette manière, sur peu d'espace, autant d'informations qu'avec les barres horizontales des bullet charts.  
 
 Plotly permet des réalisations intéressantes. Je suis loin de le maîtriser. C'est donc à creuser. Je pense que j'aurai pu obtenir un résultat comparable avec ggplot mais au prix de beaucoup d'efforts. Suite au prochain numéro...
