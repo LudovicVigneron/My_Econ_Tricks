@@ -7,18 +7,16 @@ categories:
   - dataviz
   - ggplot2
   - r
-  - gt
 tags:
   - Climat
   - dataviz
   - ggplot2
   - r
-  - gt
 ---
 
-**Dans ce nouveau post, nous allons traiter d'une forme de visualisation hybride entre le tableau et le graphe: la heatmap (ou en français carte thermique). Celle-ci permet de présenter en un unique visuel une grande quantité de données et autorise de fait la réalisation de comparaisons multiples. Son point de départ est un tableau à deux dimensions établis pour stocker les valeurs à illustrer. Il s'agit alors de communiquer une information quasi complète sur la répartition de ces valeurs sur les deux dimensions. Cela serait bien sur possible juste en fournissant le tableau. Cependant, la lecture en serait laborieuse eu égard à la taille de ce dernier. Pour simplifier les choses, la heatmap propose d'attribuer des couleurs aux différentes cases du tableau et de faire varier les nuances en fonction des valeurs de la variable représentée. Les contrastes établis permettent ainsi de mettre en évidence des tendances.**
+**Dans ce nouveau post, nous allons traiter d'une forme de visualisation hybride entre le tableau et le graphe: la heatmap (ou en français carte thermique). Elle permet de présenter en un unique visuel une grande quantité de données ce qui autorise la réalisation de comparaisons multiples entre leur valeur. Le point de départ est un tableau à deux dimensions établis pour stocké les valeurs d'une variable. Il s'agit alors de communiquer une information quasi complète sur la répartition de ces valeurs sur ces deux dimensions. Cela serait possible juste en fournissant le tableau mais la lecture en serait laborieuse d'autant ne serait que du fait de sa taille. Pour simplifier les choses, la heatmap propose de le faire en attribuant des couleurs aux différentes cases dont les nuances varies en fonction de la valeur de la variable représentée. Les contrastes établis permettent de mettre en évidence des tendances.**
 
-Il existe deux grands types de heatmap: la heatmap la classique, où les dimensions du tableau sont n'importe quelles variables discrètes, et la calendar heatmap, où une des variables exprime une notion temporelles permettant la formation d'un calendrier. C'est ce second type qui sera mobilisé pour notre illustration. 
+Il existe deux grands types de heatmap: la classique, où les dimensions du tableau sont n'importe quels éléments discrets, et la calendar heatmap, où celles-ci sont des éléments temporelles formant par leur intersection un calendrier. C'est ce second type qui sera mobilisé pour notre illustration. 
 
 Nous allons une nouvelle fois utiliser les données du Hadley Center concernant les relevés de températures au centre de l'Angleterre entre 1772 et 2022. Il s'agit de présenter l'évolution des moyennes mensuelles sur toute la période en utilisant une calendar heatmap. 
 
@@ -55,13 +53,13 @@ dat_1<-dat_ %>% mutate(ms=month(date,label=TRUE),an=year(date)) %>%
                 summarise(temp=mean(d_t)) 
 ```
 
-Nous commençons par redéfinir les noms des variables. Puis, revoyons le format de la base pour qu'elle soit établie sur la longueur. Construisons la variable date et assurons nous qu'elle soit bien de type temporelle. Limitons le résultat à un base comprenant les températures moyennes relevées sur chaque jour entre 1772 et 2022. A partir de là, nous définissons les variables mois (ms) et année (an), ainsi que la moyenne des températures journalières à leur intersection (les moyennes mensuelles). On a alors une tableau dont les six premières lignes sont les suivantes:
+Nous commençons par redéfinir les noms des variables puis revoyons le format de la base pour qui soit établi sur la longueur, construisons la variable date de type temporelle. Nous limitons le résultat à un base comprenant les températures moyennes relevé sur chaque jour entre 1772 et 2022. A partir de là, nous définissons les variables mois (ms) et année (an) ainsi que la moyenne des températures journalières à leur intersection. On a alors une tableau dont les six premières lignes sont les suivantes:
 
 ```{r}
 head(dat_1)
 ```
 
-C'est ce tableau, dans son ensemble que nous allons transformer en calendar heatmap. Commençons par un graphe de base. Les esthétiques mobilisées sont en abscisses les années, en ordonnées les mois et la couleur de remplissage des cases définie en fonction des températures moyennes. Le geom utilisé est le **geom_tile()**.
+C'est ce tableau, dans son ensemble que nous allons transformer en calendar heatmap. Commençons par un graphe de base. Les esthétiques mobilisés sont en abscisses les années, en ordonnées les mois et la couleur de remplissage un élément défini par les températures moyennes. Le geom utilisé est le geom_tile().
 
 ```{r}
 ggplot(data=dat_1,
@@ -69,7 +67,7 @@ ggplot(data=dat_1,
   geom_tile()
 ```
 
-Le résultat en l'état n'est pas très convainquant. Améliorons le rendu avec quelques manipulations simples.
+Le résultat en l'état n'est pas trés convainquant. Améliorons le rendu avec quelques manipulations de base.
 
 ```{r}
 ggplot(data=dat_1,
@@ -85,7 +83,7 @@ ggplot(data=dat_1,
     panel.grid = element_blank())
 ```
 
-Modifions les couleurs permettant de présenter les gradations de températures. Pour cela, utilisons le complément **scale_fill_gradient2()**. Indiquons que les valeurs les plus bases seront bleues, les valeurs moyennes jaunes et les valeurs les plus hautes rouges. Initialisons cette gradation à partir des minimum, médiane et maximum des températures. Indiquons "°C" comme étiquette pour la légende associée.
+Modifions les couleurs permettant de présenter les gradations de températures. Pour cela, utilisons le complémant scale_fill_gradient2(). Indiquons que les valeurs les plus bases seront bleux, les valeurs moyennes jaunes et les valeurs les plus hautes rouges. Initialisons cette gradation à partir des minimums, mediane et maximum des températures. Indiquons °C comme étiquette pour la légende associée.
 
 ```{r}
 ggplot(data=dat_1,
@@ -104,7 +102,7 @@ ggplot(data=dat_1,
     panel.grid = element_blank())
 ```
 
-Les tuiles de notre heatmap sont un peu petite. Voyons comment les rendre plus distinctes en utilisant **coord_fixed()** qui instaure un lien proportionnel en entre les longueurs des incréments en abscisses et en ordonnées. Le ratio marquant le lien a une valeur par défaut de 1.
+Les tuilles de notre heatmap sont un peu petite en l'état. Voyons comme les rendre plus distinctes en utilisant coord_fixed() qui instaure un lien proportionnel en entre les longueurs des incréments en abscisses et en ordonnées. Le ratio marquant le lien a une valeur par défaut de 1.
 
 ```{r}
 ggplot(data=dat_1,
@@ -147,6 +145,7 @@ ggplot(data=dat_1,
 
 Redimensionnons le graphe de manière à avoir une fenêtre d'expression plus adaptée.
 
+
 ```{r fig.height=3,fig.width=11,fig.align='left'}
 ggplot(data=dat_1,
        aes(x=an,y=ms,fill=temp))+
@@ -166,7 +165,7 @@ ggplot(data=dat_1,
     legend.position = 'bottom')
 ```
 
-Intégrons des limites entre les tuiles à l'aide de lignes noires. Modifions la taille de la légende et des éléments textuelles (titres et captions). Encadrons notre graphe.
+Intégrons des limites entre les tuiles à l'aide de lignes noires. Modifions la taille de la légende et des éléments textuelles (titres et captions). En cadrons notre graphe.
 
 ```{r fig.height=3,fig.width=11,fig.align='left'}
 ggplot(data=dat_1,
@@ -193,7 +192,7 @@ ggplot(data=dat_1,
     legend.key.width = unit(1.5, 'cm'))
 ```
 
-Les choses seraient plus parlante avec une numérotation des abscisses plus précises. Optons pour une progressions par blocs de 4 ans. Changeons l'angle d'écriture pour que l'ensemble reste lisible.
+Les choses serait plus parlante avec une numérotation des abscisses plus précises. Optons pour une progressions par blocs de 4 ans. Changeons l'angle d'écriture pour que l'ensemble reste lisible.
 
 ```{r fig.height=3,fig.width=11,fig.align='left'}
 ggplot(data=dat_1,
@@ -222,7 +221,7 @@ ggplot(data=dat_1,
     legend.key.width = unit(1.5, 'cm'))
 ```
 
-Pour finir, passons l'axes des abscisses au dessus du repaire, renversons l'ordre des ordonnées pour que janvier arrive en premier, ajustons le graphe pour que les étiquettes des ordonnées collent au repaire. N'oublions pas de donner un nom au graphe pour pouvoir le mobiliser par la suite.
+Pour finir, passons l'axes des abscisses au dessus du repaire, renversons l'ordre des ordonnées pour que janvier arrive en premier, ajustons le graphe pour les étiquettes des ordonnées collent au repaire. N'oublions pas de donner un nom au graphe pour pouvoir le mobiliser par la suite.
 
 ```{r fig.height=2.5,fig.width=11,fig.align='left'}
 ggplot(data=dat_1,
@@ -254,7 +253,7 @@ ggplot(data=dat_1,
 g
 ```
 
-Le graphe que nous venons de réaliser présente les années sur l'axe horizontal et les mois sur l'axe vertical. C'est un choix. Nous aurions pu faire l'inverse et obtenir un autre graphe comme celui ci-contre. L'important c'est que la présentation choisie réponde à une logique.
+Le graphe que nous venons de réaliser présente les années sur l'axe horizontal et les mois sur l'axe vertical. C'est un choix. Nous aurions pu faire l'inverse est obtenir un autre graphe comme celui ci contre. L'important c'est que la présentation choisie réponde à une logique.
 
 ```{r fig.height=20,fig.width=8,fig.align='left'}
 ggplot(data=dat_1,
@@ -286,7 +285,7 @@ ggplot(data=dat_1,
 g1
 ```
 
-Ce type de graphe, si il est diffusé par internet, gagne à inclure des éléments interactif qui peuvent améliorer la communication du message porté par les données. Cela peut être réalisé à partir du package plotly. Pour illustrer ce propos, utilisons-le sur le premier graphe (g) légèrement transformé afin de simplifier les choses (je suis loin de maîtriser toutes les subtilités de ce package très riche...). 
+Ce type de représentation, si elle est diffusée par internet, gagne à inclure des éléments d'interaction qui peuvent améliorer la communication du message porté par les données. Cela peut être réaliser à partir du package plotly. Pour illustrer ce propos, utilisons-le sur le premier graphe légèrement transformé afin de simplifier les choses (je suis loin de maîtriser les subtilités de ce package trés riche...). 
 
 ```{r fig.align='left',fig.height=2,fig.width=11,message=FALSE, warning=FALSE}
 library(plotly)
@@ -300,9 +299,9 @@ ggplotly(g_,tooltip = c('text')) %>%
   config(displayModeBar=FALSE)
 ```
 
-Notez que l'on a ajouté une esthétique (text) reprenant le texte associé à l'étiquette devant s'afficher lorsque la curseur passe sur une tuile. Notons également que beaucoup de notre mise en forme a été perdue. Bref, il y a peut-être plus intéressant pour tirer partie de nos données.
+Notez que l'on a ajouté une esthétique reprenant le texte associé à l'étiquette devant s'afficher lorsque la curseur passe sur une tuile. Notons également que beaucoup de notre mise en forme a été perdu. Bref, il y a peut être plus intéressant pour tirer partie de nos données.
 
-Essayons plutôt de dresser une heatmap des écarts de températures à la moyenne générale de la série ou à la moyenne de chaque mois. Reprenons la base pour générer les variables correspondant.
+Essayons plutôt de dresser une heatmap des écarts de températures à la moyenne générale de la série ou la moyenne de chaque mois. Reprenons la base pour générer les variables correspondant.
 
 ```{r}
 dat_2<-dat_1 %>% 
@@ -341,7 +340,7 @@ ggplot(data=dat_2,
     plot.margin = margin(0.01,0.5,0.01,0.5,'cm'))
 ```
 
-Sans grande surprise, on a quelque chose de quasi identique au graphe de base. On a la marque forte de température plus élevées les mois d'été et plus faibles les mois d'hiver. On note aussi des hivers moins froid sur la fin de la série mais les choses sont peu claires. Les effets de saisons masquent les tendances ce ne sera pas le cas avec les écarts à la moyenne établi sur les mois.
+Sans grande surprise, on a quelque chose de quasi identique au graphe de base. On a la marque forte de température plus élevées les mois d'été et plus faibles les mois d'hivers. On note aussi des hivers moins froid sur la fin de la série mais les choses sont peu claires. Les effets de saisons masquent les tendances ce ne sera pas le cas avec les écarts à la moyenne établi sur les mois.
 
 ```{r fig.height=2.5,fig.width=11,fig.align='left'}
 ggplot(data=dat_2,
