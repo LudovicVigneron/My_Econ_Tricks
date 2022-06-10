@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Le diagramme en mosaïque et le graphe Marimekko GT6" />
+<meta property="og:description" content="Continuons notre exploration des graphes permettant d’illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-01-07T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-01-07T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Le diagramme en mosaïque et le graphe Marimekko GT6"/>
+<meta name="twitter:description" content="Continuons notre exploration des graphes permettant d’illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Le diagramme en mosaïque et le graphe Marimekko GT6 | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Continuons notre exploration des graphes permettant d’illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Le diagramme en mosaïque et le graphe Marimekko GT6</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Jan 7, 2022&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/r/'>r</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6%2f&text=Le%20diagramme%20en%20mosa%c3%afque%20et%20le%20graphe%20Marimekko%20GT6&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6%2f&t=Le%20diagramme%20en%20mosa%c3%afque%20et%20le%20graphe%20Marimekko%20GT6" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6%2f&title=Le%20diagramme%20en%20mosa%c3%afque%20et%20le%20graphe%20Marimekko%20GT6&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+<script src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p><strong>Continuons notre exploration des graphes permettant d’illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde. Les séparations entre modalités sont opérées de manière à représenter les effectifs qui les composent. La taille des groupes désignées par l’intersection des variables est ainsi représentée par la surface du petit rectangle qui lui correspond. Cela facilite l’identification des relations entre les variables.</strong></p>
+<p>Tout ceci est un peu abstrait… Prenons un exemple d’utilisation de ce type de graphe pour y voir plus clair et profitons-en pour comparer le rendu avec celui des différentes formes de diagramme à bâtons. Mais, avant de nous lancer, chargeons quelques packages utiles pour la suite.</p>
+<pre class="r"><code>library(tidyverse)
+library(patchwork)
+library(rvest)
+library(ggmosaic)</code></pre>
+<p>Notez la présence de deux packages que nous n’avons pas encore utilisé rvest et ggmosaic. Le premier sert à scrapper des informations sur internet. Le second, comme son nom l’indique, permet intégrer un <strong>geom_</strong> supplémentaire dans ggplot pour réaliser facilement un diagramme en mosaïque.</p>
+<p>Venons-en aux données mobilisées. Utilisons celles proposées par Bickel et al. (1975)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. Dans cet article, les auteurs s’intéressent au biais de sélection en fonction du sexe affectant les candidats à l’admission à l’université de Berkeley en 1973. Ils montrent que, si l’on s’arrête à l’analyse bi-variée, les femmes apparaissent nettement défavorisées par rapport aux hommes. Néanmoins, si l’on creuse et que l’on prend en compte les départements dans lesquels les candidats postulent, la différence homme/femme n’est plus significative. On se rend compte que si les femmes sont moins souvent admise à Berkley, c’est qu’elles postulent plus dans les départements les plus sélectifs et donc son plus souvent rejetée. On est face à ce que l’on appel le paradoxe de Simpson, le résultat primaire est contre-dit par le résultat approfondi prenant en compte plus de facteurs. D’un point de vue pratique, si on avait voulu assurer l’égalité hommes/femmes à Berkley à l’époque, il aurait été plus utile d’augmenter le nombre de places dans les départements dans lesquels elles postulent le plus ou les encourager à postuler sur d’autres moins sélectifs plutôt que de travailler sur une discrimination globale.</p>
+<p>Allons chercher ces données sur la page wikipédia anglo-saxonne dédiée au <a href="https://en.wikipedia.org/wiki/Simpson%27s_paradox">paradoxe de Simpson</a>.Commençons par intégrer le premier tableau dans R en utilisant les fonctions de rvest. <strong>read_html()</strong> crée la connexion avec la page où se trouve l’information. <strong>html_nodes()</strong> trie l’information sur la page pour isoler l’élément que vous voulez traiter. Ici, nous utilisons l’option xpath. Pour obtenir le chemin de l’élément, sélectionnez le tableau sur la page, effectuez un clique gauche, sélectionnez “inspecter”, puis dans la nouvelle fenêtre qui s’ouvre sélectionner “copier xpath”. <strong>htm_table()</strong> permet de restructurer les éléments importer pour l’intégrer dans un tableau.</p>
+<pre class="r"><code>url&lt;-&quot;https://en.wikipedia.org/wiki/Simpson%27s_paradox&quot;
+dat1&lt;-url %&gt;% 
+    read_html() %&gt;%
+    html_nodes(xpath=&#39;//*[@id=&quot;mw-content-text&quot;]/div[1]/table[1]&#39;) %&gt;%
+    html_table() %&gt;% 
+    as.data.frame()
+dat1</code></pre>
+<pre><code>##   Var.1        All    All.1        Men    Men.1      Women  Women.1
+## 1       Applicants Admitted Applicants Admitted Applicants Admitted
+## 2 Total     12,763      41%      8,442      44%      4,321      35%</code></pre>
+<p>L’information obtenue doit être retravailler pour permettre son traitement. Vous voudrions simplement une data frame avec une colonne pour le sexe des candidats et une pour leur statut (admis ou rejeté). Utilisons la fonction <strong>rep()</strong> pour générer les observations correspondant et vérifions si le résultat est conforme au tableau que nous avons scrappé avec les fonctions <strong>table()</strong> et <strong>addmargins()</strong>.</p>
+<pre class="r"><code>dat1&lt;-data.frame(
+  sexe=c(rep(&#39;homme&#39;,8442),rep(&#39;femme&#39;,4321)),
+  statut=c(rep(&#39;admis&#39;,round(8442*0.41)),
+                  rep(&#39;rejeté&#39;,round(8442*0.59)),
+                  rep(&#39;admis&#39;,round(4321*0.35)),
+                  rep(&#39;rejeté&#39;,round(4321*0.65))))
+addmargins(table(dat1))</code></pre>
+<pre><code>##        statut
+## sexe    admis rejeté   Sum
+##   femme  1512   2809  4321
+##   homme  3461   4981  8442
+##   Sum    4973   7790 12763</code></pre>
+<p>Maintenant que nous avons nos données, essayons d’illustrer la différence hommes/femmes concernant le taux d’admission à Berkley. Commençons par un diagramme à bâtons juxtaposés. Il s’obtient grâce au <strong>geom_bar()</strong> et l’option <em>position</em> “dodge”. Réalisons également quelques mises en formes de manière obtenir le graphe le plus parlant possible. Retenons notamment les couleurs de l’université (bleu et marron claire) pour nos barres.</p>
+<pre class="r"><code>ggplot(dat1,aes(x=sexe,fill=statut))+
+  geom_bar(position=&#39;dodge&#39;)+
+  geom_text(aes(label = ..count..),stat = &quot;count&quot;, vjust = 5,colour = &quot;white&quot;,
+            position = position_dodge(width = .9))+
+  geom_text(aes(label = statut,y=..count..),stat=&quot;count&quot;,vjust = 3,colour = &quot;white&quot;,
+            position = position_dodge(width = .9))+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;,      
+       caption=&#39;Source données: Bickel et al (1975)&#39;,
+       y=&#39;Effectif&#39;)+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(hjust=0,angle=0),
+        legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>On voit nettement qu’il y a beaucoup plus de candidats hommes que femmes. Par contre, la différence en terme de taux de réussite est bien moins nette. Voyons ce qu’il en est, si on utilise des barres empilées. Nous les obtenons en indiquant ‘stack’ dans l’option <em>position</em> du <strong>geom_bar()</strong>. Pour rendre les indications textuelles incluent dans les bars plus faciles à manipuler, nous créons une variable les reprenant.</p>
+<pre class="r"><code>dat1&lt;-dat1 %&gt;% 
+  mutate(et=ifelse(sexe==&#39;femme&#39;&amp;statut==&#39;admi&#39;,&#39;1512 admis&#39;,
+            ifelse(sexe==&#39;femme&#39;&amp;statut==&#39;rejeté&#39;,&#39;2809 rejetés&#39;,
+            ifelse(sexe==&#39;homme&#39;&amp;statut==&#39;admi&#39;,&#39;3461 admis&#39;,&#39;4981 rejetés&#39;))))
+ggplot(dat1,aes(x=sexe,fill=statut))+
+  geom_bar(position=&#39;stack&#39;)+
+  geom_text(aes(label = et,y=..count..),stat=&quot;count&quot;,vjust = 3,colour = &quot;white&quot;,
+            position = position_stack(vjust=1))+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;,      
+       caption=&#39;Source données: Bickel et al (1975)&#39;,
+       y=&#39;Effectif&#39;)+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(hjust=0,angle=0),
+        legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>La différence en termes de proportions d’admissions entre hommes et femmes est maintenant clairement apparente. Néanmoins, on peine à en réaliser son ampleur du fait des tailles différentes des groupes définis en fonction du sexe. Voyons ce qu’il en est si on établit la hauteur des barres les représentant pour qu’elles soient la même. Pour cela, indiquons “fill” dans l’option <em>position</em> du <strong>geom_bar()</strong>.</p>
+<pre class="r"><code>ggplot(dat1,aes(x=sexe,fill=statut))+
+  geom_bar(position=&#39;fill&#39;)+
+  geom_text(aes(label = et,y=..count..),stat=&quot;count&quot;,vjust = 3,colour = &quot;white&quot;,
+            position = position_fill(vjust=0.8))+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;,      
+       caption=&#39;Source données: Bickel et al (1975)&#39;,
+       y=&#39;Effectif&#39;)+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(hjust=0,angle=0),
+        legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Cette fois, la différence de taux d’admission est bien mise en évidence. On voit que prés de 35% des candidates sont admises tandis que prés de 40% des candidats sont admis. On perd cependant en partie l’information concernant la taille des groupes hommes/femmes. Il ne reste que les indications textuelles que nous avons ajoutées pour intégrer cette information.</p>
+<p>Un diagramme en mosaïque permet de remédier au problème en mettant en évidence à la fois la différence de tailles en proportion des groupes hommes/femmes et admis/rejeté. Pour le mettre en oeuvre, utilisons le <strong>geom_mosaic()</strong> du package ggmosaic. Indiquons comme esthétique (<strong>aes()</strong>) pour x l’intersection entre statut et sexe. Cela est rendu possible par la fonction <strong>product()</strong>. Indiquons également que nous souhaitons que les différents éléments du graphe soient colorés en fonction de statut (bleu pour les admis et marron pour les rejetés).</p>
+<pre class="r"><code>ggplot(dat1) + 
+  geom_mosaic(aes(x=product(statut,sexe),fill=statut),position = &#39;identity&#39;)+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;,
+       subtitle = &#39;(12 763 candidats)&#39;,
+       caption=&#39;Source données: Bickel et al (1975)&#39;)+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_mosaic()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Les proportions sont bien rendues dans ce nouveau graphe. On voit clairement que le nombre de femmes candidates représente moins d’un tiers de l’ensemble et qu’elles sont admises à un taux un peu plus élevé que 33% alors que les hommes qui représentent plus des deux tiers de l’ensemble sont admis à un taux supérieur (plus proche des 40%).</p>
+<p>Sans indications chiffrées, le diagramme en mosaïque rend bien compte de la relation entre les deux variables. Comme tout les graphes issus de ggplot, il peut être personnalisé. On peut notamment utiliser <strong>geom_mosaic_text()</strong> pour faire apparaître la valeur des différentes variables à l’intérieur du graphe et non sur les axes.</p>
+<pre class="r"><code>ggplot(dat1) + 
+  geom_mosaic(aes(x=product(statut,sexe),fill=statut),position = &#39;identity&#39;)+
+  geom_mosaic_text(aes(x=product(statut,sexe)),color=&#39;white&#39;,size=6)+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;, 
+       subtitle = &#39;(12 763 candidats)&#39;,
+       caption=&#39;Source données: Bickel et al (1975)&#39;)+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_mosaic()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        legend.position=&#39;none&#39;)</code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Il y a une différence apparente entre les hommes et les femmes concernant l’admission à Berkley. Mais est-elle statistiquement significative? Pour le savoir, procédons à un test de différences de proportions (basé sur un khi2) à l’aide de la fonction <strong>prop.test()</strong>.</p>
+<pre class="r"><code>table(dat1$statut,dat1$sexe) %&gt;% prop.test() </code></pre>
+<pre><code>## 
+##  2-sample test for equality of proportions with continuity correction
+## 
+## data:  .
+## X-squared = 43.091, df = 1, p-value = 5.224e-11
+## alternative hypothesis: two.sided
+## 95 percent confidence interval:
+##  -0.07336126 -0.03973609
+## sample estimates:
+##    prop 1    prop 2 
+## 0.3040418 0.3605905</code></pre>
+<p>La p-value est très petite, on rejette donc largement l’hypothèse d’égalité entre les proportions. La différence est statistiquement significative. On pourrait, sur cette base, conclure à une discrimination basée sur les goûts des jury d’admission qui seraient défavorables au femmes. Néanmoins, si on approfondit l’analyse pour prendre en compte les départements dans lesquels les étudiants ont candidaté, on voit que les choses sont différentes.</p>
+<p>Introduisons cette nouvelles variables dans l’analyse. Pour cela, voyons le second tableau de la page wikipedia. Chargeons-le dans R.</p>
+<pre class="r"><code>url&lt;-&quot;https://en.wikipedia.org/wiki/Simpson%27s_paradox&quot;
+dat2&lt;-url %&gt;% 
+    read_html() %&gt;%
+    html_nodes(xpath=&#39;//*[@id=&quot;mw-content-text&quot;]/div[1]/table[2]&#39;) %&gt;%
+    html_table() %&gt;% 
+    as.data.frame()
+dat2</code></pre>
+<pre><code>##   Department        All    All.1        Men    Men.1      Women  Women.1
+## 1 Department Applicants Admitted Applicants Admitted Applicants Admitted
+## 2          A        933      64%        825      62%        108      82%
+## 3          B        585      63%        560      63%         25      68%
+## 4          C        918      35%        325      37%        593      34%
+## 5          D        792      34%        417      33%        375      35%
+## 6          E        584      25%        191      28%        393      24%
+## 7          F        714       6%        373       6%        341       7%
+## 8      Total       4526      39%       2691      45%       1835      30%</code></pre>
+<p>Notons qu’il ne porte que sur un sous-échantillon de notre base de départ. Considérons que celui-ci présente néanmoins les mêmes caractéristiques. Mettons-le en forme afin de pourvoir l’exploiter.</p>
+<pre class="r"><code>dat2&lt;-data.frame(sexe=c(rep(&#39;homme&#39;,2691),rep(&#39;femme&#39;,1835)),
+                 dep=c(rep(&#39;A&#39;,825),rep(&#39;B&#39;,560),rep(&#39;C&#39;,325),
+                       rep(&#39;D&#39;,417),rep(&#39;E&#39;,191),rep(&#39;F&#39;,373),
+                       rep(&#39;A&#39;,108),rep(&#39;B&#39;,25),rep(&#39;C&#39;,593),
+                       rep(&#39;D&#39;,375),rep(&#39;E&#39;,393),rep(&#39;F&#39;,341)),
+                 statut=c(rep(&#39;admis&#39;,round(825*0.62)-1),rep(&#39;rejeté&#39;,round(825*0.38)),
+                       rep(&#39;admis&#39;,round(560*0.63)),rep(&#39;rejeté&#39;,round(560*0.37)),
+                       rep(&#39;admis&#39;,round(325*0.37)),rep(&#39;rejeté&#39;,round(325*0.63)),
+                       rep(&#39;admis&#39;,round(417*0.33)),rep(&#39;rejeté&#39;,round(417*0.67)),
+                       rep(&#39;admis&#39;,round(191*0.28)),rep(&#39;rejeté&#39;,round(191*0.72)),
+                       rep(&#39;admis&#39;,round(373*0.06)),rep(&#39;rejeté&#39;,round(373*0.94)),
+                       rep(&#39;admis&#39;,round(108*0.82)),rep(&#39;rejeté&#39;,round(108*0.18)),
+                       rep(&#39;admis&#39;,round(25*0.68)),rep(&#39;rejeté&#39;,round(25*0.32)),
+                       rep(&#39;admis&#39;,round(593*0.34)),rep(&#39;rejeté&#39;,round(593*0.66)),
+                       rep(&#39;admis&#39;,round(375*0.35)),rep(&#39;rejeté&#39;,round(375*0.65)),
+                       rep(&#39;admis&#39;,round(393*0.24)),rep(&#39;rejeté&#39;,round(393*0.76)),
+                       rep(&#39;admis&#39;,round(341*0.07)),rep(&#39;rejeté&#39;,round(341*0.93))))
+addmargins(table(dat2$sexe,dat2$statut))</code></pre>
+<pre><code>##        
+##         admis rejeté  Sum
+##   femme   557   1278 1835
+##   homme  1197   1494 2691
+##   Sum    1754   2772 4526</code></pre>
+<p>Ceci étant fait, on peut réaliser un diagramme en mosaïque pour vérifier si notre sous-échantillon on reprouve bien le même type de différences hommes/femmes que dans le cadre général.</p>
+<pre class="r"><code>ggplot(dat2) + 
+  geom_mosaic(aes(x=product(statut,sexe),fill=statut))+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;, 
+       subtitle = &#39;(4 526 candidats)&#39;,
+       caption=&#39;Source données: Bickel et al (1975)&#39;)+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_mosaic()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position = &#39;none&#39;) </code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Il semble bien que ce soit le cas. On peut donc continuer l’analyse en intégrant notre nouvelle variable.</p>
+<p>Voyons ce que donne le diagramme mosaïque. Cette fois, la déclaration de l’élément principale à représenter (x) comprendra trois variables (statut, sexe et dep) que l’on introduit conjointement avec la fonction <strong>product()</strong>. Indiquons pour faciliter la lecture que nous ferons varier la couleur (fill) en fonction de statut et le niveau de transparence (alpha) de ces couleurs en fonction de sexe. Utilisons l’option <em>divider</em> pour renforcer les séparations verticales et horizontales dans le graphe.</p>
+<pre class="r"><code>ggplot(dat2) + 
+  geom_mosaic(aes(x=product(statut,sexe,dep),fill=statut,alpha=sexe),
+              divider=c(&quot;vspine&quot;,&quot;hspine&quot;,&quot;hspine&quot;))+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;,
+       subtitle = &#39;(4 526 candidats)&#39;,
+       caption=&#39;Source données: Bickel et al (1975)&#39;)+
+  scale_alpha_manual(values =c(0.9,0.6))+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  theme_mosaic()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title.x = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5,size=10),
+        axis.title.y = element_blank(),
+        legend.position = &#39;none&#39;) </code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>On voit que les femmes ne sont pas moins fréquemment admises dans tout les départements. Leur taux d’admission est plus important que celui des hommes dans les départements A, B, D et F. Néanmoins, elles sont proportionnellement moins nombreuses à y postuler. Elles sont plus nombreuses à postuler dans les département C et E où le taux d’admission est en générale relativement bas et où elles sont légèrement moins fréquemment reçues que les hommes. On peut dire qu’elles s’orientent sur les départements les plus sélectifs et donc sont plus souvent rejetées.</p>
+<p>Bref, les choses semblent plus compliquées. Voyons ce qu’il en ait si on pratique des tests statistiques. Commençons par le simple test de différence de proportions.</p>
+<pre class="r"><code>table(dat2$statut,dat2$sexe) %&gt;% prop.test() </code></pre>
+<pre><code>## 
+##  2-sample test for equality of proportions with continuity correction
+## 
+## data:  .
+## X-squared = 91.147, df = 1, p-value &lt; 2.2e-16
+## alternative hypothesis: two.sided
+## 95 percent confidence interval:
+##  -0.1725624 -0.1143958
+## sample estimates:
+##    prop 1    prop 2 
+## 0.3175599 0.4610390</code></pre>
+<p>Comme sur l’échantillon précédant, on retrouve une différence significative (p-value très faible). On rejette l’hypothèse d’égalité de taux d’admission entre les hommes et les femmes. Les femmes semblent défavorisées lors de la sélection.</p>
+<p>Le test pratiqué ne permet pas d’inclure dep dans l’analyse. Pour palier à la difficulté, utilisons une régression logistique (grâce à la fonction <strong>glm()</strong>). Nous l’estimons, pour avoir une référence pour suite, sur la seule variable sexe (après quelques transformations rapides afin d’avoir des variables binaires avec pour références admis et femme).</p>
+<pre class="r"><code>dat2$st_d&lt;-dat2$statut==&#39;admis&#39;
+dat2$sex_d&lt;-dat2$sexe==&#39;femme&#39;
+dat2 %&gt;% glm(formula=st_d~sex_d,
+             family = binomial(logit)) %&gt;% 
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = st_d ~ sex_d, family = binomial(logit), data = .)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.0849  -1.0849  -0.8506   1.2729   1.5442  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept) -0.22164    0.03879  -5.714 1.11e-08 ***
+## sex_dTRUE   -0.60885    0.06389  -9.529  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 6043.4  on 4525  degrees of freedom
+## Residual deviance: 5950.4  on 4524  degrees of freedom
+## AIC: 5954.4
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<p>Le coefficient est négatif et statistiquement significatif. Cela confirme que les femmes sont moins fréquemment admises à Berkley que les hommes. On peut utiliser <strong>binomial()$linkin()</strong> sur la constante pour obtenir la probabilité estimée par le modèle d’être admis pour un homme et le coefficient de la variable sex_d pour obtenir celle prévalant pour une femme.</p>
+<pre class="r"><code>binomial()$linkinv(-0.221)</code></pre>
+<pre><code>## [1] 0.4449738</code></pre>
+<pre class="r"><code>binomial()$linkinv(-0.608)</code></pre>
+<pre><code>## [1] 0.3525156</code></pre>
+<p>D’après le modèle, un homme aurait 44,5% de chance d’être admis tandis qu’une femme n’aurait que 35,2% de chance d’être admises.</p>
+<p>Incluons la variable dep dans le modèle pour voir si l’effet perdure lorsque l’on contrôle par le département dans lequel l’individu candidate.</p>
+<pre class="r"><code>dat2 %&gt;% glm(formula=st_d~sex_d+dep,
+             family = binomial(logit)) %&gt;% 
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = st_d ~ sex_d + dep, family = binomial(logit), data = .)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.4754  -0.9307  -0.3741   0.9588   2.3615  
+## 
+## Coefficients:
+##             Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)  0.57729    0.06895   8.373   &lt;2e-16 ***
+## sex_dTRUE    0.10061    0.08084   1.244    0.213    
+## depB        -0.03867    0.10981  -0.352    0.725    
+## depC        -1.25832    0.10660 -11.804   &lt;2e-16 ***
+## depD        -1.29020    0.10579 -12.195   &lt;2e-16 ***
+## depE        -1.73505    0.12609 -13.760   &lt;2e-16 ***
+## depF        -3.30209    0.16996 -19.428   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 6043.4  on 4525  degrees of freedom
+## Residual deviance: 5188.6  on 4519  degrees of freedom
+## AIC: 5202.6
+## 
+## Number of Fisher Scoring iterations: 5</code></pre>
+<p>Le coefficient associé à sex_d (le fait pour un candidat d’être une femme) n’est plus significatif. Il n’y a pas de différence concernant la probabilité d’admission entre hommes et femmes si l’on contrôle en fonction du département dans lequel elle ou il postule.</p>
+<p>On est face au paradoxe de Simpson qui est bien illustrer par nos diagrammes en mosaïque que l’on peut réunir en une seul figure avec le package pacthwork.</p>
+<pre class="r"><code>m1&lt;-ggplot(dat2) + 
+      geom_mosaic(aes(x=product(statut,sexe),fill=statut,alpha=sexe))+
+      scale_alpha_manual(values =c(0.9,0.6))+
+      scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+      theme_mosaic()+
+      theme(plot.title = element_text(hjust=0.5),
+            plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+            plot.caption = element_text(face=&#39;italic&#39;),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            legend.position = &#39;none&#39;) 
+m2&lt;-ggplot(dat2) + 
+     geom_mosaic(aes(x=product(statut,sexe,dep),fill=statut,alpha=sexe),
+                 divider=c(&quot;vspine&quot;,&quot;hspine&quot;,&quot;hspine&quot;))+
+     scale_alpha_manual(values =c(0.9,0.6))+
+     scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+     theme_mosaic()+
+     theme(plot.title = element_text(hjust=0.5),
+           plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+           plot.caption = element_text(face=&#39;italic&#39;),
+           axis.title.x = element_blank(),
+           axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5,size=10),
+           axis.title.y = element_blank(),
+           axis.text.y = element_blank(),
+           axis.ticks.y = element_blank(),
+           legend.position = &#39;none&#39;)
+m1+m2+plot_annotation(
+  title = &#39;Illustrations du Paradox de Simpson&#39;,
+  subtitle = &#39;Admission à Berkley automne 1973 - 4526 candidats&#39;,
+  caption = &#39;Source données: Bickel et al (1975)&#39;) &amp;
+  theme(plot.title = element_text(hjust=0.5),
+        plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+        plot.caption= element_text(face=&#39;italic&#39;))</code></pre>
+<p><img src="/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>Les diagrammes en mosaïque sont performant pour illustrer les liens entre variables catégorielles. Ils donnent une vision claire des effectifs croisés au travers de la différence de surface des rectangles qui les composent. Ils présentent néanmoins des limites. La première est que l’œil humain n’est pas très performant lorsqu’il s’agit de relever de faibles différences de surfaces. Il n’est pas non plus très bon pour évaluer les proportions de ces différences. La surface correspondant aux hommes admis est 3,15 fois celle des femmes admises dans le graphe sans les départements ((1197x2691)/(557x1835))… La seconde limites est qu’ils deviennent vite illisibles si les variables mobilisées intègrent trop de catégories.</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>P.J. Bickel, E.A. Hammel and J.W. O’Connell (1975). “Sex Bias in Graduate Admissions: Data From Berkeley” (PDF). Science. 187 (4175): 398–404. Bibcode:1975Sci…187..398B. <a href="doi:10.1126/science.187.4175.398" class="uri">doi:10.1126/science.187.4175.398</a>. PMID 17835295. S2CID 15278703.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6%2f&text=Le%20diagramme%20en%20mosa%c3%afque%20et%20le%20graphe%20Marimekko%20GT6&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6%2f&t=Le%20diagramme%20en%20mosa%c3%afque%20et%20le%20graphe%20Marimekko%20GT6" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6%2f&title=Le%20diagramme%20en%20mosa%c3%afque%20et%20le%20graphe%20Marimekko%20GT6&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>

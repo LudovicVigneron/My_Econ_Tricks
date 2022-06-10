@@ -6,13 +6,10 @@ slug: []
 categories:
   - datavisualisation
   - R
-  - ggplot2
-  - gt
 tags:
   - Dataviz
   - GGPLOT2
   - R
-  - gt
 ---
 
 **Continuons notre exploration des graphes permettant d'illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde. Les séparations entre modalités sont opérées de manière à représenter les effectifs qui les composent. La taille des groupes désignées par l’intersection des variables est ainsi représentée par la surface du petit rectangle qui lui correspond. Cela facilite l'identification des relations entre les variables.**
@@ -79,9 +76,9 @@ On voit nettement qu'il y a beaucoup plus de candidats hommes que femmes. Par co
 
 ```{r}
 dat1<-dat1 %>% 
-  mutate(et=ifelse(sexe=='femme'&statut=='admis','1512 admis',
+  mutate(et=ifelse(sexe=='femme'&statut=='admi','1512 admis',
             ifelse(sexe=='femme'&statut=='rejeté','2809 rejetés',
-            ifelse(sexe=='homme'&statut=='admis','3461 admis','4981 rejetés'))))
+            ifelse(sexe=='homme'&statut=='admi','3461 admis','4981 rejetés'))))
 ggplot(dat1,aes(x=sexe,fill=statut))+
   geom_bar(position='stack')+
   geom_text(aes(label = et,y=..count..),stat="count",vjust = 3,colour = "white",
