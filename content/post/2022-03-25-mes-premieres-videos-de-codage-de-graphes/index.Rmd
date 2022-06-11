@@ -2,15 +2,14 @@
 title: Mes premieres videos de codage de graphes
 author: Ludovic Vigneron
 date: '2022-03-25'
-slug: []
 categories:
   - datavisualisation
   - R
   - video
 tags:
+  - Dataviz
   - GGPLOT2
   - R
-  - Dataviz
   - video
 ---
 
