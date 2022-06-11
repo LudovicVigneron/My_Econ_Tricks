@@ -10,6 +10,7 @@ tags:
   - GGPLOT2
   - R
   - Dataviz
+  - video
 ---
 
 **Le cours de datavisualisation à l'UPHF que je donne sous la forme d'un module polytechnique (dont le nom est "présenter une donnée") a commencé début février. Il s'organise en distanciel asynchrone. Tous les quinze jours, les étudiants ont accès à de nouveaux contenus (textes, vidéos, données...) que je met à leur disposition via le campus virtuel. L'idée est de les amener assez vite à pouvoir être à l'aise avec les outils de manière à produire leurs propres graphes. J'y présente R, le tidyverse et surtout ggplot, mais pas que. J'insiste également sur ce qui fait la différence entre une représentation parlante, qui porte un message clair, et un simple empilement de données agrémenté de formes et de couleurs.**
