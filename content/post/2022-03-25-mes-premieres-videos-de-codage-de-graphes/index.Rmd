@@ -39,5 +39,5 @@ Vous trouverez ci-dessous un aperçu de chaque graphe réalisé. Pour accéder a
     <img alt="spir_bar" src="spirals_charts1.svg"
          width=650" height="850">
 </a>
-____________________________________________________
+
 
