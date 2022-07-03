@@ -9,8 +9,13 @@ pygmentsUseClasses: yes
 params:
   author: My Econ Tricks
   contentSharing: Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
-  introDescription: Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d'années,
-                    Maître de Conférences à l'Université Polytechnique Hauts de France.
+  introDescription: Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d'années
+                    Maître de Conférences, aujourd'hui à Université de Lille.
 social:
   linkedin: ludovic-vigneron-1ba27749
   twitter: VigneronLudovic
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
