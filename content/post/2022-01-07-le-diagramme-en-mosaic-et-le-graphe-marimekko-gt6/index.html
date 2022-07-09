@@ -21,6 +21,7 @@ tags:
 <p>Tout ceci est un peu abstrait… Prenons un exemple d’utilisation de ce type de graphe pour y voir plus clair et profitons-en pour comparer le rendu avec celui des différentes formes de diagramme à bâtons. Mais, avant de nous lancer, chargeons quelques packages utiles pour la suite.</p>
 <pre class="r"><code>library(tidyverse)
 library(patchwork)
+library(scales)
 library(rvest)
 library(ggmosaic)</code></pre>
 <p>Notez la présence de deux packages que nous n’avons pas encore utilisé rvest et ggmosaic. Le premier sert à scrapper des informations sur internet. Le second, comme son nom l’indique, permet intégrer un <strong>geom_</strong> supplémentaire dans ggplot pour réaliser facilement un diagramme en mosaïque.</p>
@@ -39,16 +40,16 @@ dat1</code></pre>
 <p>L’information obtenue doit être retravailler pour permettre son traitement. Vous voudrions simplement une data frame avec une colonne pour le sexe des candidats et une pour leur statut (admis ou rejeté). Utilisons la fonction <strong>rep()</strong> pour générer les observations correspondant et vérifions si le résultat est conforme au tableau que nous avons scrappé avec les fonctions <strong>table()</strong> et <strong>addmargins()</strong>.</p>
 <pre class="r"><code>dat1&lt;-data.frame(
   sexe=c(rep(&#39;homme&#39;,8442),rep(&#39;femme&#39;,4321)),
-  statut=c(rep(&#39;admis&#39;,round(8442*0.41)),
-                  rep(&#39;rejeté&#39;,round(8442*0.59)),
-                  rep(&#39;admis&#39;,round(4321*0.35)),
-                  rep(&#39;rejeté&#39;,round(4321*0.65))))
+  statut=c(rep(&#39;admis&#39;,round(8442*0.44)),
+           rep(&#39;rejeté&#39;,round(8442*0.56)),
+           rep(&#39;admis&#39;,round(4321*0.35)),
+           rep(&#39;rejeté&#39;,round(4321*0.65))))
 addmargins(table(dat1))</code></pre>
 <pre><code>##        statut
 ## sexe    admis rejeté   Sum
 ##   femme  1512   2809  4321
-##   homme  3461   4981  8442
-##   Sum    4973   7790 12763</code></pre>
+##   homme  3714   4728  8442
+##   Sum    5226   7537 12763</code></pre>
 <p>Maintenant que nous avons nos données, essayons d’illustrer la différence hommes/femmes concernant le taux d’admission à Berkley. Commençons par un diagramme à bâtons juxtaposés. Il s’obtient grâce au <strong>geom_bar()</strong> et l’option <em>position</em> “dodge”. Réalisons également quelques mises en formes de manière obtenir le graphe le plus parlant possible. Retenons notamment les couleurs de l’université (bleu et marron claire) pour nos barres.</p>
 <pre class="r"><code>ggplot(dat1,aes(x=sexe,fill=statut))+
   geom_bar(position=&#39;dodge&#39;)+
@@ -96,6 +97,7 @@ ggplot(dat1,aes(x=sexe,fill=statut))+
        caption=&#39;Source données: Bickel et al (1975)&#39;,
        y=&#39;Effectif&#39;)+
   scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  scale_y_continuous(labels=label_percent(accuracy = NULL))+
   theme_minimal()+
   theme(plot.title = element_text(hjust=0.5),
         plot.caption = element_text(face=&#39;italic&#39;),
@@ -104,7 +106,35 @@ ggplot(dat1,aes(x=sexe,fill=statut))+
         legend.position=&#39;none&#39;)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <p>Cette fois, la différence de taux d’admission est bien mise en évidence. On voit que prés de 35% des candidates sont admises tandis que prés de 40% des candidats sont admis. On perd cependant en partie l’information concernant la taille des groupes hommes/femmes. Il ne reste que les indications textuelles que nous avons ajoutées pour intégrer cette information.</p>
-<p>Un diagramme en mosaïque permet de remédier au problème en mettant en évidence à la fois la différence de tailles en proportion des groupes hommes/femmes et admis/rejeté. Pour le mettre en oeuvre, utilisons le <strong>geom_mosaic()</strong> du package ggmosaic. Indiquons comme esthétique (<strong>aes()</strong>) pour x l’intersection entre statut et sexe. Cela est rendu possible par la fonction <strong>product()</strong>. Indiquons également que nous souhaitons que les différents éléments du graphe soient colorés en fonction de statut (bleu pour les admis et marron pour les rejetés).</p>
+<p>Le diagramme de Marimekko intégre l’information sur les effectifs en faisant varier la largeur des barres en fonction de ceux-ci. Présentons nos données à l’aide de ce type de graphe. Pour ce faire, nous allons utiliser le <strong>geom_rect()</strong> qui permet de tracer des rectangles à partir de l’indication des valeurs minimums et maximums des coordonnées associés pour chaque figure (x et y). Commençons par restructurer la base pour faciliter sa construction.</p>
+<pre class="r"><code>dat1_d&lt;-data.frame(
+  sex= c(&#39;femme&#39;, &#39;femme&#39;,&#39;homme&#39;, &#39;homme&#39;),
+  stat=c(&#39;admis&#39;,&#39;rejeté&#39;,&#39;admis&#39;,&#39;rejeté&#39;),
+  tx_reu = c(0.35, 0.65, 0.44, 0.56),
+  effectif = c(1512, 2809, 3461, 4891))</code></pre>
+<p>Ceci fait, réalisons le graphe.</p>
+<pre class="r"><code>ggplot(dat1_d, aes(fill = stat)) +
+  geom_rect(aes(xmin = cumsum(c(0,effectif[1:3])),
+                xmax = cumsum(effectif),
+                ymin = 0, ymax = tx_reu))+
+  geom_text(aes(label = stat,y=tx_reu,x=c(800,3000,6000,10000)),
+            vjust = 3,colour = &quot;white&quot;)+
+  geom_text(aes(label = sex,y=tx_reu,x=c(800,3000,6000,10000)),
+            vjust = 6,colour = &quot;white&quot;)+
+  scale_x_continuous(breaks = seq(0,13000,1000))+
+  scale_y_continuous(breaks = seq(0,0.70,0.05),limits = c(0,0.7),
+                     labels=label_percent(accuracy = NULL))+
+  scale_fill_manual(values=c(&#39;#0000FF&#39;,&#39;#BEA226&#39;))+
+  labs(title=&#39;Admissions à Berkley automne 1973&#39;,      
+       caption=&#39;Source données: Bickel et al (1975)&#39;)+
+  coord_cartesian(expand=FALSE)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        axis.title= element_blank(),
+        legend.position=&#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>L’ensemble est plus parlant. Un diagramme en mosaïque apparaît encore plus parlant. Il met en évidence à la fois la différence de tailles en proportion des groupes hommes/femmes et admis/rejeté. Pour le mettre en oeuvre, utilisons le <strong>geom_mosaic()</strong> du package ggmosaic. Indiquons comme esthétique (<strong>aes()</strong>) pour x l’intersection entre statut et sexe. Cela est rendu possible par la fonction <strong>product()</strong>. Indiquons également que nous souhaitons que les différents éléments du graphe soient colorés en fonction de statut (bleu pour les admis et marron pour les rejetés).</p>
 <pre class="r"><code>ggplot(dat1) + 
   geom_mosaic(aes(x=product(statut,sexe),fill=statut),position = &#39;identity&#39;)+
   labs(title=&#39;Admissions à Berkley automne 1973&#39;,
@@ -121,7 +151,7 @@ ggplot(dat1,aes(x=sexe,fill=statut))+
 ## Please use `unite()` instead.
 ## This warning is displayed once every 8 hours.
 ## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was generated.</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>Les proportions sont bien rendues dans ce nouveau graphe. On voit clairement que le nombre de femmes candidates représente moins d’un tiers de l’ensemble et qu’elles sont admises à un taux un peu plus élevé que 33% alors que les hommes qui représentent plus des deux tiers de l’ensemble sont admis à un taux supérieur (plus proche des 40%).</p>
 <p>Sans indications chiffrées, le diagramme en mosaïque rend bien compte de la relation entre les deux variables. Comme tout les graphes issus de ggplot, il peut être personnalisé. On peut notamment utiliser <strong>geom_mosaic_text()</strong> pour faire apparaître la valeur des différentes variables à l’intérieur du graphe et non sur les axes.</p>
 <pre class="r"><code>ggplot(dat1) + 
@@ -139,20 +169,20 @@ ggplot(dat1,aes(x=sexe,fill=statut))+
         axis.text = element_blank(),
         axis.ticks = element_blank(),
         legend.position=&#39;none&#39;)</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
 <p>Il y a une différence apparente entre les hommes et les femmes concernant l’admission à Berkley. Mais est-elle statistiquement significative? Pour le savoir, procédons à un test de différences de proportions (basé sur un khi2) à l’aide de la fonction <strong>prop.test()</strong>.</p>
 <pre class="r"><code>table(dat1$statut,dat1$sexe) %&gt;% prop.test() </code></pre>
 <pre><code>## 
 ##  2-sample test for equality of proportions with continuity correction
 ## 
 ## data:  .
-## X-squared = 43.091, df = 1, p-value = 5.224e-11
+## X-squared = 95.421, df = 1, p-value &lt; 2.2e-16
 ## alternative hypothesis: two.sided
 ## 95 percent confidence interval:
-##  -0.07336126 -0.03973609
+##  -0.09997492 -0.06676925
 ## sample estimates:
 ##    prop 1    prop 2 
-## 0.3040418 0.3605905</code></pre>
+## 0.2893226 0.3726947</code></pre>
 <p>La p-value est très petite, on rejette donc largement l’hypothèse d’égalité entre les proportions. La différence est statistiquement significative. On pourrait, sur cette base, conclure à une discrimination basée sur les goûts des jury d’admission qui seraient défavorables au femmes. Néanmoins, si on approfondit l’analyse pour prendre en compte les départements dans lesquels les étudiants ont candidaté, on voit que les choses sont différentes.</p>
 <p>Introduisons cette nouvelles variables dans l’analyse. Pour cela, voyons le second tableau de la page wikipedia. Chargeons-le dans R.</p>
 <pre class="r"><code>url&lt;-&quot;https://en.wikipedia.org/wiki/Simpson%27s_paradox&quot;
@@ -209,7 +239,7 @@ addmargins(table(dat2$sexe,dat2$statut))</code></pre>
         axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         legend.position = &#39;none&#39;) </code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 <p>Il semble bien que ce soit le cas. On peut donc continuer l’analyse en intégrant notre nouvelle variable.</p>
 <p>Voyons ce que donne le diagramme mosaïque. Cette fois, la déclaration de l’élément principale à représenter (x) comprendra trois variables (statut, sexe et dep) que l’on introduit conjointement avec la fonction <strong>product()</strong>. Indiquons pour faciliter la lecture que nous ferons varier la couleur (fill) en fonction de statut et le niveau de transparence (alpha) de ces couleurs en fonction de sexe. Utilisons l’option <em>divider</em> pour renforcer les séparations verticales et horizontales dans le graphe.</p>
 <pre class="r"><code>ggplot(dat2) + 
@@ -228,7 +258,7 @@ addmargins(table(dat2$sexe,dat2$statut))</code></pre>
         axis.text.x = element_text(angle = 90, hjust = 1,vjust = 0.5,size=10),
         axis.title.y = element_blank(),
         legend.position = &#39;none&#39;) </code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
 <p>On voit que les femmes ne sont pas moins fréquemment admises dans tout les départements. Leur taux d’admission est plus important que celui des hommes dans les départements A, B, D et F. Néanmoins, elles sont proportionnellement moins nombreuses à y postuler. Elles sont plus nombreuses à postuler dans les département C et E où le taux d’admission est en générale relativement bas et où elles sont légèrement moins fréquemment reçues que les hommes. On peut dire qu’elles s’orientent sur les départements les plus sélectifs et donc sont plus souvent rejetées.</p>
 <p>Bref, les choses semblent plus compliquées. Voyons ce qu’il en ait si on pratique des tests statistiques. Commençons par le simple test de différence de proportions.</p>
 <pre class="r"><code>table(dat2$statut,dat2$sexe) %&gt;% prop.test() </code></pre>
@@ -344,7 +374,7 @@ m1+m2+plot_annotation(
   theme(plot.title = element_text(hjust=0.5),
         plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
         plot.caption= element_text(face=&#39;italic&#39;))</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
 <p>Les diagrammes en mosaïque sont performant pour illustrer les liens entre variables catégorielles. Ils donnent une vision claire des effectifs croisés au travers de la différence de surface des rectangles qui les composent. Ils présentent néanmoins des limites. La première est que l’œil humain n’est pas très performant lorsqu’il s’agit de relever de faibles différences de surfaces. Il n’est pas non plus très bon pour évaluer les proportions de ces différences. La surface correspondant aux hommes admis est 3,15 fois celle des femmes admises dans le graphe sans les départements ((1197x2691)/(557x1835))… La seconde limites est qu’ils deviennent vite illisibles si les variables mobilisées intègrent trop de catégories.</p>
 <div class="footnotes footnotes-end-of-document">
 <hr />
