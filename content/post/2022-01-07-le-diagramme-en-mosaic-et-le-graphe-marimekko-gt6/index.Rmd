@@ -175,7 +175,7 @@ dat2<-url %>%
     html_nodes(xpath='//*[@id="mw-content-text"]/div[1]/table[2]') %>%
     html_table() %>% 
     as.data.frame()
-dat2
+dat2[1:8,]
 ```
 
 Notons qu'il ne porte que sur un sous-échantillon de notre base de départ. Considérons que celui-ci présente néanmoins les mêmes caractéristiques. Mettons-le en forme afin de pourvoir l'exploiter.

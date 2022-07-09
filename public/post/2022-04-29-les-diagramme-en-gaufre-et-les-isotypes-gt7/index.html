@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Les diagrammes en gaufre et les isotypes GT7" />
+<meta property="og:description" content="Pour ce nouveau post de la série GT, qui propose d’illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos one chart at a time, nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d’un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s’agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d’observations." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2022-01-27T00:00:00+00:00" />
+<meta property="article:modified_time" content="2022-01-27T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Les diagrammes en gaufre et les isotypes GT7"/>
+<meta name="twitter:description" content="Pour ce nouveau post de la série GT, qui propose d’illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos one chart at a time, nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d’un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s’agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d’observations."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Les diagrammes en gaufre et les isotypes GT7 | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Pour ce nouveau post de la série GT, qui propose d’illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos one chart at a time, nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d’un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s’agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d’observations.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Les diagrammes en gaufre et les isotypes GT7</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Jan 27, 2022&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/r/'>r</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7%2f&text=Les%20diagrammes%20en%20gaufre%20et%20les%20isotypes%20GT7&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7%2f&t=Les%20diagrammes%20en%20gaufre%20et%20les%20isotypes%20GT7" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7%2f&title=Les%20diagrammes%20en%20gaufre%20et%20les%20isotypes%20GT7&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+
+
+<p><strong>Pour ce nouveau post de la série GT, qui propose d’illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos <a href="https://www.youtube.com/playlist?list=PLfv89tPxlTiVIrwuSBCISiBaGSH1CJR5-">one chart at a time</a>, nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d’un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s’agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d’observations. Le lecteur les comptes pour inférer les valeurs représentées. Ils ont l’avantage d’être possiblement moins abstraits que les graphes classiques.</strong></p>
+<p>Dans le diagramme de Wilkinson, la distribution d’une variable est figurée par des empilement de ronds. Leur nombre sur une valeur, ou un interval, informe sur l’effectif qui lui est associé. Dans les graphes que nous allons travailler ici, nous nous focaliserons sur la représentation des parties d’un tout. A la manière d’un camembert (ou pie chart) où l’angle d’une part rend compte de l’importance d’une catégorie sur l’ensemble, ils indiquent l’importance d’une catégorie par le nombre d’items de même forme et/ou de même couleur qui s’y rattache par rapport au nombre total d’items qui représente l’ensemble. Cet alternative apparaît plus rigoureuse dans la mesure où elle ne souffre pas de la dissonance angle/surface des camemberts. Pour les diagrammes en gaufre, les formes sont des carrés articulés/empilés. Pour les diagrammes isotypes, les formes sont des iconnes issues du système éponyme (international system of typographic pictures for education).</p>
+<p>La principale règle de graphe est simple si une icône/un carré représente un individu alors deux icônes/carrés représente deux individus. Il n’est pas question ici de jouer sur la taille de ces éléments. Pour exprimer un nombre plus grand, on utilise un plus grand nombre de symboles. Ceux-ci doivent être choisi avec attention pour ne pas induire d’erreurs d’interprétation. Quand les quantités à représenter sont grandes un symbole peu représenter un grand nombre d’individus.</p>
+<p>Pour illustrer l’utilisation de ces graphes, nous allons travailler sur le mix énergétique de la France pour l’année 2020. Les données sont extraites du site <a href="https://ourworldindata.org/grapher/primary-sub-energy-source">Our World in Data</a>.</p>
+<p>Commençons par charger les packages que nous allons utiliser. On y retrouve les classiques (tidyverse…), mais aussi un particulier qu’il sera nécessaire d’installer à partir d’un répertoire différent du CRAN: le package waffle. Pour en avoir la version la plus récente, exécuter la commande suivante:</p>
+<pre class="r"><code>install.packages(&quot;waffle&quot;,repos=&quot;https://cinc.rud.is&quot;)</code></pre>
+<p>Vérifiez que la version installée est suffisamment avancée avec packcageVersion().</p>
+<pre class="r"><code>packageVersion(&quot;waffle&quot;)</code></pre>
+<pre><code>## [1] &#39;1.0.1&#39;</code></pre>
+<p>Elle doit être supérieure à 1, ce qui est le cas ici.</p>
+<pre class="r"><code>library(readr)
+library(tidyverse)
+library(ggtext)
+library(waffle)
+library(showtext)</code></pre>
+<p>Ceci fait, chargeons les données dans R. Nous avons au préalable déposé le fichier csv correspondant charger à partir de <a href="https://ourworldindata.org/grapher/primary-sub-energy-source">Our World in Data</a> dans le dossier de travail.</p>
+<pre class="r"><code>dat &lt;- read_csv(&quot;energy-consumption-by-source-and-region.csv&quot;)</code></pre>
+<pre><code>## Rows: 5264 Columns: 12
+## -- Column specification --------------------------------------------------------
+## Delimiter: &quot;,&quot;
+## chr  (2): Entity, Code
+## dbl (10): Year, Biofuels Consumption - TWh - Total (zero filled), Solar Cons...
+## 
+## i Use `spec()` to retrieve the full column specification for this data.
+## i Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>glimpse(dat)</code></pre>
+<pre><code>## Rows: 5,264
+## Columns: 12
+## $ Entity                                             &lt;chr&gt; &quot;Africa&quot;, &quot;Africa&quot;,~
+## $ Code                                               &lt;chr&gt; NA, NA, NA, NA, NA,~
+## $ Year                                               &lt;dbl&gt; 1965, 1966, 1967, 1~
+## $ `Biofuels Consumption - TWh - Total (zero filled)` &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0~
+## $ `Solar Consumption - TWh (zero filled)`            &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0~
+## $ `Wind Consumption - TWh (zero filled)`             &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0~
+## $ `Hydro Consumption - TWh (zero filled)`            &lt;dbl&gt; 38.62676, 43.08334,~
+## $ `Nuclear Consumption - TWh (zero filled)`          &lt;dbl&gt; 0.00000, 0.00000, 0~
+## $ `Gas Consumption - TWh (zero filled)`              &lt;dbl&gt; 9.543754, 10.669916~
+## $ `Coal Consumption - TWh (zero filled)`             &lt;dbl&gt; 323.4961, 323.1222,~
+## $ `Oil Consumption - TWh (zero filled)`              &lt;dbl&gt; 327.3332, 358.1327,~
+## $ `Geo Biomass Other - TWh (zero filled)`            &lt;dbl&gt; 0.000, 0.000, 0.000~</code></pre>
+<p>La base est trés large. Limitons-la aux seules données que nous utiliserons.</p>
+<pre class="r"><code>dat &lt;- dat %&gt;% filter(Year==2020&amp;Entity==&#39;France&#39;) %&gt;% 
+               select(-Entity,-Code,-Year)</code></pre>
+<p>Intégrons des noms de variables plus faciles à manipuler pour la suite.</p>
+<pre class="r"><code>names(dat)&lt;-c(&#39;Bio_carburant&#39;,&#39;Solaire&#39;,&#39;Eolienne&#39;,&#39;Hydro&#39;,
+              &#39;Nucléaire&#39;,&#39;Gaz&#39;,&#39;Charbon&#39;,&#39;Pétrole&#39;,&#39;autre_biomass&#39;)</code></pre>
+<p>Restructurons le base pour l’organiser en longueur et créons la variable gr reprenons les différents types d’énergie en regroupant au sein d’une seule catégorie les énergies renouvelables.</p>
+<pre class="r"><code>dat &lt;- dat %&gt;% pivot_longer(cols=names(dat),
+                            names_to=&#39;Energie&#39;,
+                            values_to=&#39;TW_h&#39;) %&gt;%
+               mutate(gr=ifelse(Energie%in%c(&#39;Bio_carburant&#39;,&#39;Solaire&#39;,
+                                             &#39;Eolienne&#39;,&#39;Hydro&#39;,
+                                             &#39;autre_biomass&#39;),
+                                &#39;Renouvelable&#39;,Energie)) </code></pre>
+<p>Pour finaliser le travail de préparation des données, établissons la part des différentes énergies (gr) dans le mix.</p>
+<pre class="r"><code>dat_red &lt;- dat %&gt;% group_by(gr) %&gt;% 
+                   summarise(TW_h_c=sum(TW_h)) %&gt;% 
+                   ungroup() %&gt;% 
+                   mutate(part=round(TW_h_c/sum(TW_h_c)*100,digits=2))
+dat_red</code></pre>
+<pre><code>## # A tibble: 5 x 3
+##   gr           TW_h_c  part
+##   &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt;
+## 1 Charbon        53.8  2.24
+## 2 Gaz           407.  16.9 
+## 3 Nucléaire     873.  36.3 
+## 4 Pétrole       744.  31.0 
+## 5 Renouvelable  325.  13.5</code></pre>
+<p>Maintenant que les données sont prêtes, nous pouvons travailler sur nos graphes. Commençons par un diagramme en gaufre classique. Nous utilisons ainsi le geom_waffle() avec deux esthétiques les valeurs représentées part et les différentes énergies pour l’application des couleurs.</p>
+<pre class="r"><code>ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle()</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Le résultat de base peut être facilement amélioré en s’assurant que les éléments représentés prennent bien la forme de carrés et en adoptant un thème plus léger.</p>
+<pre class="r"><code>ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle()+
+  coord_equal()+
+  theme_void()</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Pour rendre l’ensemble encore plus lisible, limitons le nombre de carré par ligne à un maximum de 8, basculons le repère pour avoir le carré seul en haut, marquons la séparation entre les carrés par une ligne blanche assez épaisse et intégrons un léger arrondi sur les angles.</p>
+<pre class="r"><code>ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour=&#39;white&#39;,size=0.5,
+              radius=unit(3,&#39;pt&#39;))+
+  coord_equal()+
+  theme_void()</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Ajoutons des éléments textuels pour expliciter l’ensemble: un titre, un sous-titre (indiquant la quantité totale d’énergie représenté - TWH et la quantité représentée par un carré), le titre de la légende. Nous procédons à une mise en forme pour renforcer les points importants et nous utilisons la police de caractère Montserrat proposée par google font.</p>
+<pre class="r"><code>font_add_google(&quot;Montserrat&quot;,&quot;Montserrat&quot;)
+showtext_auto()
+ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour=&#39;white&#39;,size=0.5,
+              radius=unit(3,&#39;pt&#39;))+
+  labs(title = &quot;Mix énergétique en *2020* pour **France** &lt;img src=&#39;drapeau.png&#39;,
+       width=&#39;10&#39;/&gt;&quot;,
+       subtitle = &quot;(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)&quot;,
+       caption = &quot;Source: Statistical Review of World Energy via Our World in Data&quot;,
+       fill=&#39;Energie&#39;)+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=14),
+        plot.caption = element_text(face = &#39;italic&#39;,hjust=1,size=12),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=12))</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
+<p>Les couleurs attribuées par défaut paraissent ici assez inadéquate. On a du vert pour le gaz et le nucléaire et du violet pour les énergies renouvelables. Changeons cela pour avoir du gris foncé pour le charbon, du gris plus clair pour le gaz, du jaune pour le nucléaire, du bleu foncé pour le pétrole et du vert pour les renouvelables. Pour ce faire, utilisons un échec manuelle scale_fill_manual().</p>
+<pre class="r"><code>ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour=&#39;white&#39;,size=0.5,
+              radius=unit(3,&#39;pt&#39;))+
+  labs(title = &quot;Mix énergétique en *2020* pour **France** &lt;img src=&#39;drapeau.png&#39;,
+       width=&#39;10&#39;/&gt;&quot;,
+       subtitle = &quot;(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)&quot;,
+       caption = &quot;Source: Statistical Review of World Energy via Our World in Data&quot;,
+       fill=&#39;Energie&#39;)+
+  scale_fill_manual(values=c(&#39;DimGray&#39;,&#39;grey&#39;,&#39;Gold&#39;,&#39;MidnightBlue&#39;,
+                             &#39;MediumSpringGreen&#39;))+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=14),
+        plot.caption = element_text(face = &#39;italic&#39;,hjust=1,size=12),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=12))</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-13-1.png" width="960" /></p>
+<p>Cela nous donne un diagramme simple est expressif. L’empilement des carrés permet d’avoir à la fois l’information sur le total de l’énergie consommée et le détail par type.</p>
+<p>On peut sur le même modèle envisager de présenter les groupes de carrés sous une forme non empilée en utilisant la commande facet_wap(). Mettons les sur une ligne et assurons-nous que l’étiquette des catégories soit sous les blocs. Faisons également sauter la légende qui ne sert plus à rien.</p>
+<pre class="r"><code>ggplot(data=dat_red,aes(values=part,fill=gr))+
+  geom_waffle(n_rows=8,flip=TRUE,colour=&#39;white&#39;,size=0.5,
+              radius=unit(3,&#39;pt&#39;))+
+  facet_wrap(~gr,nrow = 1,strip.position = &#39;bottom&#39;)+
+  labs(title = &quot;Mix énergétique en *2020* pour **France** &lt;img src=&#39;drapeau.png&#39;,
+       width=&#39;10&#39;/&gt;&quot;,
+       subtitle = &quot;(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)&quot;,
+       caption = &quot;Source: Statistical Review of World Energy via Our World in Data&quot;)+
+  scale_fill_manual(values=c(&#39;DimGray&#39;,&#39;grey&#39;,&#39;Gold&#39;,&#39;MidnightBlue&#39;,
+                             &#39;MediumSpringGreen&#39;))+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=18),
+        plot.caption = element_text(face = &#39;italic&#39;,hjust=1,size=14),
+        legend.position=&#39;none&#39;,
+        strip.text=element_text(size=14))</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-14-1.png" width="960" /></p>
+<p>Une autre alternative à notre diagramme en gaufres empilés consiste à utiliser des iconnes à la place des carrés. Le graphe devient alors isotype. Pour ce faire, il est nécessaire au préalable de télécharger une série de polices complémentaires. Il s’agit des polices Awesome qui sont gérées par le package waffle. Vous les trouverez en suivant les liens suivant:</p>
+<ul>
+<li><p><a href="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/webfonts/fa-solid-900.ttf">solid 900</a></p></li>
+<li><p><a href="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/webfonts/fa-regular-400.ttf">regular 400</a></p></li>
+<li><p><a href="https://raw.githubusercontent.com/FortAwesome/Font-Awesome/master/webfonts/fa-brands-400.ttf">brands 400</a></p></li>
+</ul>
+<p>Une fois charger, appelons-les dans notre environnement de travail. Profitons-en pour en faire autant avec une nouvelle police google, la police Nunito.</p>
+<pre class="r"><code>font_add_google(&quot;Nunito&quot;,&quot;Nunito&quot;)
+font_add(family=&quot;FontAwesome5Free-Solid&quot;,
+         regular=&#39;fa-solid-900.ttf&#39;)
+font_add(family=&quot;FontAwesome5Free-Regular&quot;,
+         regular=&#39;fa-regular-400.ttf&#39;)
+font_add(family=&quot;FontAwesome5Brands-Regular&quot;,
+         regular=&#39;fa-brands-400.ttf&#39;)
+showtext_auto()</code></pre>
+<p>Vous pouvez chercher les icônes à retenir en utilisant l’applet associée. Celle-ci est mobilisée en saisissant fa_list() dans la console. Nous retenons ici une montagne pour le charbon (cela rappel les terriles), une flamme pour gaz, un symbole radiation pour le nucléaire, une pompe à essence pour le pétrole, et un arbre pour les énergies renouvelable. Elles sont introduites par le geom_pictogram() et les esthétiques label et color. Leur liste est précisée dans une échelle dédiée scale_label_pictogram().</p>
+<pre class="r"><code>ggplot(data=dat_red,aes(values=part,label=gr,color=gr))+
+  geom_pictogram(n_rows=8,flip=TRUE)+
+  labs(title = &quot;Mix énergétique en *2020* pour **France** &lt;img src=&#39;drapeau.png&#39;,
+       width=&#39;10&#39;/&gt;&quot;,
+       subtitle = &quot;(Total de *2 402,24 TWh* - un carré représente *24,76 TWh*)&quot;,
+       caption = &quot;Source: Statistical Review of World Energy via Our World in Data&quot;,
+       label=&#39;Energie&#39;,color=&#39;Energie&#39;)+
+  scale_label_pictogram(values=c(&#39;mountain&#39;,&#39;fire-alt&#39;,&#39;radiation&#39;,
+                                 &#39;gas-pump&#39;,&#39;tree&#39;))+
+  scale_color_manual(values=c(&#39;DimGray&#39;,&#39;grey&#39;,&#39;Gold&#39;,&#39;MidnightBlue&#39;,
+                             &#39;MediumSpringGreen&#39;))+
+  coord_equal()+
+  theme_void()+
+  theme(text=element_text(family = &quot;Nunito&quot;),
+        plot.title = element_markdown(size=24),
+        plot.subtitle = element_markdown(size=14),
+        plot.caption = element_text(face = &#39;italic&#39;,hjust=1,size=12),
+        legend.title = element_text(size=14),
+        legend.text = element_text(size=12))</code></pre>
+<p><img src="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/index_files/figure-html/unnamed-chunk-16-1.png" width="960" /></p>
+<p>Ce nouveau graphe est, je pense, le plus parlant des trois. De nombreuses variations peuvent être envisagées en jouons sur les icônes, leurs couleurs, le nombre sur une lignes, l’empilement ou non, etc. Utiliser des éléments autres que les formes classiques (points, courbes, lignes, barres) ouvre un champs d’outils de communications importants. Ils faudra néanmoins veiller à rester rigoureux dans leur utilisation.</p>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7%2f&text=Les%20diagrammes%20en%20gaufre%20et%20les%20isotypes%20GT7&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7%2f&t=Les%20diagrammes%20en%20gaufre%20et%20les%20isotypes%20GT7" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7%2f&title=Les%20diagrammes%20en%20gaufre%20et%20les%20isotypes%20GT7&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>
