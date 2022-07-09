@@ -101,18 +101,23 @@ ggplot(dat_sank,
         legend.position = &#39;none&#39;)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <p>Voyons maintenant comment faire de même à partir de données réelles. Reprenons les données d’admissions à Berkley pour l’automne 1973 que nous avions utilisées pour illustrer le diagramme en mosaïque (GT 6) et le paradoxe de Simpson. Celles-ci sont issues d’un tableau sur la page wikipédia (US) sur ce dernier. Nous les avons scraper à l’aide du code suivant:</p>
-<pre class="r"><code>library(rvest)</code></pre>
-<pre><code>## 
-## Attachement du package : &#39;rvest&#39;</code></pre>
-<pre><code>## L&#39;objet suivant est masqué depuis &#39;package:readr&#39;:
-## 
-##     guess_encoding</code></pre>
-<pre class="r"><code>url&lt;-&quot;https://en.wikipedia.org/wiki/Simpson%27s_paradox&quot;
+<pre class="r"><code>library(rvest,quietly=TRUE)
+url&lt;-&quot;https://en.wikipedia.org/wiki/Simpson%27s_paradox&quot;
 dat&lt;-url %&gt;% 
     read_html() %&gt;%
     html_nodes(xpath=&#39;//*[@id=&quot;mw-content-text&quot;]/div[1]/table[2]&#39;) %&gt;%
     html_table() %&gt;% 
-    as.data.frame()</code></pre>
+    as.data.frame()
+dat[1:8,]</code></pre>
+<pre><code>##   Department        All    All.1        Men    Men.1      Women  Women.1
+## 1 Department Applicants Admitted Applicants Admitted Applicants Admitted
+## 2          A        933      64%        825      62%        108      82%
+## 3          B        585      63%        560      63%         25      68%
+## 4          C        918      35%        325      37%        593      34%
+## 5          D        792      34%        417      33%        375      35%
+## 6          E        584      25%        191      28%        393      24%
+## 7          F        714       6%        373       6%        341       7%
+## 8      Total       4526      39%       2691      45%       1835      30%</code></pre>
 <p>Puis, nous avons créé une data frame correspondant à ces informations en retenu une répartition individuelle.</p>
 <pre class="r"><code>dat2&lt;-data.frame(sexe=c(rep(&#39;homme&#39;,2691),rep(&#39;femme&#39;,1835)),
                  dep=c(rep(&#39;A&#39;,825),rep(&#39;B&#39;,560),rep(&#39;C&#39;,325),

@@ -122,14 +122,15 @@ ggplot(dat_sank,
 
 Voyons maintenant comment faire de même à partir de données réelles. Reprenons les données d'admissions à Berkley pour l'automne 1973 que nous avions utilisées pour illustrer le diagramme en mosaïque (GT 6) et le paradoxe de Simpson. Celles-ci sont issues d'un tableau sur la page wikipédia (US) sur ce dernier. Nous les avons scraper à l'aide du code suivant:
 
-```{r}
-library(rvest)
+```{r,message=FALSE}
+library(rvest,quietly=TRUE)
 url<-"https://en.wikipedia.org/wiki/Simpson%27s_paradox"
 dat<-url %>% 
     read_html() %>%
     html_nodes(xpath='//*[@id="mw-content-text"]/div[1]/table[2]') %>%
     html_table() %>% 
     as.data.frame()
+dat[1:8,]
 ```
 
 Puis, nous avons créé une data frame correspondant à ces informations en retenu une répartition individuelle.
