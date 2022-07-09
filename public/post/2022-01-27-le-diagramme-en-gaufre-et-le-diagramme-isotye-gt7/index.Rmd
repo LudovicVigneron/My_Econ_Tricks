@@ -1,0 +1,54 @@
+---
+title: "Le diagramme en gaufre et le diagramme isotye GT7"
+author: "Ludovic Vigneron"
+date: '2022-01-27'
+categories:
+- datavisualisation
+- R
+- ggplot2
+tags:
+- Dataviz
+- GGPLOT2
+- R
+---
+
+**Pour ce nouveau post de la série GT, qui propose d'illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos [one chart at a time](https://www.youtube.com/playlist?list=PLfv89tPxlTiVIrwuSBCISiBaGSH1CJR5-), nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d'un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s'agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d'observations. Le lecteur les comptes pour inférer les valeurs représentées. Ils ont l'avantage d'être possiblement moins abstraits que les graphes classiques.**
+
+Dans le diagramme de Wilkinson, la distribution d'une variable est figurée par des empilement de ronds. Leur nombre sur une valeur, ou un interval, informe sur l'effectif qui lui est associé. Dans les graphes que nous allons travailler ici, nous nous focaliserons sur la représentation des parties d'un tout. A la manière d'un camembert (ou pie chart) où l'angle d'une part rend compte de l'importance d'une catégorie sur l'ensemble, ils indiquent l'importance d'une catégorie par le nombre d'items de même forme et/ou de même couleur qui s'y rattache par rapport au nombre total d'items qui représente l'ensemble. Cet alternative apparaît plus rigoureuse dans la mesure où elle ne souffre pas de la dissonance angle/surface des camemberts. Pour les diagrammes en gaufre, les formes sont des carrés articulés/empilés. Pour les diagrammes isotypes, les formes sont des icones issues du système éponyme (international system of typographic pictures for education).
+
+La principale règle de graphe est simple si une icone/un carré représente un individu alors deux icones/carrés représente deux individus. Il n'est pas question ici de jouer sur la taille de ces éléments. Pour exprimer un nombre plus grand, on utilise un plus grand nombre de symboles. Ceux-ci doivent être choisi avec attention pour ne pas induire d'erreurs d'interprétation. Quand les quantités à représenter sont grandes un symbole peu représenter un grand nombre d'individus.
+
+Pour illustrer l'utilisation de ces graphes, nous allons travailler sur le mix énergétique de la France pour l'année 2020. Les données sont extraites du site [Our World in Data](https://ourworldindata.org/grapher/primary-sub-energy-source).
+
+Commençons par charger les packages que nous allons utiliser. On y retrouve les classiques (tidyverse...), mais aussi un particulier qu'il sera nécessaire d'installer à partir d'un répertoire différent du CRAN: le package waffle. Pour en avoir la version la plus récente, exécuter la commande suivante:
+
+```{r }
+#install.packages("waffle",repos="https://cinc.rud.is")
+```
+
+vérifier que vous avez une version suffisamment avancée (supérieure à 1.0).
+
+```{r }
+packageVersion("waffle")
+```
+
+
+```{r message=FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+library(ggtext)
+library(waffle)
+library(showtext)
+```
+
+
+
+
+
+
+
+
+
+
+
+
