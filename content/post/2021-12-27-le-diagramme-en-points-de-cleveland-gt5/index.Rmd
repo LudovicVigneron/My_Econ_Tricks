@@ -2,19 +2,19 @@
 title: Le diagramme en points GT5
 author: Ludovic Vigneron
 date: '2021-12-27'
-slug: []
 categories:
   - datavisualisation
   - R
 tags:
-  - GGPLOT2
   - Dataviz
+  - GGPLOT2
   - R
+  - gt
 ---
 
-**Jusqu'à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l'exploitation d'un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison mais cet fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot.**
+**Jusqu'à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l'exploitation d'un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison, mais cette fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot.**
 
-Le premier a avoir été utilisé est très proche du simple diagramme à bâtons. Il s'agit d'un  empilement de points servant à matérialiser les effectifs des différentes valeurs d'une variable (discrète ou continue découpée en intervalles). Il permet d'avoir une image rapide et possiblement élégante de la distribution de cette dernière. Ce type de représentation doit néanmoins être réservé à des bases comprenant un nombre d'observation relativement réduite pour ne pas apparaître illisible.
+Le premier a avoir été utilisé est très proche du simple diagramme à bâtons. Il s'agit d'un empilement de points servant à matérialiser les effectifs des différentes valeurs d'une variable (discrète ou continue découpée en intervalles). Il permet d'avoir une image rapide et possiblement élégante de la distribution de cette dernière. Ce type de représentation doit néanmoins être réservé à des bases comprenant un nombre d'observation relativement réduite pour ne pas apparaître illisible.
 
 Pour illustrer, l'ensemble de ces considérations, prenant un ensemble de données portant sur le tabagisme dans les différents pays composant l'OCDE en 2019. Celles-ci sont téléchargeables à l'adresse suivante: https://doi.org/10.1787/888934015277. Mais avant d'aller plus loin, chargeons les différents packages que nous utiliserons par la suite.
 
