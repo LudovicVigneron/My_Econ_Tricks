@@ -18,7 +18,6 @@ Pour commencer, chargeons quelques packages: le **tidyverse**, **broom**, qui pe
 ```{r, message=FALSE,warning=FALSE}
 library(tidyverse)
 library(broom)
-library(DT)
 library(plm)
 library(panelr)
 library(lmtest) 
@@ -119,7 +118,8 @@ Qu'est-ce que cela signifie d'un point de vue pratique? Simplement que le coeffi
 
 ```{r}
 g_i <- pvcm(lwage~wks, data=wages,index="id", model="within")
-g_i$coefficients
+g_i$coefficients[1:20,]
+print("reste 575 modèles")
 ```
 
 Le résultat des estimations (g_i) peut alors être introduit dans la fonction **pooltest()** avec le résultat de l'estimation du modèle de pooling (g) pour réaliser le test.
