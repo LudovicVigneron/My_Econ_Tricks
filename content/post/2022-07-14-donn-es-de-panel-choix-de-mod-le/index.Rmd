@@ -9,7 +9,6 @@ categories:
 tags:
   - R
   - panel
-draft: yes
 ---
 
 **Entamer l'écriture un nouveau papier est l'occasion de revenir sur des méthodes que j'ai déjà utiliser et d'en découvrir de nouvelles. J'en profites pour réviser et partager quelques réflexions techniques. Il s'agit de travailler des données des panels. Bon rien d'original ici. La grande majorité de mes travaux utilisent ce type d'informations notamment au travers de modèles à effets fixes. Le défaut de la méthode est qu'elle nécessite que l'ensemble des informations traitées varies à la fois entre les individus et dans le temps. Une solution que je viens de découvrir au fil des lectures pour mobiliser en complément des variables fixes dans l'analyse est de passer par des modèles hybrides de type between-within. Ceux-ci sont développés par [Allison (2009)](https://methods.sagepub.com/book/fixed-effects-regression-models/d33.xml) et [Bell et Jones (2015)](https://www.cambridge.org/core/journals/political-science-research-and-methods/article/explaining-fixed-effects-random-effects-modeling-of-timeseries-crosssectional-and-panel-data/0334A27557D15848549120FE8ECD8D63#article). Mais avant d'entamer leur analyse, débutons une série de postes pour revenir sur quelques basiques concernant les données des panels.** 
