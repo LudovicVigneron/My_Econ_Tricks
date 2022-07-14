@@ -13,7 +13,7 @@ tags:
 
 **Entamer l'écriture un nouveau papier est l'occasion de revenir sur des méthodes que j'ai déjà utiliser et d'en découvrir de nouvelles. J'en profites pour réviser et partager quelques réflexions techniques. Il s'agit de travailler des données des panels. Bon rien d'original ici. La grande majorité de mes travaux utilisent ce type d'informations notamment au travers de modèles à effets fixes. Le défaut de la méthode est qu'elle nécessite que l'ensemble des informations traitées varies à la fois entre les individus et dans le temps. Une solution que je viens de découvrir au fil des lectures pour mobiliser en complément des variables fixes dans l'analyse est de passer par des modèles hybrides de type between-within. Ceux-ci sont développés par [Allison (2009)](https://methods.sagepub.com/book/fixed-effects-regression-models/d33.xml) et [Bell et Jones (2015)](https://www.cambridge.org/core/journals/political-science-research-and-methods/article/explaining-fixed-effects-random-effects-modeling-of-timeseries-crosssectional-and-panel-data/0334A27557D15848549120FE8ECD8D63#article). Mais avant d'entamer leur analyse, débutons une série de postes pour revenir sur quelques basiques concernant les données des panels.** 
 
-Pour commencer, chargeons quelques packages: le **tidyverse**, **broom**, qui permet de gérer les estimations de modèle comme des tibbles, **DT**, pour présenter les tableau sous forme d'applet html, **plm**, qui permet d'estimer les modèles de panel classiques, et **panelr**, qui permet notamment d'estimer les modèles hybrides.
+Pour commencer, chargeons quelques packages: le **tidyverse**, **broom**, qui permet de gérer les estimations de modèle comme des tibbles, **plm**, qui permet d'estimer les modèles de panel classiques, et **panelr**, qui permet notamment d'estimer les modèles hybrides.
 
 ```{r, message=FALSE,warning=FALSE}
 library(tidyverse)
@@ -119,8 +119,7 @@ Qu'est-ce que cela signifie d'un point de vue pratique? Simplement que le coeffi
 
 ```{r}
 g_i <- pvcm(lwage~wks, data=wages,index="id", model="within")
-datatable(g_i$coefficients, options = list(pageLength = 10)) %>% 
-   formatRound(columns=c('(Intercept)', 'wks'),digits=8)
+g_i$coefficients
 ```
 
 Le résultat des estimations (g_i) peut alors être introduit dans la fonction **pooltest()** avec le résultat de l'estimation du modèle de pooling (g) pour réaliser le test.
@@ -218,9 +217,7 @@ Dans sa version la plus simple, il s'agit d'une estimation par les MCO d'un mod�
 
 ```{r}
 dum_mod<-lm(lwage~wks+factor(id)-1,data=wages) 
-datatable(dum_mod%>% tidy(), options = list(pageLength = 10)) %>% 
-   formatRound(columns=c('estimate', 'std.error','statistic','p.value'),
-               digits=8)
+dum_mod%>% tidy()
 ```
 
 Si cette version permet bien de contrôler des effets fixes individuels et donc de l'inobservable variant en fonction de l'individu et pas dans le temp, elle reste laborieuse à manipuler. Aussi, il existe une alternative plus pratique produisant le même résultat sans les variables indicatrice individuelles : le modèle "within". Il s'agit de transformer les variables en leur soustrayant leur moyenne calculé sur une base individuel et d'appliquer les MCO sur le résultat de la transformation. On a ainsi:
