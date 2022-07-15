@@ -280,4 +280,4 @@ var_b<-(sum(w_l$residuals^2)/(3569))*invXtX
 sqrt(diag(var_b))
 ```
 
-Bon voilà, je pense que ce premier poste est déjà assez long. (suite au prochain numéro...)
+Bon voilà, je pense que ce premier poste est déjà assez long. (suite au prochain numéro... On tient peut être là une série estivale? qui sait?)

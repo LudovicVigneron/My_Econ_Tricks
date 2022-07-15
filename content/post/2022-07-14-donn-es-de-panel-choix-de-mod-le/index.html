@@ -242,8 +242,8 @@ dum_mod%&gt;% tidy()</code></pre>
 ## 10 factor(id)9  6.85      0.110      62.4     0    
 ## # … with 586 more rows</code></pre>
 <p>Si cette version permet bien de contrôler des effets fixes individuels et donc de l’inobservable variant en fonction de l’individu et pas dans le temp, elle reste laborieuse à manipuler. Aussi, il existe une alternative plus pratique produisant le même résultat sans les variables indicatrice individuelles : le modèle “within”. Il s’agit de transformer les variables en leur soustrayant leur moyenne calculé sur une base individuel et d’appliquer les MCO sur le résultat de la transformation. On a ainsi:</p>
-<p><span class="math display">\[(y_{it}-\bar{y_i})=\alpha_i+\beta_{1}.(x_{it}-\bar{x_i})+u_{it}\]</span></p>
-<p>Réalisons la transformation within sur nos données.</p>
+<p><span class="math display">\[(y_{it}-\bar{y_i})=\alpha_i+\beta_{1}.(x_{it}-\bar{x_i})+(u_{it}-\bar{u_i})\]</span></p>
+<p>Réalisons la transformation “within” sur nos données.</p>
 <pre class="r"><code>wi_d&lt;-wages %&gt;% group_by(id) %&gt;% 
   mutate(m_lwage=mean(lwage),m_wks=mean(wks),
          w_lwage=lwage-m_lwage,w_wks=wks-m_wks)</code></pre>
@@ -281,4 +281,4 @@ w_l %&gt;% tidy()</code></pre>
 var_b&lt;-(sum(w_l$residuals^2)/(3569))*invXtX
 sqrt(diag(var_b))</code></pre>
 <pre><code>## [1] 0.00102071</code></pre>
-<p>Bon voilà, je pense que ce premier poste est déjà assez long. (suite au prochain numéro…)</p>
+<p>Bon voilà, je pense que ce premier poste est déjà assez long. (suite au prochain numéro… On tient peut être là une série estivale? qui sait?)</p>
