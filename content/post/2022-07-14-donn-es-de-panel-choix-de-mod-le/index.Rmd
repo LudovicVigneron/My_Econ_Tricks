@@ -223,7 +223,7 @@ Si cette version permet bien de contrôler des effets fixes individuels et donc 
 
 $$(y_{it}-\bar{y_i})=\alpha_i+\beta_{1}.(x_{it}-\bar{x_i})+(u_{it}-\bar{u_i})$$
 
-Réalisons la transformation within sur nos données.
+Réalisons la transformation "within" sur nos données.
 
 ```{r}
 wi_d<-wages %>% group_by(id) %>% 
