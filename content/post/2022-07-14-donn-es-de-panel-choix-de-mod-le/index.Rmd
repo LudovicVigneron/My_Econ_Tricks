@@ -221,7 +221,7 @@ dum_mod%>% tidy()
 
 Si cette version permet bien de contrôler des effets fixes individuels et donc de l'inobservable variant en fonction de l'individu et pas dans le temp, elle reste laborieuse à manipuler. Aussi, il existe une alternative plus pratique produisant le même résultat sans les variables indicatrice individuelles : le modèle "within". Il s'agit de transformer les variables en leur soustrayant leur moyenne calculé sur une base individuel et d'appliquer les MCO sur le résultat de la transformation. On a ainsi:
 
-$$(y_{it}-\bar{y_i})=\alpha_i+\beta_{1}.(x_{it}-\bar{x_i})+u_{it}$$
+$$(y_{it}-\bar{y_i})=\alpha_i+\beta_{1}.(x_{it}-\bar{x_i})+(u_{it}-\bar{u_i})$$
 
 Réalisons la transformation within sur nos données.
 
