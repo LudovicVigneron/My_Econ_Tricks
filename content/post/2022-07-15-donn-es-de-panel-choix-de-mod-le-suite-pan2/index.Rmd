@@ -1,0 +1,203 @@
+---
+title: Données de panel choix de modèle (suite) - pan2
+author: Ludovic Vigneron
+date: '2022-07-16'
+categories:
+  - Panel
+  - r
+tags:
+  - panel
+  - R
+---
+
+**Continuons sur la lancé du post précédent. Pour rappel, il s'agissait de faire quelques rappels pratiques concernant les données de panels à partir du jeu de données wages du package *panelr*. Le modèle que nous avions envisagé expliqué le montant des salaires sur différentes périodes (lwage) par le nombre de semaines travaillées durant ces mêmes périodes (wk). Il était question de la potentiel prise en compte d'effets individuels. Après une série de tests, nous avions conclu que le meilleure modèle à considérer pour estimation était le modèle à effets fixes individuels.**
+
+Ceci étant posé rechargeons les packages utilisés précédemment et ajoutons *ggeffects*, qui permet de générer facilement les prédictions issues d'un modèle, et *patchwork*, qui permet de juxtaposer des graphes en utilisant une syntaxe simplifiée.
+
+```{r, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(plm)
+library(panelr)
+library(ggeffects)
+library(patchwork)
+```
+
+Rechargeons également le jeu de données.
+
+```{r}
+wages<-WageData
+```
+
+Reprenons de même les deux estimations du modèle à effets fixes individuels développés dum_mod (variables indicatrices individuelles) et wit (within).
+
+```{r}
+dum_mod<-lm(lwage~wks+factor(id)-1,data=wages) 
+wit<-plm(lwage ~ wks, data=wages, index="id",model="within")
+```
+
+Ceci étant fait, intéressons-nous à nos effets fixes. Voyons à quoi ils ressemblent. La fonctions **fixef()** permet de les extraire du modèle 'within'. Contentons-nous des 6 premiers (affichez les 595 serait à ce stade superflu).
+
+```{r}
+head(fixef(wit))
+```
+
+La sortie correspond bien aux coefficients associés aux six premières variables incatives des id de la régression classique (dum_mod).
+
+```{r}
+dum_mod$coefficients[2:7]
+```
+
+Mais ces effets fixes sont-ils individuellement statistiquement significatifs (différents de 0)? Pour le savoir rien de très compliqué, il suffit d'appliquer la fonction **summary()** à la sortie de **fixef()**. 
+
+```{r}
+head(summary(fixef(wit)))
+```
+
+On obtient les tests de Student associée à chaque effet fixes. Il peut également être intéressant d'avoir un test global des effets fixes individuels. Pour cela, encore un fois, il n'y a rien de très compliqué, d'autant que nous l'avons déjà pratiqué dans le post précédent. On utilise la fonction **pFtest()** pour comparer le notre modèle "within" avec le modèle sans effets fixes. 
+
+```{r}
+pFtest(wit, plm(lwage~wks,data=wages,index='id',model="pooling"))
+```
+
+La p-value du test est très petite. L'hypothèse d’absence d'effets fixes (individuels) significatif est rejeté (assez largement). On a des effets fixes globalement significatif. Le principe de ce test est classique. Il s'agit d'un test de Fisher de comparaison de modèle que l'on peut réaliser à partir de la fonction **anova()** sur notre modèle à variables indicatives.
+
+```{r}
+anova(lm(lwage~wks,data=wages),dum_mod)
+```
+
+On obtient le même résultat. La statistique de Fisher est calculée selon la formule suivante:
+
+$$F=\frac{\frac{RSS_1-RSS_2}{Df_1-Df_2}}{\frac{RSS_2}{Df_2}}$$
+
+Où $Df_1$ et $Df_2$ correspond aux degrés de liberté des modèles 1 (contraint) et 2 (non contraint), $RSS_1$ et $RSS_2$ la somme des carrés des résidus des mêmes modèles.
+
+```{r}
+((883.87-240.59)/(4163-3569))/(240.59/3569)
+```
+
+Elle suit une loi de Fisher à $Df_1-Df_2$ et $Df_2$ degrés de liberté. 
+
+On peut répliquer le **pFtest()** à partir des informations suivantes issues du modèle "within".
+
+```{r}
+c('RSS_2',sum(summary(wit)$residuals^2))
+c('Df_2',wit$df.residual)
+```
+
+Pour ce donnée une idée de la diversité des situations individuels, on peut observer la distribution des effets fixes.
+
+```{r}
+c(fixef(wit)) %>% summary()
+```
+
+Pour avoir un bonne compréhension d'un modèle, je recommande toujours d'observer les prédictions générés au regard des données sur lequel il est estimé. Ici, on aura pour chaque id une droite différente ajusté sur un ensemble de 7 points. Soit, un total de 595 droites ce qui rendre les choses peu lisibles.
+
+*plm* propose une fonction permettant de générer directement le graphe en question directement en ajustant certains paramètre pour rendre si possible l'ensemble plus lisible.
+
+```{r}
+plot(wit,dx=1)
+```
+
+Notez qu'il fait également paraître la droite correspondant au modèle de "pooling" en pointillé. La fonction propose des éléments d’ajustement permettant de rendre la sortie plus claire. L'option dx fait évoluer la longueur des ségments figurant les droits d'estimation du modèle à effets fixes.
+
+```{r}
+plot(wit,dx=0.05) 
+```
+
+L'ensemble reste peu lisible et de surcroît le graphe n'est pas de type ggplot... Il peut être intéressant de réaliser la figure sur moins d'observation en ce concentrant sur un nombre restreint d'individu. Commençons par le premier (id=1). Représentons en plus de la droit d'estimation en bleu la droit du modèle de pooling en rouge.
+
+```{r}
+ggplot(data=filter(wages,id==1),aes(x=wks,y=lwage))+geom_point()+
+  geom_abline(slope=wit$coefficients[1],intercept = fixef(wit)[1],color='blue')+
+  geom_abline(slope=0.00527,intercept = 6.43,color='red')+
+  labs(title='id = 1')+
+  coord_cartesian(ylim=c(5.5,7.5))+
+  theme_minimal()
+```
+
+Le graphe peut être décliné de manière à considérer plus d'individus et donc obtenir une vision plus global de la situation. Présentons un groupe de graphes en considérant six individus ceux ayant les id allant de 6 à 11.
+
+```{r}
+for (i in 6:11){
+  d<-filter(wages,id==i)
+  assign(paste0('G_',i),
+  ggplot(data=d,aes(x=wks,y=lwage))+geom_point()+
+  geom_abline(slope=wit$coefficients[1],intercept = fixef(wit)[i],color='blue')+
+  geom_abline(slope=0.00527,intercept = 6.43,color='red')+
+  labs(title = paste('id =',i))+
+  coord_cartesian(ylim=c(5.5,7.5),xlim=c(15,52))+
+  theme_minimal())}
+(G_6+G_7)/(G_8+G_9)/(G_10+G_11)
+rm(G_6,G_7,G_8,G_9,G_10,G_11,d)
+```
+
+Au delà de ces graphes, on peut être intéressé par les prédictions issues du modèle pour des plages de valeurs choisies. Dans le cadre de modèles classiques, le packages *ggeffects* permet de le faire très facilement mais ne fonctionne pas (pour l'instant) avec les modèles plm. Prenons donc pour point de départ le modèle à variables indicatives (dum_mod). Chercherons ensuite à émuler les fonctionnalités utilisé pour notre modèle "within" (wit).La fonction à mobiliser ici est **ggpredict()**. Elle prend pour premier argument le modèle et les valeurs sur lesquelles les prédictions seront réalisées avec l'option terms. Voyons ce que cela donne avec le modèle à variables indicatives (dum_mod) pour les valeurs allant de 30 à 40 de wks.
+
+```{r}
+ggpredict(dum_mod,terms="wks[30:40]")
+```
+Par défaut, il réalise l'estimation à partir de l'individu 1 (id=1) pour lequel le modèle est $lwage=5.92687+0.00101*wkds$. Il nous donne les listes de valeur de wks, la prédiction et un intervalle de confiance à 95%. La prédiction affichée ne comprend que deux chiffres aprés le vigule. On peut avoir mieux en appelant les valeurs générées par la fonction.
+
+```{r}
+pred<-ggpredict(dum_mod,terms="wks[30:40]")
+cbind(wks=30:40,pred=pred$predicted,conf_b=pred$conf.low,conf_h=pred$conf.high)
+```
+
+Les prédictions peuvent être générer pour plusieurs individus. Il suffit de l'indiquer leur id. Limitons nous à trois valeurs de wks et quatre id.
+
+```{r}
+ggpredict(dum_mod,terms=c("wks[30,35,40]","id[2:5]"))
+```
+
+Les possibilités sont multiples. Bon, l'ensemble est plus intéressant pour des modèles plus sophistiqués. ggeffects permet en plus de générer des graphes pour 
+présenter ces estimations.
+
+```{r}
+ggpredict(dum_mod,terms=c("wks[30:60]","id[10:16]")) %>%
+  plot(ci.style = "dash")
+```
+
+La fonction graphique propose pas mal d'options de mise en forme d'autant que les graphes créés sont de type ggplot2.
+
+```{r}
+ggpredict(dum_mod,terms=c("wks[30:60]","id[10:16]")) %>%
+  plot(ci.style = "ribbon",facets = TRUE)+
+  labs(caption='Data wages-package panelr')+
+  theme(plot.title = element_text(colour='purple',face='bold',hjust=0.5),
+        plot.caption = element_text(family="serif",face='italic',hjust=1))
+```
+
+Malheureusement ggeffects n'est pas compatible avec les modèles plm (même si les développeurs finiront surement par y remédier). Néanmoins, il n'est pas très difficile de créer une fonction à partir de l'estimation du modèle et de l'utiliser pour générer la prédiction. Libre à vous de la mobiliser par la suite dans des graphes (que vous devrait designer vous-même) ou dans d'autres analyses.
+
+```{r}
+f_p<-function(val,id){
+ est<-cbind("wks"=val,"est"=wit$coefficients*val+fixef(wit)[id])
+ row.names(est)<-rep(paste('id =',id),length(val))
+ return(est)
+}
+f_p(42,1)
+f_p(30:40,1)
+f_p(seq(30,45,5),1)
+```
+
+Encore une fois, je pense avoir été un peu long. Il est temps de conclure le post du jour. Mais avant utilisons les prédictions du modèle obtenu à partir des données qui ont permis de l'estimé pour les comparer aux valeurs de la variable expliquée. Créons un nuage de points articulant ces deux dimensions. 
+
+```{r}
+dif_<-data.frame(pred=wages$lwage - residuals(wit),obs= wages$lwage)
+ggplot(data=dif_,aes(x=obs,y=pred))+geom_point()+
+  geom_abline(intercept = 0, slope=1, color='red')+
+  coord_equal()+
+  theme_minimal()
+```
+
+Ce graphe donne une idée de la qualité d'ajustement globale du modèle. Un modèle parfaitement ajusté aurait l'ensemble de ces points situés sur la droite en rouge (45°). Les prédictions obtenues correspondraient aux données. On est loin du compte... Mais ce n'est pas une surprise si on regrade les statistiques du modèle.
+
+
+```{r}
+summary(wit)
+```
+
+Le coefficient associé à notre seul variable explicative (hors effets fixes individuels) n'est pas significatif. Peut être serait-il pertinent de contrôle d'autres dimensions que les effets fixes individuels? des effets temporels? (à suivre)
+
+
+
