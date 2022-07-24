@@ -1,0 +1,263 @@
+---
+title: Données de panel choix de modèle (digression variabilité) - pan3
+author: Ludovic Vigneron
+date: '2022-07-22'
+slug: []
+categories:
+  - R
+  - Panel
+tags:
+  - panel
+  - r
+---
+
+**Bon! J'aurais peut-être dû commencer par là. Les données de panel présentent une structure particulière la répétition des observations dans le temps permet d'appréhender à la fois des différences entre individus et entre périodes mais aussi pour les individus sur les périodes ou pour les périodes en fonction des individus... Cela se concrétise par des tendances au niveau de données plus précisément au niveau de la variation de leur valeurs des variables. C'est autour de à l'appréhension de cette variabilité, à sa mesure, que ce court billet s'organise.**
+
+```{r, message=FALSE,warning=FALSE}
+library(tidyverse)
+library(plm)
+library(panelr)
+```
+
+Rechargeons le jeu de données.
+
+```{r}
+wages<-WageData
+```
+
+
+Revenons sur nos données de base et intéressons-nous à la variabilité de notre variable expliquée (lwage). Cette variabilité est généralement exprimée par la variance ($s^2$) ou l'écart type ($s$) (construit à partir de somme des écarts carrés à la moyenne - sec). Recalculons-les.
+
+```{r}
+wages %>% select(lwage) %>% 
+  summarise_all(c(var,sd,function(x){var(x)*(n()-1)})) %>% 
+  round(digits=5) %>% 
+  rename(variance=fn1,ecart_type=fn2,somme_écarts_carrés=fn3)
+```
+
+Dans le cadre de données de panel, ces indicateurs est leur sous-jacent sont qualifiés de globaux (Overall). La variance (échantillon) globale correspond à la variance classique.
+
+$$s^2=\frac{1}{N.T-1}\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y})^2=\frac{1}{N.T-1}.sec$$
+
+où N est le nombre total d'individus et T le nombre de périodes sur lesquels ils sont observés.
+
+Les dimensions individuelles et temporelles des données permettent de décomposer cette variabilité pour mieux la comprendre. A ce niveau, il y plusieurs possibilités. 
+
+La plus courante consiste à distinguer la variabilité associée aux différences entre individus (Between individuals) indépendamment du temps (variabilité inter-individuelle) et la variabilité associée à l'évolution de chaque individu dans le temps (Within individuals) indépendamment de ses caractéristiques invariable (variabilité intra-individuelle). Ces deux sources de variabilité se cumulent pour former la variabilité globale. On a ainsi:
+
+$$ sec= sec_{B_i} + sec_{W_i} $$
+
+La variabilité inter-individuelle ($sec_{B_i}$) se mesure par la somme des écarts carrés des moyennes individuelles calculées sur l'ensemble des périodes à la moyenne globale.
+
+$$ sec_{B_i}=T\sum^{N}_{i=1}(\bar{y_{i}}-\bar{y})^2$$
+
+Calculons cette variabilité inter-individuelle à partir de nos données.
+
+```{r}
+moy_lwage<-mean(wages$lwage)
+sec_Bi<-wages %>% select(lwage,id) %>% group_by(id) %>% 
+                  summarise(moy_id=mean(lwage),es_id=(moy_id-moy_lwage)^2)%>% 
+                  ungroup() %>% 
+                  summarize(secbi=sum(es_id)*length(unique(wages$t))) %>%
+                  unlist() %>% unname()
+sec_Bi
+```
+
+On retrouve souvent cette valeur présentée sous forme de la variance inter-individuelle (Between variance ou Between individual variance). Elle est juste normé par le nombre d'individus moins (puisque l'on est sur une variance échantillon).
+
+$$ s^2_{B_i}=\frac{1}{N-1}\sum^{N}_{i=1}(\bar{y_{i}}-\bar{y})^2=\frac{1}{N-1}.sec_{B_i} $$
+
+Calculons la.
+
+```{r}
+var_bi<-sec_Bi/(length(unique(wages$id))-1)
+var_bi
+```
+
+La variabilité intra-individuelle ($sec_{W_i}$) se mesure par la somme des écarts carrés valeurs individuelles aux moyennes individuelles sur l'ensemble de la période.
+
+$$ sec_{W_i}=\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y_i})^2 $$
+
+Voyons ce que cela donne sur nos données.
+
+```{r}
+sec_Wi<-wages %>% group_by(id) %>% 
+                  mutate(moy_id=mean(lwage),ec2=(lwage-moy_id)^2) %>% 
+                  ungroup() %>% summarize(secbi=sum(ec2)) %>%
+                  unlist() %>% unname()
+sec_Wi
+```
+
+En additionnant cette variabilité intra-individuelle ($sec_{W_i}$) et la variabilité inter-individuelle ($sec_{B_i}$), on retrouve bien la variabilité globale ($sec$).
+
+```{r}
+sec_Bi+sec_Wi
+```
+
+La variabilité intra-individuelle est généralement présentée sous la forme de la variance intra-individuelle (Within variance ou Within individual variable). 
+
+
+$$ s^2_{W_i}=\frac{1}{N.T-1}\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y_i})^2 $$
+
+Sa valeur sur nos données est la suivante:
+
+```{r}
+var_wi<-sec_Wi/(nrow(wages)-1)
+var_wi
+```
+
+La somme des variances between et within doit être ajusté pour correspondre à la variance totale.
+
+```{r}
+(var_bi*(length(unique(wages$id))-1))/(nrow(wages)-1)+var_wi
+```
+
+Une autre manière d'appréhender (moins usitée) la variabilité de nos données  consiste à organiser la décomposition non plus sur les individus mais sur les périodes. On a ainsi la variabilité globale qui se décompose en variabilité inter-temportelle (between time) et variabilité intra-temporelle (within time). 
+
+$$ sec= sec_{B_t} + sec_{W_t} $$
+
+La variabilité inter-temporelle ($sec_{B_t}$) se mesure par la somme des écarts carrés des moyennes sur les périodes calculées sur l'ensemble des individus à la moyenne globale.
+
+$$sec_{B_t}=N.\sum^{T}_{i=1}(\bar{y_{t}}-\bar{y})^2 $$
+
+Calculons la.
+
+```{r}
+sec_Bt<-wages %>% select(lwage,t) %>% group_by(t) %>% 
+                  summarise(moy_t=mean(lwage),es_t=(moy_t-moy_lwage)^2)%>% 
+                  ungroup() %>%
+                  summarize(secbi=sum(es_t)*length(unique(wages$id))) %>%
+                  unlist() %>% unname()
+sec_Bt
+```
+
+Cette valeur peut être présentée sous forme de la variance inter-temporelle (Between variance ou Between time variance). Elle est juste normé par le nombre de périodes moins une (puisque l'on est sur une variance échantillon).
+
+$$s^2_{B_t}=\frac{1}{T-1}\sum^{T}_{i=1}(\bar{y_{t}}-\bar{y})^2=\frac{1}{T-1}.sec_{B_t} $$
+
+Sa valeur sur nos données est la suivante:
+
+```{r}
+var_bt<-sec_Bt/(length(unique(wages$t))-1)
+var_bt
+```
+
+La variabilité intra-temporelle ($sec_{W_t}$) se mesure par la somme des écarts carrés des valeurs aux moyennes périodiques sur l'ensemble des individus.
+
+$$ sec_{W_t}=\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y_t})^2 $$
+
+Voyons ce que cela donne.
+
+```{r}
+sec_Wt<-wages %>% group_by(t) %>% 
+                  mutate(moy_t=mean(lwage),ec2=(lwage-moy_t)^2) %>% 
+                  ungroup() %>% summarize(secbt=sum(ec2)) %>%
+                  unlist() %>% unname()
+sec_Wt
+```
+
+En additionnant cette variabilité intra-temporelle ($sec_{W_t}$) et la variabilité inter-temporelle ($sec_{B_t}$), on retrouve bien la variabilité globale ($sec$).
+
+```{r}
+sec_Bt+sec_Wt
+```
+
+Encore une fois la variabilité intra-temporelle est plus généralement présenté via la variance associée dont l'expression est la suivante:
+
+$$s^2_{W_t}=\frac{1}{N.T-1}\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y_t})^2=\frac{1}{N.T-1}.sec_{W_t}$$
+
+Sa valeur sur nos données est :
+
+```{r}
+var_wt<-sec_Wt/(nrow((wages)-1))
+var_wt
+```
+
+La variance globale peut être retrouvé en ajustant la somme des variances between time et within time.
+
+```{r}
+(var_bt*(length(unique(wages$t))-1))/(nrow((wages)-1))+var_wt
+```
+
+Le package *plm* fournit quelques éléments permettant de déterminer rapidement l'importance des variabilités individuelles et temporelles (within et between). Pour y accéder, il faut au préalable déclarer la structure de données au travers de la fonction **pdata.frame()**. Celles-ci prendront alors la forme d'une data frame spécifique au panel (des attributs indiquant les indexations des individus et des périodes). Créons dat_pan en l'utilisant et demandons l'affichage de ses attributs. 
+
+```{r}
+dat_pan <- pdata.frame(wages,index=c('id','t'))
+str(attr(dat_pan,"index"))
+```
+
+Pour avoir une idée de la décomposition sommaire de la variabilité de notre variable explicative, il suffit d'appeler la fonction **summary()**.
+
+```{r}
+summary(dat_pan$lwage)
+```
+
+En plus de la variabilité d'une série de statistiques descriptives classiques on nous donne la variabilité globale (somme des carrés des écarts) ainsi qu'une décomposition id time correspondant à la part de la variabilité between de ces dimensions dans la variabilité totale.
+
+```{r}
+summary(dat_pan$lwage)[1:3]
+c(summary(dat_pan$lwage)[2]/summary(dat_pan$lwage)[1],
+  summary(dat_pan$lwage)[3]/summary(dat_pan$lwage)[1])
+```
+
+On voit bien ici que la variabilité entre individus indépendamment de la période (73% de variabilité totale) est plus importante que celles entre périodes indépendamment des caractéristiques propres (invariables) des individus (18%).
+
+L'ensemble peut être avec un peu de travail étendue et synthétisé dans un tableau unique. Commençons par créer des fonctions nous permettant de sortir les variations within et between.
+
+```{r}
+sec_W<-function(dat,x,type="id"){
+  attach(dat,warn.conflicts = FALSE)
+  if(type=="t"){
+    sec_wt<-sum(tapply(x,t,var)*(length(unique(id))-1))
+    names(sec_wt)<-"sec_wt"
+    detach(dat)
+    return(sec_wt)}
+  if(type=="id") {
+    sec_wi<-sum(tapply(x,id,var)*(length(unique(t))-1))
+    names(sec_wi)<-"sec_wi"
+    detach(dat)
+    return(sec_wi)}
+}
+sec_B<-function(dat,x,type="id"){
+  attach(dat,warn.conflicts = FALSE)
+  if(type=="t"){
+    sec_Bt<-sum((tapply(x,t, mean)-mean(x))^2)*length(unique(id))
+    names(sec_Bt)<-"sec_Bt"
+    return(sec_Bt)}
+  if(type=="id") {
+    sec_Bi<-sum((tapply(x,id, mean)-mean(x))^2)*length(unique(t))
+    names(sec_Bi)<-"sec_Bi"
+    return(sec_Bi)}
+}
+```
+
+Assemblons l'ensemble dans un tableau en ajoutant la variation globale et la répartition de cette dernière en pourcentages en fonction de nos types de variabilité.  
+
+```{r}
+tab_sec<-function(dat,x){
+  attach(dat,warn.conflicts = FALSE)
+  sec_g<-var(x)*4164
+  detach(dat)
+  d1<-data.frame(
+        id_=c(sec_W(dat,x,type="id"),sec_B(dat,x,type="id"),sec=sec_g),
+        time_=c(sec_W(wages,x,type="t"),sec_B(dat,x,type="t"),sec=sec_g))
+  dp<-round(d1/sec_g*100,digits=2)
+  colnames(dp)<-c("prct_id","prct_time")
+  tab<-cbind(d1,dp)
+  row.names(tab)<-c('sec within','sec between','sec')
+  tab
+}
+tab_sec(wages,lwage)
+```
+
+L'analyse peut être appliqué à notre variable explicative (wks).
+
+```{r}
+tab_sec(wages,wks)
+```
+
+
+
+
+
+
