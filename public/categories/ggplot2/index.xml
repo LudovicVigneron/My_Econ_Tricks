@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ggplot2 on My Econ Tricks</title>
+    <link>/categories/ggplot2/</link>
+    <description>Recent content in ggplot2 on My Econ Tricks</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>© Ludovic Vigneroin 2021–2022. All rights reserved.</copyright>
+    <lastBuildDate>Mon, 23 May 2022 00:00:00 +0000</lastBuildDate><atom:link href="/categories/ggplot2/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Le diagramme en chute d&#39;eau GT12</title>
+      <link>/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/</link>
+      <pubDate>Mon, 23 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/</guid>
+      <description>Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d’eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d’illustrer comment une valeur de départ devient une valeur finale au travers d’une série d’étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale.</description>
+    </item>
+    
+    <item>
+      <title>Le diagramme de Sankey GT11</title>
+      <link>/post/2022-05-10-le-diagramme-de-sankey-gt11/</link>
+      <pubDate>Tue, 10 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-10-le-diagramme-de-sankey-gt11/</guid>
+      <description>Nous allons ici nous pencher sur un type graphe unique (ou du moins présentant moins de différentes formes que ceux présentés jusqu’ici). Il permet de montrer à la fois comment les effectifs de différentes catégories se comparent entre eux dans un état et comment elles se transforment, se recombinent, pour former d’autres catégories dans un autre état voir plusieurs autres états. Il s’agit du diagramme de Sankey inventé par un ingénieur irlandais qui lui a donné son nom en 1898.</description>
+    </item>
+    
+    <item>
+      <title>Bulles de comparaison et bulle intriquée GT10</title>
+      <link>/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/</link>
+      <pubDate>Thu, 05 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/</guid>
+      <description>Il n’est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d’un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d’avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s’agit dans un graphe d’associé la valeur à un marqueur visuel et d’offrir des marqueurs de même forme mais de tailles différentes pour d’autres valeurs qui vont servir de points de références.</description>
+    </item>
+    
+    <item>
+      <title>Bullet chart et gauge chart GT9</title>
+      <link>/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/</link>
+      <pubDate>Sun, 17 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/</guid>
+      <description>Il s’agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l’on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.</description>
+    </item>
+    
+    <item>
+      <title>Les heatmap et les calendar heatmap GT8</title>
+      <link>/post/2022-04-10-test/</link>
+      <pubDate>Sun, 10 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-10-test/</guid>
+      <description>Dans ce nouveau post, nous allons traiter d’une forme de visualisation hybride entre le tableau et le graphe: la heatmap (ou en français carte thermique). Elle permet de présenter en un unique visuel une grande quantité de données ce qui autorise la réalisation de comparaisons multiples entre leur valeur. Le point de départ est un tableau à deux dimensions établis pour stocké les valeurs d’une variable.</description>
+    </item>
+    
+    <item>
+      <title>Les diagrammes en gaufre et les isotypes GT7</title>
+      <link>/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/</link>
+      <pubDate>Thu, 27 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/</guid>
+      <description>Pour ce nouveau post de la série GT, qui propose d’illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos one chart at a time, nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d’un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s’agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d’observations.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="La structure des données" />
+<meta property="og:description" content="Depuis quelques temps déjà, je me suis lancé dans l’écriture d’un manuel de statistiques utilisant R pour la présentation des concepts et comme outil pratique pour leur mise en oeuvre. L’idée est qu’une simulation numérique bien pensée rend leur compréhension plus facile que les seuls développements mathématiques (même si le livre en contient sa part). En montrant les choses à partir de petits programmes et en donnant les clés pour librement les modifier, il offre au lecteur la possibilité d’approcher les mécaniques et de découvrir leurs limites en les mettant à l’épreuve." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2021-08-05-la-structure-des-donnees/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-08-05T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-05T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="La structure des données"/>
+<meta name="twitter:description" content="Depuis quelques temps déjà, je me suis lancé dans l’écriture d’un manuel de statistiques utilisant R pour la présentation des concepts et comme outil pratique pour leur mise en oeuvre. L’idée est qu’une simulation numérique bien pensée rend leur compréhension plus facile que les seuls développements mathématiques (même si le livre en contient sa part). En montrant les choses à partir de petits programmes et en donnant les clés pour librement les modifier, il offre au lecteur la possibilité d’approcher les mécaniques et de découvrir leurs limites en les mettant à l’épreuve."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  La structure des données | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Depuis quelques temps déjà, je me suis lancé dans l’écriture d’un manuel de statistiques utilisant R pour la présentation des concepts et comme outil pratique pour leur mise en oeuvre. L’idée est qu’une simulation numérique bien pensée rend leur compréhension plus facile que les seuls développements mathématiques (même si le livre en contient sa part). En montrant les choses à partir de petits programmes et en donnant les clés pour librement les modifier, il offre au lecteur la possibilité d’approcher les mécaniques et de découvrir leurs limites en les mettant à l’épreuve.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>La structure des données</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Aug 5, 2021&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/exercice/'>exercice</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-08-05-la-structure-des-donnees%2f&text=La%20structure%20des%20donn%c3%a9es&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-08-05-la-structure-des-donnees%2f&t=La%20structure%20des%20donn%c3%a9es" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-08-05-la-structure-des-donnees%2f&title=La%20structure%20des%20donn%c3%a9es&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+<script src="/post/2021-08-05-la-structure-des-donnees/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Depuis quelques temps déjà, je me suis lancé dans l’écriture d’un manuel de statistiques utilisant R pour la présentation des concepts et comme outil pratique pour leur mise en oeuvre. L’idée est qu’une simulation numérique bien pensée rend leur compréhension plus facile que les seuls développements mathématiques (même si le livre en contient sa part). En montrant les choses à partir de petits programmes et en donnant les clés pour librement les modifier, il offre au lecteur la possibilité d’approcher les mécaniques et de découvrir leurs limites en les mettant à l’épreuve.</p>
+<p>Mais pour ce faire, il est nécessaire de maîtriser un minimum du langage de programmation. Aussi, la première partie du livre est consacrée à sa présentation. Celle-ci s’étale sur plusieurs chapitres. Chacun d’eux (comme tous ceux du livre) est accompagné d’une série d’exercices mobilisant R. Je profite de ce blog pour rendre le travail de relecture plus amusant en en partageant certains. Je tiendrai bien sûr le lecteur informé de l’avancé de l’ouvrage (dès que j’aurai trouvé un titre plus percutant qu’“Introduction à la Statistique avec R”, promis je fais une annonce…) et de ses futurs débouchés éditoriaux.</p>
+<p>En attendant, voyons cela de plus près avec les exercices du chapitre 1 (version actuelle). Pour chacun d’eux, avant d’en reproduire l’énoncé et d’en présenter la résolution, je commencerai par un rappel des notions abordées.</p>
+<div id="exercice-1-type-mode-et-la-classe-dun-objet" class="section level1">
+<h1>Exercice 1 : type, mode et la classe d’un objet</h1>
+<p>R est un langage orienté objet à la structure vectorielle, c’est-à-dire qu’il s’organise autour d’éléments désignés comme des objets appelés à interagir entre eux pour en former d’autres. L’objet de base, celui qui compose en dernier ressort tous les autres, est le vecteur.</p>
+<p>Un vecteur ne peut contenir qu’un type de donnée à la fois. Il en existe cinq différents : “logical”, “integer”, “double”, “complex” et “character” (des éléments binaires VRAI/FAUX, des entiers, des nombres à virgule, des nombres complexes et des lettres). Si un vecteur mélange des données pouvant être rattachées à plusieurs types, il adoptera celui du plus détaillé. A ce jeu, l’information de type “character” l’emporte sur tout les autres. Si un vecteur est vide, il sera de type “NULL”. La fonction <strong>typeof()</strong> permet d’obtenir l’information sur l’objet considéré.</p>
+<p>L’information contenue dans un objet est stockée en mémoire selon un format défini de manière à permettre de préserver l’information et limiter la place prise par cette dernière. On a pour les vecteurs en fonction de leur type les modes de stockage suivants (du moins gourmand au plus gourmand en ressources) :</p>
+<ul>
+<li><p>logical =&gt; logical</p></li>
+<li><p>integer et double =&gt; numeric</p></li>
+<li><p>complex =&gt; complex</p></li>
+<li><p>character =&gt; character</p></li>
+</ul>
+<p>Les vecteurs les plus lourds sont les “character”. S’ils présentent des régularités , il sera intéressant de les convertir en facteurs (avec <strong>as.factor()</strong>) pour réduire leur taille en mémoire. Ils prennent alors le format “numeric”. R convertit souvent des vecteurs “character” en facteur lors de leur importation pour traitement à partir d’une source externe. Pour les objets complexes combinant plusieurs type de vecteurs (data.frame, list…), le mode de stockage correspondant et “list”. La fonction <strong>mode()</strong> permet d’obtenir directement l’information sur le mode de stockage.</p>
+<p>Pour les traitements spécifiques, R utilise des objets pouvant être plus complexes que les simples vecteurs (matrix, array, data.frame, list…). Ceux-ci sont regroupés en classes. Chaque classe aura ses propres règles de fonctionnement et de présentation. Ainsi, une data.frame regroupe des vecteurs pouvant être de type différents mais qui doivent être de même taille. Une list regroupe des vecteurs de tous types mais pouvant être de tailles différentes. Une matrix comprend des vecteurs de mêmes tailles et de mêmes types… Concernant plus spécifiquement les vecteurs seuls, leur classe correspond à leur mode de stockage. La fonction <strong>class()</strong> permet d’obtenir l’information directement.</p>
+<p>Il est important de connaître les types, modes et classes des objets manipulés dans vos programmes de manière à connaître les opérations qu’il est possible de réaliser sur l’information qu’ils contiennent. Si nécessaire, vous devrez procéder à des transformations pour permettre les traitements que vous envisagez.</p>
+<p>Mais trêve de bavardages, voici l’énoncé du premier exercice du livre:</p>
+<p><strong><em>Identifiez le type, le mode de stockage et la classe des objets suivant:</em></strong></p>
+<pre class="r"><code>A&lt;-c(TRUE,FALSE,FALSE,FALSE,TRUE)
+B&lt;-c(1,2.5,10,15,13,0)
+C&lt;-c(A,B)
+D&lt;-2i
+E&lt;-c(C,D)
+F&lt;-c(C,&quot;La La La&quot;)</code></pre>
+<p>On pourrait simplement utiliser les fonctions <strong>typeof()</strong>, <strong>mode()</strong> et <strong>class()</strong> pour obtenir directement la réponse mais avant essayons de la déduire des règles que nous venons d’énoncées.</p>
+<p>Pour le vecteur A, il n’y a pas de grande difficluté. Il n’est composé que de valeurs logique TRUE/FALSE. Il est donc simplement de type “logical”. Il sera stocké également sous forme “logical” dans la mesure où il s’agit de la forme la moins consommatrice en ressources. En tant que vecteur sa classe correspond à son mode de stockage, ce sera donc une nouvelle fois “logical”.</p>
+<pre class="r"><code>c(typeof(A),mode(A),class(A))</code></pre>
+<pre><code>## [1] &quot;logical&quot; &quot;logical&quot; &quot;logical&quot;</code></pre>
+<p>Le vecteur B contient une serie de nombres. Des entiers à l’exception du second 2.5 qui est un nombre décimal. Il est donc de type “double” et est stocké sous la forme “numeric”. Sa classe correspond à son mode de stockage et donc “numeric”.</p>
+<pre class="r"><code>c(typeof(B),mode(B),class(B))</code></pre>
+<pre><code>## [1] &quot;double&quot;  &quot;numeric&quot; &quot;numeric&quot;</code></pre>
+<p>Le vecteur C correspond à la jonction des vecteurs A et B. Il prend le type du plus complexe des deux (le vecteur B). Il est donc de type “double”. Son mode de stockage est en conséquence “numeric” de même que sa classe.</p>
+<pre class="r"><code>c(typeof(C),mode(C),class(C))</code></pre>
+<pre><code>## [1] &quot;double&quot;  &quot;numeric&quot; &quot;numeric&quot;</code></pre>
+<p>Le vecteur D ne présente qu’un seul élément le nombre complexe 2i. Son type est donc “complex” de même que son mode de stockage et sa classe.</p>
+<pre class="r"><code>c(typeof(D),mode(D),class(D))</code></pre>
+<pre><code>## [1] &quot;complex&quot; &quot;complex&quot; &quot;complex&quot;</code></pre>
+<p>Le vecteur E correspond à l’adjonction des vecteurs C qui est de type “double” et du vecteur D qui est de type “complex”. Il prend le type du plus compliqué des deux. Il est dons de type “complex” et sera stocké selon ce même mode et sera de cette même classe.</p>
+<pre class="r"><code>c(typeof(E),mode(E),class(E))</code></pre>
+<pre><code>## [1] &quot;complex&quot; &quot;complex&quot; &quot;complex&quot;</code></pre>
+<p>Le vecteur F combine le vecteur C, qui est de type “double” (l’adjonction de A, qui est “logical”, et B, qui est “double), et un élément (un vecteur” comprenant le texte “La La La”. Il prend le type du vecteur le plus complexe ici le texte. Il est donc de type “character”, sera stocké sous ce même mode et sera de cette même classe.</p>
+<pre class="r"><code>c(typeof(F),mode(F),class(F))</code></pre>
+<pre><code>## [1] &quot;character&quot; &quot;character&quot; &quot;character&quot;</code></pre>
+<p>Voici pour la version actuelle de l’exercice. Je pense ajouter des questions incluant des variables manquantes NA classiques et des NaN qui marquent le résultat d’un calcul qui ne serait pas un nombre (Not a Number). Ceux-ci pourrait être confondus avec chaînes de caractères. On aurait par exemple:</p>
+<pre class="r"><code>G&lt;-c(2,5.5,6,NA,10,14)
+G</code></pre>
+<pre><code>## [1]  2.0  5.5  6.0   NA 10.0 14.0</code></pre>
+<p>Le vecteur G est composé de nombres dont un à virgule. Le NA représentant une valeur manquante qui peut être de tout type. Elle est considérée comme du même type que les autres. Le vecteur est donc de type “double” et est stocké sous format “numeric” et appatient à la classe “numeric”.</p>
+<pre class="r"><code>c(typeof(G),mode(G),class(G))</code></pre>
+<pre><code>## [1] &quot;double&quot;  &quot;numeric&quot; &quot;numeric&quot;</code></pre>
+<p>Une autre question pourrait porter sur un vecteur n’incluant que des variables manquantes de différentes formes.</p>
+<pre class="r"><code>H&lt;-c(NA,NaN,NA)
+H</code></pre>
+<pre><code>## [1]  NA NaN  NA</code></pre>
+<p>Le vecteur pourrait être de type “NULL” puisque ne contenant aucune information valable. Ce n’est cependant pas le cas. Il pourrait également être de type “logical”, le format le moins encombrant à stocker en mémoire. En fait, le NaN qu’il intègre est de nature numérique. Le vecteur est de type “double”, le format numérique le plus complexe. Il est stocké sous format “numeric” et de classe “numeric”.</p>
+<pre class="r"><code>c(typeof(H),mode(H),class(H))</code></pre>
+<pre><code>## [1] &quot;double&quot;  &quot;numeric&quot; &quot;numeric&quot;</code></pre>
+<p>L’exercice peut également être enrichi en intégrant des objets plus complexe comme des matrices ou des data frame que l’on peut assembler avec la fonction <strong>cbind()</strong>.</p>
+<pre class="r"><code>I&lt;-cbind(B,G)
+I</code></pre>
+<pre><code>##         B    G
+## [1,]  1.0  2.0
+## [2,]  2.5  5.5
+## [3,] 10.0  6.0
+## [4,] 15.0   NA
+## [5,] 13.0 10.0
+## [6,]  0.0 14.0</code></pre>
+<p>En réunissant les deux vecteurs de type “double”, on obtient un nouvel objet du même type. Il est stocké au format “numeric”. Il est de classe “matrix” (ou “array”).</p>
+<pre class="r"><code>c(typeof(I),mode(I),class(I))</code></pre>
+<pre><code>## [1] &quot;double&quot;  &quot;numeric&quot; &quot;matrix&quot;  &quot;array&quot;</code></pre>
+<p>Voyons ce qu’il en est lorsque l’on réunit deux vecteurs de types différents. Prenons ici un vecteur de type “double” et un vecteur de type “character”.</p>
+<pre class="r"><code>J&lt;-c(&#39;A&#39;,&#39;B&#39;,&#39;C&#39;,&#39;A&#39;,&#39;B+&#39;,&#39;D&#39;)
+J&lt;-cbind(B,J)
+J</code></pre>
+<pre><code>##      B     J   
+## [1,] &quot;1&quot;   &quot;A&quot; 
+## [2,] &quot;2.5&quot; &quot;B&quot; 
+## [3,] &quot;10&quot;  &quot;C&quot; 
+## [4,] &quot;15&quot;  &quot;A&quot; 
+## [5,] &quot;13&quot;  &quot;B+&quot;
+## [6,] &quot;0&quot;   &quot;D&quot;</code></pre>
+<p>Les informations de type “character” étant plus difficiles à stocker, ce type l’emport sur l’autre. L’objet obtenu est donc de type “character”. Il est stocké comme “character” . Sa classe est “matrix” (ou “array”).</p>
+<pre class="r"><code>c(typeof(J),mode(J),class(J))</code></pre>
+<pre><code>## [1] &quot;character&quot; &quot;character&quot; &quot;matrix&quot;    &quot;array&quot;</code></pre>
+<p>Si pour joindre les vecteurs ont utilise une data frame, les choses sont légèrement différentes. La data frame permet la coexistence de plusieurs types de vecteur. Prenons un vecteur de type “double” et un vecteur de type “integer”.</p>
+<pre class="r"><code>K&lt;-1:6
+K&lt;-data.frame(J,K)
+K</code></pre>
+<pre><code>##     B  J K
+## 1   1  A 1
+## 2 2.5  B 2
+## 3  10  C 3
+## 4  15  A 4
+## 5  13 B+ 5
+## 6   0  D 6</code></pre>
+<p>Le type de l’objet est “list” de même que le son mode de stockage. Sa classe est “data.frame”. Cela reflète le fait qu’une data frame n’est qu’une list d’un type particulier (qui comprend uniquement des vecteurs de même taille).</p>
+<pre class="r"><code>c(typeof(K),mode(K),class(K))</code></pre>
+<pre><code>## [1] &quot;list&quot;       &quot;list&quot;       &quot;data.frame&quot;</code></pre>
+</div>
+<div id="exercice-2-calculs-sous-r" class="section level1">
+<h1>Exercice 2 : calculs sous R</h1>
+<p>Il s’agit ici d’utiliser R pour réaliser des opérations de programmations linéaires simples (impliquant vecteurs et matrices). L’objectif est de familiariser le lecteur avec les fonctions associées avec les opérateurs mobilisés: transposition de matrice avec <strong>t()</strong>, inversion avec <strong>solve()</strong> et produit matriciel avec <strong>%*%</strong> . Mais aussi, de le sensibiliser au principe de recyclage du vecteur les plus petits retenu par R et du décalage que cela implique par rapport à l’arithmétique classique.</p>
+<p>Pour ceux qui aurait besoin de quelques rappels sur les opérations à réaliser, voici une série de liens avec des vidéos reprenant les différentes notions mobilisées:</p>
+<ul>
+<li><p><a href="https://www.youtube.com/watch?v=Sdg9O-HqSN0">généralité sur les matrices</a></p></li>
+<li><p><a href="https://www.youtube.com/watch?v=rxz6nYDwE1Q">multiplication de matrices</a></p></li>
+<li><p><a href="https://www.youtube.com/watch?v=a5XQKEQnf_Y">inversion de matrices</a></p></li>
+</ul>
+<p>Vous noterez l’origine commune de ces vidéos: la chaîne <a href="https://www.youtube.com/user/Exo7Math/featured">youtube Exo7</a>, qui est tenue par des collègues de mathématiques de l’université de Lille. Le travail proposé y est à la fois rigoureux et accessible. Je ne saurais que vous la recommander.</p>
+<p><strong><em>Réalisez les opérations suivantes en utilisant les règles de l’arithmétique classique et comparez vos résultats avec ceux obtenus avec R.</em></strong></p>
+<table>
+<colgroup>
+<col width="31%" />
+<col width="68%" />
+</colgroup>
+<tbody>
+<tr class="odd">
+<td><strong>a.</strong> <span class="math display">\[\left(\begin{array}{c}20 \\ 12 \\ 8\end{array}\right)\times{2}+\left(\begin{array}{c}1\\2\\1\end{array}\right)\]</span></td>
+<td><strong>d.</strong><span class="math display">\[
+                                                                                                                             \left( \begin{array}{cc} 1 \ 3\\ 2 \ 3\end{array}\right)^t.\left(\begin{array}{cc} 1 \ 0\\ 0 \ 1\end{array}\right)
+                                                                                                                             \]</span></td>
+</tr>
+<tr class="even">
+<td><strong>b.</strong> <span class="math display">\[
+ \left(\begin{array} {c} 1\\2\\3\\10 \end{array}\right)+\left(\begin{array} {c} 5\\5 \end{array}\right) -1
+ \]</span></td>
+<td><strong>e.</strong><span class="math display">\[
+                                                                                                                             \left(\begin{array}{ccc} \ 1 \ 1\ 1\\ 12\ 2\ -3 \\ 3 \ 4 \ 1 \end{array}\right)^{-1} .\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)
+                                                                                                                             \]</span></td>
+</tr>
+<tr class="odd">
+<td><strong>c.</strong><span class="math display">\[
+ \left(\begin{array}{} 1\\3\\-5 \end{array}\right).\left(\begin{array}{} 4\\-2\\-1 \end{array}\right)
+ \]</span></td>
+<td><strong>f.</strong><span class="math display">\[
+                                                                                                                             \left(\left( \begin{array}\ 1\ 6\ 1 \\ 6\ 3\ 1
+                                                                                                                              \end{array}\right)+4\right)^T
+                                                                                                                             \]</span></td>
+</tr>
+</tbody>
+</table>
+<p>Voyons les choses opérations par opérations.</p>
+<p><strong>a.</strong></p>
+<p><span class="math display">\[\left(\begin{array}{c}20 \\ 12 \\ 8\end{array}\right)\times{2}+\left(\begin{array}{c}1\\2\\1\end{array}\right)=\left(\begin{array}{c}40 \\ 24 \\ 16\end{array}\right)+\left(\begin{array}{c}1\\2\\1\end{array}\right)=\left(\begin{array}{c}41\\26\\17\end{array}\right)\]</span></p>
+<p>Pour le premier calcul, il n’y a pas de difficultés particulières. Le premier vecteur est multiplié par une constante et donc tous ces éléments le sont individuellement. On additionne alors chaque élément des deux vecteurs un à un en fonction de leur rang.</p>
+<pre class="r"><code>a&lt;-c(20,12,8)
+b&lt;-c(1,2,1)
+a*2+b</code></pre>
+<pre><code>## [1] 41 26 17</code></pre>
+<p><strong>b.</strong></p>
+<p><span class="math display">\[
+\left(\begin{array} {c} 1\\2\\3\\10 \end{array}\right)+\left(\begin{array} {c} 5\\5 \end{array}\right) -1 = \left(\begin{array} {c} 6\\7\\3\\10 \end{array}\right)-1=\left(\begin{array} {c} 5\\6\\2\\9 \end{array} \right)
+\]</span></p>
+<p>Ici on additionne un vecteur de quatre éléments avec un vecteur de deux. L’opération n’engage donc que les deux premier l’élément du grand vecteur. On soustrait une constante au résultat et donc à chaque élément du vecteur.</p>
+<pre class="r"><code>a&lt;-c(1,2,3,10)
+b&lt;-c(5,5)
+a+b-1</code></pre>
+<pre><code>## [1]  5  6  7 14</code></pre>
+<p>Lorsque l’on fait l’opération sous R, on obtient un résultat différent dans la mesure où le petit vecteur est recyclé pour s’ajuster au grand. Si l’on veut retrouver le résultat, il faut étendre le petit vecteur pour qu’il ait la même taille que le grand, ce qui crée des valeurs manquantes NA, puis transformer ces valeurs manquantes en 0</p>
+<pre class="r"><code>length(b)&lt;-length(a)
+b[which(is.na(b))]&lt;-0
+a+b-1</code></pre>
+<pre><code>## [1] 5 6 2 9</code></pre>
+<p><strong>c.</strong></p>
+<p><span class="math display">\[
+\left(\begin{array}{} 1\\3\\-5 \end{array}\right).\left(\begin{array}{} 4\\ -2\\ -1 \end{array}\right)=1\times4+3\times-2-5\times-1=4-6+5=3
+\]</span></p>
+<p>Il s’agit de réaliser un produit matriciel. Chaque élément d’un vecteur est multiplié par l’élément correspondant dans l’autre puis l’ensemble est additionné. Le même résultat s’obtient sans difficulté sous R en utilisant l’opérateur <strong>%*%</strong>.</p>
+<pre class="r"><code>a&lt;-c(1,3,-5)
+b&lt;-c(4,-2,-1)
+a%*%b</code></pre>
+<pre><code>##      [,1]
+## [1,]    3</code></pre>
+<p><strong>d.</strong></p>
+<p><span class="math display">\[
+\left( \begin{array}{cc} 1 \ 3\\ 2 \ 3\end{array}\right)^t.\left(\begin{array}{cc} 1 \ 0\\ 0 \ 1\end{array}\right)=\left(\begin{array} \ 1 \ 2 \\ 3\ 3 \end{array}\right).\left(\begin{array}{cc} 1 \ 0\\ 0 \ 1\end{array}\right)=\left(\begin{array}{cc} (1\times1)+(3\times0)\ (3\times0)+(2\times1)\\ (3\times1)+(3\times0) \ (3\times0)+(3\times1)\end{array}\right)=\left(\begin{array}{cc} 1 \ 2\\ 3 \ 3\end{array}\right)
+\]</span></p>
+<p>On commence par transposer une matrice, c’est à dire faire en sorte que ses lignes deviennent ses colonnes et ses colonnes ses lignes. Ceux-ci est réalisé dans R avec la fonction <strong>t()</strong>. Puis, on effectue un produit matriciel en utilisant une nouvelle fois l’opérateur <strong>%*%.</strong></p>
+<pre class="r"><code>A&lt;-matrix(c(1,2,3,3),nrow=2,ncol=2)
+B&lt;-matrix(c(1,0,0,1),nrow=2,ncol=2)
+t(A)%*%B</code></pre>
+<pre><code>##      [,1] [,2]
+## [1,]    1    2
+## [2,]    3    3</code></pre>
+<p><strong>e.</strong></p>
+<p><span class="math display">\[
+\left(\begin{array}{ccc} \ 1 \ 1\ 1\\ 12\ 2\ -3 \\ 3 \ 4 \ 1 \end{array}\right)^{-1} .\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)=\left(\begin{array}{ccc} \ 1 \ 1\ 1\\ 12\ 2\ -3 \\ 3 \ 4 \ 1 \end{array}\right|\left|\begin{array}{ccc} \ 1 \ 0\ 0\\ 0\ 1\ 0 \\ 0 \ 0 \ 1 \end{array}\right).\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)=\left(\begin{array}{ccc} \ 0.4 \ 0.0857\ -0.1428\\ -0.6\ -0.0571\ 0.4285 \\ 1.23 \ -0.0285 \ -0.2857 \end{array}\right).\left(\begin{array}{}\ 2 \\2 \\1 \end{array}\right)=\left(\begin{array}{}\ 0.8285 \\ -0.8857 \\ 2.0571 \end{array}\right)
+\]</span></p>
+<p>L’inversion de la matrice est réalisée sous R grâce à la fonction <strong>solve()</strong>. Ici, aucune difficulté la matrice proposée est inversible. Puis, l’on utilise %*% pour le produit matriciel entre la matrice obtenu et le vecteur.</p>
+<pre class="r"><code>A&lt;-matrix(c(1,12,3,1,2,4,1,-3,1),nrow=3,ncol=3)
+b&lt;-c(2,2,1)
+solve(A)%*%b</code></pre>
+<pre><code>##            [,1]
+## [1,]  0.8285714
+## [2,] -0.8857143
+## [3,]  2.0571429</code></pre>
+<p><strong>f.</strong></p>
+<p><span class="math display">\[
+\left(\left( \begin{array}\ 1\ 6\ 1 \\ 6\ 3\ 1
+ \end{array}\right)+4\right)^T=\left(\begin{array}\ 5\ 10\ 5 \\ 10\ 7\ 5
+ \end{array}\right)^T=\left(\begin{array}\ 5\ 10\\ 7 \ 10\\ 5\ 5
+ \end{array}\right)
+\]</span></p>
+<p>On additionne une constante à une matrice et donc à chacun de ses éléments. Puis, on transpose le résultat (avec la fonction <strong>t()</strong>).</p>
+<pre class="r"><code>A&lt;-matrix(c(1,6,6,3,1,1),nrow=2,ncol=3)
+t(A+4)</code></pre>
+<pre><code>##      [,1] [,2]
+## [1,]    5   10
+## [2,]   10    7
+## [3,]    5    5</code></pre>
+<p>Voilà qui est déjà long pour un billet rapide… Je vais donc renvoyer à plus tard la relecture partagée des autres exercices. J’espère que sa lecture vous aura été utile. Pour ma part, cela m’a permis de revenir sur certains points (corriger quelques boulettes dans le manuscrit) et de m’interroger avec le recul sur la pertinence de quelques uns. Comme on dit : “Work in progress”.</p>
+</div>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-08-05-la-structure-des-donnees%2f&text=La%20structure%20des%20donn%c3%a9es&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-08-05-la-structure-des-donnees%2f&t=La%20structure%20des%20donn%c3%a9es" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-08-05-la-structure-des-donnees%2f&title=La%20structure%20des%20donn%c3%a9es&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>

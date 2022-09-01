@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Premiers pas sur GGPLOT2" />
+<meta property="og:description" content="Au printemps prochain, je donnerai, dans mon université, un cours introductif sur la visualisation de données. L’idée est de conférer aux étudiants un savoir technique, afin qu’ils soient capables de réaliser des graphes rigoureux et esthétiques,et de cultiver chez eux un regard critique sur les représentations qui leur sontprésentées dans la presse, sur internet ou ailleurs. Pour ce faire, j’ai choisi d’utiliser R comme outil principal, plus spécifiquement le package GGPLOT2 (et ses compléments) qui permet d’obtenir très rapidement, au travers d’un codes intuitifs, des graphes qui ont de l’allure." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2021-08-23-premiers-pas-sur-ggplot2/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-08-23T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-23T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Premiers pas sur GGPLOT2"/>
+<meta name="twitter:description" content="Au printemps prochain, je donnerai, dans mon université, un cours introductif sur la visualisation de données. L’idée est de conférer aux étudiants un savoir technique, afin qu’ils soient capables de réaliser des graphes rigoureux et esthétiques,et de cultiver chez eux un regard critique sur les représentations qui leur sontprésentées dans la presse, sur internet ou ailleurs. Pour ce faire, j’ai choisi d’utiliser R comme outil principal, plus spécifiquement le package GGPLOT2 (et ses compléments) qui permet d’obtenir très rapidement, au travers d’un codes intuitifs, des graphes qui ont de l’allure."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Premiers pas sur GGPLOT2 | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Au printemps prochain, je donnerai, dans mon université, un cours introductif sur la visualisation de données. L’idée est de conférer aux étudiants un savoir technique, afin qu’ils soient capables de réaliser des graphes rigoureux et esthétiques,et de cultiver chez eux un regard critique sur les représentations qui leur sontprésentées dans la presse, sur internet ou ailleurs. Pour ce faire, j’ai choisi d’utiliser R comme outil principal, plus spécifiquement le package GGPLOT2 (et ses compléments) qui permet d’obtenir très rapidement, au travers d’un codes intuitifs, des graphes qui ont de l’allure.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Premiers pas sur GGPLOT2</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Aug 23, 2021&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/dataviz/'>dataviz</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-08-23-premiers-pas-sur-ggplot2%2f&text=Premiers%20pas%20sur%20GGPLOT2&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-08-23-premiers-pas-sur-ggplot2%2f&t=Premiers%20pas%20sur%20GGPLOT2" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-08-23-premiers-pas-sur-ggplot2%2f&title=Premiers%20pas%20sur%20GGPLOT2&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+<script src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Au printemps prochain, je donnerai, dans mon université, un cours introductif sur la visualisation de données. L’idée est de conférer aux étudiants un savoir technique, afin qu’ils soient capables de réaliser des graphes rigoureux et esthétiques,et de cultiver chez eux un regard critique sur les représentations qui leur sont
+présentées dans la presse, sur internet ou ailleurs. Pour ce faire, j’ai choisi d’utiliser R comme outil principal, plus spécifiquement le package GGPLOT2 (et ses compléments) qui permet d’obtenir très rapidement, au travers d’un codes intuitifs, des graphes qui ont de l’allure.</p>
+<p>Jusqu’à récemment, je n’utilisais pas beaucoup cette solution. Je préférais réaliser les figures de mes papiers et de mes cours avec les fonctionnalités de base de R. Je partais du postulat que tout ce qui peut être fait avec GGPLOT2, peut être fait, avec un effort supplémentaire de programmation, avec R base. Bref, je ne me facilitais pas la vie mais ça convenait à mes faibles ambitions esthétiques. Puis, j’ai découvert la communauté des spécialistes de la Datavisualisation et là les choses ont changé. Les graphes réalisées par de gens comme <a href="https://www.cedricscherer.com/">Cédric Scherer</a> m’ont convaincu qu’un peu simplification pouvait permettre d’aller beaucoup plus loin dans les représentations et au final mieux communiquer les résultats de mes travaux.</p>
+<p>Le package a été crée par Hadley Wickham en 2005 en s’inspirant de la grammaire des graphiques développée par le statisticien Leland Wilkinson dans son livre de 1993 (<a href="https://link.springer.com/book/10.1007/0-387-28695-0">Grammar of graphics</a>).Schématiquement, il propose de coder le graphe que vous souhaitez réaliser comme une phrase. Vous commencez par indiquer le sujet, les données que vous cherchez
+à représenter. Puis, vous indiquez ce que vous voulez faire avec, autrement-dit le verbe ou les verbes (une nuage de points, un histogramme, des courbes…). Et vous finalisez les choses par des compléments qui ajoutent à l’information principale (légende, titres ou autres).</p>
+<p>Pour illustrer son utilisation, dans ce premier billet associé à la préparation du cours, j’ai choisi de travailler à partir de données environnementales. L’idée est de trouver des sujets susceptibles d’intéresser des étudiants d’horizons différents et je pense que la question de la lutte contre réchauffement climatique peut être fédérateur.
+A ce stade, il me faut néanmoins préciser que je ne suis pas climatologue et donc que les analyses qui seront réalisées seront purement statistiques. Pour celles et ceux qui voudraient allez au delà, je recommande la lecture du nouveau rapport produit par le <a href="https://www.ipcc.ch/languages-2/francais/">GIEC</a> qui montre une nouvelle fois la situation alarmante dans laquelle nous trouvons.</p>
+<div id="obtenir-les-données" class="section level2">
+<h2>Obtenir les données</h2>
+<p>La premier étape de tout travail statistique repose sur une collecte de données. Plus celle-ci sera rigoureuse, meilleure sera la qualité des conclusions qui pourront en être tirées. Ici, nous intéresserons à l’évolution des températures sur une période longue si possible au moins deux siècles. Nous devons donc déléguer… Après, une rapide recherche sur internet, je suis parvenu à identifier le plus long historique relevé journaliers disponible, celui réalisé par le <a href="https://hadleyserver.metoffice.gov.uk/hadcet">centre Hadley</a> du service métrologique du Royaume-Uni. Celui-ci court du 1er janvier 1772 à nos jours et concerne les températures moyennes constatées sur un triangle formé par Bristol, le Lancashire et Londres.</p>
+<p>Commençons donc par charger ces données dans R et regardons comment elles se présentent.</p>
+<pre class="r"><code>dat&lt;-read.table(&quot;https://hadleyserver.metoffice.gov.uk/hadcet/cetdl1772on.dat&quot;)
+head(dat)</code></pre>
+<pre><code>##     V1 V2 V3  V4 V5 V6  V7  V8  V9 V10 V11 V12 V13 V14
+## 1 1772  1 32 -15 18 25  87 128 187 177 105 111  78 112
+## 2 1772  2 20   7 28 38  77 138 154 158 143 150  85  62
+## 3 1772  3 27  15 36 33  84 170 139 153 113 124  83  60
+## 4 1772  4 27 -25 61 58  96  90 151 160 173 114  60  47
+## 5 1772  5 15  -5 68 69 133 146 179 170 173 116  83  50
+## 6 1772  6 22 -45 51 77 113 105 175 198 160 134 134  42</code></pre>
+<p>On a sur la premier colonne (V1) l’année, sur la seconde (V2) le jour et les douze colonnes suivantes reprennent pour chaque mois (un par colonnes) les températures constatées en dixièmes de degré Celsius.</p>
+</div>
+<div id="mettre-en-forme-les-données" class="section level2">
+<h2>Mettre en forme les données</h2>
+<p>Les données ne sont pas directement utilisables. Il va donc falloir procéder à quelques transformations avant de pouvoir entrer dans le vif du sujet. Commençons par renommer les colonnes pour y voir plus clair.</p>
+<pre class="r"><code>colnames(dat)&lt;-c(&#39;year&#39;,&#39;day&#39;,paste0(&#39;month_&#39;,1:12))
+head(dat)</code></pre>
+<pre><code>##   year day month_1 month_2 month_3 month_4 month_5 month_6 month_7 month_8
+## 1 1772   1      32     -15      18      25      87     128     187     177
+## 2 1772   2      20       7      28      38      77     138     154     158
+## 3 1772   3      27      15      36      33      84     170     139     153
+## 4 1772   4      27     -25      61      58      96      90     151     160
+## 5 1772   5      15      -5      68      69     133     146     179     170
+## 6 1772   6      22     -45      51      77     113     105     175     198
+##   month_9 month_10 month_11 month_12
+## 1     105      111       78      112
+## 2     143      150       85       62
+## 3     113      124       83       60
+## 4     173      114       60       47
+## 5     173      116       83       50
+## 6     160      134      134       42</code></pre>
+<p>C’est déjà mieux, mais ce n’est toujours pas exploitable. Ce que l’on veut, c’est simplement deux colonnes: une avec la date et une avec la température relevée. Nous allons donc devoir étendre la base de manière à ce que les colonnes de mois (month_1,…) s’empilent pour donner deux colonnes une indiquant le mois et une la température pour l’année, le mois et le jour considéré. Pour ce faire, nous allons utiliser la fonction <strong>pivot_longer()</strong> qui fait partie du package tidyverse. Ce dernier comprend également GGPLOT2, et donc une fois chargé, il ne sera donc pas nécessaire d’appeler spécifiquement le package graphique par la suite. Indiquons dans la fonction que l’on veut étendre les colonnes commençant par <em>month_</em> pour les inclure dans une colonne nommée <em>month</em>. Indiquons également que nous ne voulons pas que le prefix <em>month_</em> apparaisse parmi les valeurs de la nouvelle colonnes et que la colonnes où figureront les températures sera nommée <em>d_t</em>. Ceci fait, créons la variable date regroupant le jour, le mois et l’année. Limitons la base à la colonne date et d_t. Supprimons les valeurs manquantes ici indiquées par des valeurs de température égales à -999. Enfin, rétablissons les valeurs en degré et non en dixièmes de degrés.</p>
+<pre class="r"><code>library(tidyverse)
+dat_&lt;-dat%&gt;%pivot_longer(cols=starts_with(&#39;month_&#39;),names_to=&quot;month&quot;,
+                         names_prefix=&#39;month_&#39;,values_to=&#39;d_t&#39;)%&gt;%
+            mutate(date=as.Date(paste0(day,&#39;/&#39;,month,&#39;/&#39;,year),
+                                format=&#39;%d/%m/%Y&#39;,origin=&#39;1/1/1990&#39;))%&gt;%
+            select(date,d_t)%&gt;%
+            arrange(date)%&gt;%
+            mutate(d_t=ifelse(d_t==-999,NA,d_t),
+                   degre_C=d_t/10)%&gt;%
+            filter(is.na(d_t)==FALSE)%&gt;%
+            select(-d_t)
+head(dat_)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   date       degre_C
+##   &lt;date&gt;       &lt;dbl&gt;
+## 1 1772-01-01     3.2
+## 2 1772-01-02     2  
+## 3 1772-01-03     2.7
+## 4 1772-01-04     2.7
+## 5 1772-01-05     1.5
+## 6 1772-01-06     2.2</code></pre>
+<pre class="r"><code>nrow(dat_)</code></pre>
+<pre><code>## [1] 91158</code></pre>
+<p>On obtient une base à deux variables (la date et la température relevée), soit une série chronologique comprenant 91 158 valeurs correspondant au nombre de jours entre le 1er janvier 1772 et le 31 juillet 2021.</p>
+</div>
+<div id="représenter-les-données" class="section level2">
+<h2>Représenter les données</h2>
+<p>On peut maintenant s’attaquer la représentation de ces données. Mais que choisir? Une courbe? Cela donnerait l’illusion d’avoir une mesure continue des températures alors que nous n’en avons que des mesures ponctuelles (journalières). Ici, compte tenu du nombre d’observations, cette approximation ne serait pas trop préjudiciable. J’opte néanmoins pour le nuage de points. Voyons ce que cela donne avec R base (on ne perd pas si vite les mauvaises habitudes).</p>
+<pre class="r"><code>plot(dat_)</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Pour être honnête, on ne voit pas grand chose. Chaque relevé journalier est représenté par un petit cercle. Il est difficile de lire une quelconque tendance à partir de là. Sauf, peut être, une légère remontée en toute toute fin de série, en tout cas rien de très significatif sur notre graphe (qui n’est d’ailleurs pas très beau). Voyons ce que l’on obtient avec GGPLOT2. Désignons dat_ comme sujet et identifions les éléments de dat_ qui seront représentés avec la fonction <strong>aes()</strong> pour l’anglais aesthetic : la date et la temperature (deg_C). Ajoutons que nous voulons un nuage de point en applant la fonction <strong>geom_point()</strong>.</p>
+<pre class="r"><code>ggplot(dat_,aes(x=date,y=degre_C))+geom_point()</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Ce n’est pas beaucoup mieux. Les points sont plus petits et la grille blanche sur fond gris permet une lecture plus rapide. On voit mieux le décrochage sur la toute fin de la série mais cela reste sujet à caution. Essayons d’ajouter une ligne horizontale marquant la température moyenne sur l’ensemble de la période en utilisant la fonction <strong>geom_hline()</strong>. Pour qu’elle soit visible, traçons la en rouge. Profitons en pour rendre plus lisible la légende de nos axes avec <strong>xlab()</strong> et <strong>ylab()</strong> et ajoutons un titre.</p>
+<pre class="r"><code>ggplot(dat_,aes(x=date,y=degre_C))+geom_point()+geom_hline(yintercept=mean(dat_$degre_C),color=&#39;red&#39;)+
+            xlab(&#39;Date (jour)&#39;)+ylab(&#39;Température (degrés Celsius)&#39;)+
+            ggtitle(&quot;Températures moyennes journalières au centre de l&#39;Angleterre (1772-2021)&quot;)</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>C’est mieux, mais il y a beaucoup trop de points pour y voir les choses clairement. Essayons de voir si la tendance se dessine mieux en agrégeant les températures sur des moyennes mensuelles. Créons pour cela une nouvelle base. Utilisons le fonction <strong>as.yearmon()</strong> du package zoo pour obtenir directement le bon découpage temporelle.</p>
+<pre class="r"><code>d_m&lt;-dat_%&gt;%mutate(dd=zoo::as.yearmon(date))%&gt;%
+           group_by(dd)%&gt;%
+           summarise(deg_C=round(mean(degre_C),digits=2))
+head(d_m)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   dd         deg_C
+##   &lt;yearmon&gt;  &lt;dbl&gt;
+## 1 janv. 1772  1.22
+## 2 févr. 1772  1.88
+## 3 mars 1772   4.39
+## 4 avr. 1772   6.41
+## 5 mai 1772   10.1 
+## 6 juin 1772  16.1</code></pre>
+<p>On passe d’un peu plus de 91000 jours à 2995 mois ce qui devrait éclaircir un peu les choses. Réalisons un nouveau graphe pour voir ce qu’il en est.</p>
+<pre class="r"><code>ggplot(d_m,aes(x=dd,y=deg_C))+geom_point()+geom_hline(yintercept=mean(d_m$deg_C),color=&#39;red&#39;)+
+           xlab(&#39;Date (mois)&#39;)+ylab(&#39;Température (degrés Celsius)&#39;)+
+           ggtitle(&quot;Températures moyennes mensuelles au centre de l&#39;Angleterre (1772-2021)&quot;)</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Encore une fois, c’est mieux mais les points sont encore trop nombreux pour lire une tendance claire. Voyons ce qu’il en est, si l’on agrège l’information sur une base annuelle. Pour ce faire, utilisons la fonction <strong>year()</strong> du package lubridate.</p>
+<pre class="r"><code>d_y&lt;-dat_%&gt;%mutate(dd=lubridate::year(date))%&gt;%
+            group_by(dd)%&gt;%
+            summarise(deg_C=round(mean(degre_C),digits=2))
+head(d_y)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##      dd deg_C
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  1772  9.17
+## 2  1773  9.29
+## 3  1774  9.08
+## 4  1775 10.1 
+## 5  1776  9.01
+## 6  1777  9.11</code></pre>
+<p>Voyons ce que donne le graphe sur cette nouvelle base.</p>
+<pre class="r"><code>ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+geom_hline(yintercept=mean(d_m$deg_C),color=&#39;red&#39;)+
+           xlab(&#39;Date (années)&#39;)+ylab(&#39;Température (degrés Celsius)&#39;)+
+           ggtitle(&quot;Températures moyennes annuelles au centre de l&#39;Angleterre (1772-2021)&quot;)</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Les choses sont réellement plus nettes avec ce dernier graphe. On constate que les températures moyennes annuelles deviennent de plus en plus chaude à partir de 1900. Il y a moins d’années pour lesquels la température moyenne est inférieur à la moyenne sur la période (1772-2021).Il n’y en a quasiment plus après 2000.</p>
+</div>
+<div id="travailler-lesthétique-du-graphe-pour-mieux-communiquer" class="section level2">
+<h2>Travailler l’esthétique du graphe pour mieux communiquer</h2>
+<p>Maintenant que nous avons une vue générale de ce que recèlent nos données, voyons comment mettre l’ensemble en valeur.</p>
+<p>Commençons par ajouter une courbe de tendance permettant de mettre en évidence l’évolution des températures. Pour cela utilisons la fonction <strong>geom_smooth()</strong>. Celle-ci trace une courbe estimée à partir d’une régression loess pratiquée sur nos données. Il s’agit d’une procédure non paramétrique très performante. Pour plus d’explications, je vous conseil la vidéo de <a href="https://www.youtube.com/watch?v=Vf7oJ6z2LCc&amp;t=45s">StatQuest</a> sur le sujet.</p>
+<pre class="r"><code>ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+geom_smooth(se=FALSE)+
+           geom_hline(yintercept=mean(d_m$deg_C),color=&#39;red&#39;)+
+           xlab(&#39;Date (années)&#39;)+ylab(&#39;Température (degrés Celsius)&#39;)+
+           ggtitle(&quot;Températures moyennes annuelles au centre de l&#39;Angleterre (1772-2021)&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Grace à la courbe en bleu, on voit clairement la tendance à la hausse qui devient nette après 1900. Le message du graphe est plus clair, mais on peut encore améliorer les choses. Ajoutons une légende expliquant la nature des courbes (rouge et bleu). Pour ce faire, indiquons un attribut esthétique, <strong>aes()</strong>, correspondant à la couleur, dans les geom_ correspondant. Puis, utilisons la fonction <strong>scale_coulour_manual()</strong> pour personnaliser la légende.</p>
+<pre class="r"><code>ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+geom_smooth(se=FALSE,aes(colour=&quot;Courbe d&#39;ajustement (loess)&quot;))+
+           geom_hline(aes(yintercept=mean(d_m$deg_C),colour=&quot;Moyenne&quot;))+
+           xlab(&#39;Date (années)&#39;)+ylab(&#39;Température (degrés Celsius)&#39;)+
+           ggtitle(&quot;Températures moyennes annuelles au centre de l&#39;Angleterre (1772-2021)&quot;)+
+           scale_colour_manual(name=&quot;Légende&quot;, values=c(&quot;blue&quot;, &quot;red&quot;))</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>C’est pas mal. Mais, on peut encore faire mieux. Je ne suis pas fan de la grille banc sur gris. Voyons comment changer cela. Celle-ci est associée à des choix graphiques faits par défaut qui sont regroupés dans ce que l’on appelle un thème. Changeons-le pour quelque chose de plus minimaliste en ajoutons à notre phrase <strong>theme_minimal()</strong>. Profitons-en pour procéder à quelques autres modifications. Retravaillons le titre du graphe et des axes pour être moins redondant dans l’information donnée. Ajoutons un sous titre qui indique le type de représentation dont il s’agit et une note qui précise l’origine des données. Utilisons <strong>labs()</strong> pour mettre tout ce texte. Ajustons la fenêtre graphique pour qu’elle se resserre autour de notre nuage avec <strong>coord_cartesian()</strong>. Pour finir, modifions quelques autres options par défaut avec la commande <strong>theme()</strong>. Changeons la police pour Taille New Roman (qui s’appelle en fait ici serif). Déplaçons la légende, ajoutons lui un cadre…</p>
+<pre class="r"><code>ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+geom_smooth(se=FALSE,aes(colour=&quot;Courbe d&#39;ajustement (loess)&quot;))+
+           geom_hline(aes(yintercept=mean(d_m$deg_C),colour=&quot;Moyenne&quot;))+
+           labs(title=&quot;Températures moyennes au centre de l&#39;Angleterre (1772-2021)&quot;,
+               subtitle=&quot;Nuage de points&quot;,
+               caption=&quot;Données: Hadley Center [Parker, Legg et Folland (1992)]&quot;,
+               x=&#39;années&#39;,y=&#39;°C&#39;)+
+           scale_colour_manual(name=&quot;Légende&quot;, values=c(&quot;blue&quot;, &quot;red&quot;))+
+           coord_cartesian(xlim=c(1770,2022),ylim=c(7.2,11),expand = FALSE)+
+           theme_minimal()+
+           theme(text=element_text(family=&quot;serif&quot;),
+                 plot.title = element_text(size=16,face=&#39;bold&#39;),
+                 plot.title.position = &#39;plot&#39;,
+                 plot.margin = margin(25,25,10,25),
+                 legend.background = element_rect(size=0.5, linetype=&quot;solid&quot;),
+                 legend.position = &quot;bottom&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Voilà qui est bien mieux, mais on peut encore améliorer les choses. Par exemple, en ajoutant des mises en formes différenciées aux différents textes. Pour cela, utilisons le package ggtext qui permet l’introduction d’éléments de langage markdown dans GGPLOT2. Ici, nous nous contenterons des * * pour les éléments en italiques et des ** ** pour ceux en gras mais on pourrait aller bien au delà. Profitions en aussi pour déplacer légèrement notre note sur l’origine des données que je trouve bien trop proche de la légende et réorientons l’étiquette des ordonnées pour qu’elle soit plus lisible.</p>
+<pre class="r"><code>library(ggtext)
+ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+geom_smooth(se=FALSE,aes(colour=&quot;Courbe d&#39;ajustement (loess)&quot;))+
+           geom_hline(aes(yintercept=mean(d_m$deg_C),colour=&quot;Moyenne&quot;))+
+           labs(title=&quot;*Températures moyennes au centre de l&#39;Angleterre* (*1772-2021*)&quot;,
+               subtitle=&quot;*Nuage de points*&quot;,
+               caption=&quot;*Données: centre Hadley [Parker, Legg et Folland (1992)]*&quot;,
+               x=&#39;*années*&#39;,y=&#39;°C&#39;)+
+           scale_colour_manual(name=&quot;*Légende*&quot;, values=c(&quot;blue&quot;, &quot;red&quot;))+
+           coord_cartesian(xlim=c(1770,2022),ylim=c(7.2,11),expand = FALSE)+
+           theme_minimal()+
+           theme(text=element_text(family=&quot;serif&quot;),
+                 plot.title = element_markdown(size=16,face=&#39;bold&#39;),
+                 plot.title.position = &#39;plot&#39;,
+                 plot.margin = margin(25,25,10,25),
+                 plot.subtitle = element_markdown(),
+                 axis.title.x = element_markdown(),
+                 axis.title.y = element_markdown(angle = 0, vjust = 0.5),
+                 legend.title = element_markdown(),
+                 legend.background = element_rect(size=0.5, linetype=&quot;solid&quot;),
+                 legend.position = &quot;bottom&quot;,
+                 plot.caption = element_markdown(margin=margin(t=15)))</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Je pense que l’on pourrait s’arrêter là. Mais,encore une fois, on aller un peu plus loin en essayant de mettre sur la même figure les nuages de points correspondant aux différents découpages temporels retenus (jours, mois, années). On pourrait même envisager d’établir une échelle commune qui faciliterait la comparaison pour bien voir de quelle manière la moyenne (en synthétisant les données) écrase les variations. On également mettre en avant notre dernier graphe dans la mesure où il est le mieux à même de rendre compte du réchauffement constaté. Pour cela, nous allons faire appel à un nouveau package venant compléter GGPLOT2, patchwork. Celui-ci propose une syntaxe simple pour articuler les graphes au sien d’une même figure. Par exemple, si vous voulez juxtaposer les graphes g1 et g2, il vous suffira d’indiquer g1+g2. Si vous voulez les superposer, indiquez g1/g2… Le package permet également d’ajouter des annotations à la figure globale et de travailler le thème qui sera appliqué à l’ensemble.</p>
+<p>Commençons donc par créer quatre graphes reprenant nos différentes analyses en version simplifiée : g_j, pour les jours, g_m, pour les mois, g_an, pour les années et g_an_f, pour sa version améliorée. Retenons pour les trois premiers une échelle des ordonnées allant de -12°C à 25°C ce qui permet de ne rien perdre des données journalières. Puis, articulons les graphes de manière à avoir les trois premiers alignés en tête de figure et le quatrième en queue de figure. Cela donne dans patchwork l’expression suivante: (g_j+g_m+g_an)/g_an_f. Procédons à un peu d’habillage et voyons le résultat.</p>
+<pre class="r"><code>library(patchwork)
+g_j&lt;-ggplot(dat_,aes(x=date,y=degre_C))+geom_point()+
+  geom_smooth(se=FALSE)+
+  geom_hline(yintercept=mean(dat_$degre_C),color=&#39;red&#39;)+
+  labs(x=&#39;**jours**&#39;,y=&#39;**°C**&#39;)+
+  coord_cartesian(ylim=c(-12,25))+
+  theme_minimal()
+g_m&lt;-ggplot(d_m,aes(x=dd,y=deg_C))+geom_point()+
+  geom_smooth(se=FALSE)+
+  geom_hline(yintercept=mean(d_m$deg_C),color=&#39;red&#39;)+
+  labs(x=&#39;**mois**&#39;,y=&#39;&#39;)+
+  coord_cartesian(ylim=c(-12,25))+
+  theme_minimal()
+g_an&lt;-ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+
+  geom_smooth(se=FALSE)+
+  geom_hline(yintercept=mean(d_y$deg_C),color=&#39;red&#39;)+
+  labs(x=&#39;**années**&#39;,y=&#39;&#39;)+
+  coord_cartesian(ylim=c(-12,25))+
+  theme_minimal()
+g_an_f&lt;-ggplot(d_y,aes(x=dd,y=deg_C))+geom_point()+
+  geom_smooth(se=FALSE,aes(colour=&quot;Tendance (loess regression)&quot;))+
+  geom_hline(aes(yintercept=mean(d_m$deg_C),colour=&quot;Moyenne&quot;))+
+  labs(x=&#39;**années**&#39;,y=&#39;**°C**&#39;)+
+  scale_colour_manual(name=&quot;*Légende*&quot;, values=c(&quot;red&quot;, &quot;blue&quot;))+
+  coord_cartesian(xlim=c(1770,2022),ylim=c(7.2,11),expand = FALSE)+
+  theme_minimal()
+(g_j+g_m+g_an)/g_an_f+
+  plot_annotation(title =&quot;Températures moyennes au centre de l&#39;Angleterre (*1772-2021*)&quot;,
+                  caption=&quot;*Données: Hadley Center [Parker, Legg et Folland (1992)]*&quot;)+
+  theme_minimal()&amp;
+  theme(text=element_text(&#39;serif&#39;),
+        plot.title=element_markdown(hjust=0.5,face=&#39;bold&#39;),
+        plot.caption = element_markdown(margin=margin(t=15)),
+        axis.title.x = element_markdown(),
+        axis.title.y = element_markdown(angle = 0, vjust = 0.5),
+        legend.title = element_markdown(),
+        legend.background = element_rect(size=0.5, linetype=&quot;solid&quot;),
+        legend.position = &quot;bottom&quot;)</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;gam&#39; and formula &#39;y ~ s(x, bs = &quot;cs&quot;)&#39;
+## `geom_smooth()` using method = &#39;gam&#39; and formula &#39;y ~ s(x, bs = &quot;cs&quot;)&#39;</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;
+## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-23-premiers-pas-sur-ggplot2/index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>Je suis assez content de la figure obtenue et je pense, que pour une rapide introduction, pas mal de choses ont été abordées.</p>
+<p>Dans les futurs billets associés à la préparation de ce cours, j’aborderais d’autres types de figures, d’autres types de données, mais aussi des points moins techniques, plus théoriques, sur les différentes types de représentations. Ce sera l’occasion de porter un regard critique sur certaines d’entre-elles, de voir comment les moins bonnes auraient pu être améliorée et pourquoi les meilleures sont si pertinentes. A chaque fois, j’essaierai (si je trouve les informations nécessaires) de les reproduire avec GGPLOT2 et les packages associés.</p>
+</div>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-08-23-premiers-pas-sur-ggplot2%2f&text=Premiers%20pas%20sur%20GGPLOT2&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-08-23-premiers-pas-sur-ggplot2%2f&t=Premiers%20pas%20sur%20GGPLOT2" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-08-23-premiers-pas-sur-ggplot2%2f&title=Premiers%20pas%20sur%20GGPLOT2&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>

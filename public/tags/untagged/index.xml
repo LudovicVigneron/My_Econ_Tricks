@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Untagged on My Econ Tricks</title>
+    <link>/tags/untagged/</link>
+    <description>Recent content in Untagged on My Econ Tricks</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>© Ludovic Vigneroin 2021–2022. All rights reserved.</copyright>
+    <lastBuildDate>Thu, 26 May 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/untagged/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ttrer</title>
+      <link>/post/2022-05-26-ttrer/</link>
+      <pubDate>Thu, 26 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-26-ttrer/</guid>
+      <description>Insert Lead paragraph here.fdsf</description>
+    </item>
+    
+  </channel>
+</rss>

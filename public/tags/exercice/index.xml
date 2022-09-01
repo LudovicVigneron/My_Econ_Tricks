@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Exercice on My Econ Tricks</title>
+    <link>/tags/exercice/</link>
+    <description>Recent content in Exercice on My Econ Tricks</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>© Ludovic Vigneroin 2021–2022. All rights reserved.</copyright>
+    <lastBuildDate>Thu, 05 Aug 2021 00:00:00 +0000</lastBuildDate><atom:link href="/tags/exercice/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>La structure des données</title>
+      <link>/post/2021-08-05-la-structure-des-donnees/</link>
+      <pubDate>Thu, 05 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-08-05-la-structure-des-donnees/</guid>
+      <description>Depuis quelques temps déjà, je me suis lancé dans l’écriture d’un manuel de statistiques utilisant R pour la présentation des concepts et comme outil pratique pour leur mise en oeuvre. L’idée est qu’une simulation numérique bien pensée rend leur compréhension plus facile que les seuls développements mathématiques (même si le livre en contient sa part). En montrant les choses à partir de petits programmes et en donnant les clés pour librement les modifier, il offre au lecteur la possibilité d’approcher les mécaniques et de découvrir leurs limites en les mettant à l’épreuve.</description>
+    </item>
+    
+  </channel>
+</rss>

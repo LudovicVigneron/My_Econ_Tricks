@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>plotly on My Econ Tricks</title>
+    <link>/tags/plotly/</link>
+    <description>Recent content in plotly on My Econ Tricks</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>© Ludovic Vigneroin 2021–2022. All rights reserved.</copyright>
+    <lastBuildDate>Sun, 17 Apr 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/plotly/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Bullet chart et gauge chart GT9</title>
+      <link>/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/</link>
+      <pubDate>Sun, 17 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/</guid>
+      <description>Il s’agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l’on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.</description>
+    </item>
+    
+  </channel>
+</rss>

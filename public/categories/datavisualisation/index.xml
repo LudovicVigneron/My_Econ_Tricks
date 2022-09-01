@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>datavisualisation on My Econ Tricks</title>
+    <link>/categories/datavisualisation/</link>
+    <description>Recent content in datavisualisation on My Econ Tricks</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>© Ludovic Vigneroin 2021–2022. All rights reserved.</copyright>
+    <lastBuildDate>Mon, 23 May 2022 00:00:00 +0000</lastBuildDate><atom:link href="/categories/datavisualisation/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Le diagramme en chute d&#39;eau GT12</title>
+      <link>/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/</link>
+      <pubDate>Mon, 23 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/</guid>
+      <description>Terminons ici la première partie (consacrée à la comparaison de catégories) de notre série GT par un type de graphe plus récent, le diagramme en chute d’eau (ou waterfall chart). Il a été popularisé par le cabinet Mc Kinsey. Il permet d’illustrer comment une valeur de départ devient une valeur finale au travers d’une série d’étapes intermédiaires. On a ainsi une forme de diagramme à barres empilées déconstruit en différents segments ordonnés et mis en forme pour mettre en évidences les impacts positifs et négatifs des différents éléments permettant le passage de la valeur de départ à la valeur finale.</description>
+    </item>
+    
+    <item>
+      <title>Le diagramme de Sankey GT11</title>
+      <link>/post/2022-05-10-le-diagramme-de-sankey-gt11/</link>
+      <pubDate>Tue, 10 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-10-le-diagramme-de-sankey-gt11/</guid>
+      <description>Nous allons ici nous pencher sur un type graphe unique (ou du moins présentant moins de différentes formes que ceux présentés jusqu’ici). Il permet de montrer à la fois comment les effectifs de différentes catégories se comparent entre eux dans un état et comment elles se transforment, se recombinent, pour former d’autres catégories dans un autre état voir plusieurs autres états. Il s’agit du diagramme de Sankey inventé par un ingénieur irlandais qui lui a donné son nom en 1898.</description>
+    </item>
+    
+    <item>
+      <title>Bulles de comparaison et bulle intriquée GT10</title>
+      <link>/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/</link>
+      <pubDate>Thu, 05 May 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/</guid>
+      <description>Il n’est pas toujours facile de donnée du sens à une valeur numérique, notamment lorsque celle-ci est soit très grande, soit très petite. En dehors d’un spectre restreint, nous sommes rapidement confronté à un manque de référence. Il nous est difficile, voir impossible, d’avoir une image mentale du nombre considéré. Aussi, pour palier à cette difficulté, on recourt à la comparaison. Il s’agit dans un graphe d’associé la valeur à un marqueur visuel et d’offrir des marqueurs de même forme mais de tailles différentes pour d’autres valeurs qui vont servir de points de références.</description>
+    </item>
+    
+    <item>
+      <title>Bullet chart et gauge chart GT9</title>
+      <link>/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/</link>
+      <pubDate>Sun, 17 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/</guid>
+      <description>Il s’agit ici de travailler des graphes permettant de montrer pour une variable la distance entre une ou plusieurs valeurs relevées et une valeur de référence. Pour cela, nous utiliserons deux types de représentation: une proche du diagramme à bâtons, le bullet chart, et une plus imagée répliquant une jauge comme celle que l’on peut trouver pour les compteurs de vitesse de véhicule, le gauge chart.</description>
+    </item>
+    
+    <item>
+      <title>Les heatmap et les calendar heatmap GT8</title>
+      <link>/post/2022-04-10-test/</link>
+      <pubDate>Sun, 10 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-10-test/</guid>
+      <description>Dans ce nouveau post, nous allons traiter d’une forme de visualisation hybride entre le tableau et le graphe: la heatmap (ou en français carte thermique). Elle permet de présenter en un unique visuel une grande quantité de données ce qui autorise la réalisation de comparaisons multiples entre leur valeur. Le point de départ est un tableau à deux dimensions établis pour stocké les valeurs d’une variable.</description>
+    </item>
+    
+    <item>
+      <title>Mes premieres videos de codage de graphes</title>
+      <link>/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/</link>
+      <pubDate>Fri, 25 Mar 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/</guid>
+      <description>Le cours de datavisualisation à l’UPHF que je donne sous la forme d’un module polytechnique (dont le nom est “présenter une donnée”) a commencé début février. Il s’organise en distanciel asynchrone. Tous les quinze jours, les étudiants ont accès à de nouveaux contenus (textes, vidéos, données…) que je met à leur disposition via le campus virtuel. L’idée est de les amener assez vite à pouvoir être alaise avec les outils de manière à produire leurs propres graphes.</description>
+    </item>
+    
+    <item>
+      <title>Les diagrammes en gaufre et les isotypes GT7</title>
+      <link>/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/</link>
+      <pubDate>Thu, 27 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/</guid>
+      <description>Pour ce nouveau post de la série GT, qui propose d’illustrer au travers de réalisations simples les différents types des graphes présentés par Jonathan Schwadish dans ses vidéos one chart at a time, nous nous allons revenir sur les diagrammes unitaires et à leurs déclinaisons. Nous avions déjà traité d’un de ces graphes dans le post consacré aux dots plots avec le diagramme de Wilkinson. Leur principe est simple. Il s’agit de mobiliser des formes ou des symboles pour figurer des observations ou des groupes d’observations.</description>
+    </item>
+    
+    <item>
+      <title>Le diagramme en mosaïque et le graphe Marimekko GT6</title>
+      <link>/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/</link>
+      <pubDate>Fri, 07 Jan 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-01-07-le-diagramme-en-mosaic-et-le-graphe-marimekko-gt6/</guid>
+      <description>Continuons notre exploration des graphes permettant d’illustrer une comparaison entre des variables catégorielles. Intéressons-nous aux diagrammes en mosaïque et au graphe de Marimekko (ou Mekko plot). Ceux-ci mobilisent des éléments rectangulaires, les tuiles de la mosaïque, que se combinent dans grand rectangle. Chacune de ses dimensions est attachée à une des variables. Ainsi, on a en abscisses des barres accolées correspondant aux différentes modalités de la première variable et sur les ordonnées empilées les modalités de la seconde.</description>
+    </item>
+    
+    <item>
+      <title>Le diagramme en points GT5</title>
+      <link>/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/</link>
+      <pubDate>Mon, 27 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/</guid>
+      <description>Jusqu’à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l’exploitation d’un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison mais cet fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot.</description>
+    </item>
+    
+    <item>
+      <title>Le diagramme à bâtons divergents GT4</title>
+      <link>/post/2021-12-13-le-diagramme-b-tons-divergeant-gt4/</link>
+      <pubDate>Mon, 13 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-12-13-le-diagramme-b-tons-divergeant-gt4/</guid>
+      <description>Intéressons-nous, pour ce quatrième post de la série GT, à une autre manière d’illustrer des différences en deux groupes pour une variables catégorielles: le diagramme à bâtons divergents (diverging bars chart). Celui-ci est également connu sous d’autres noms comme le diagramme en tornade ou en papillon. Il consiste à adosser des diagrammes à bâtons représentant la variable étudiée, un pour chacun des deux groupes impliqués dans la comparaison. Le repaire utilisé prend la forme d’un T inversé avec comme axe central l’origine des barres.</description>
+    </item>
+    
+    <item>
+      <title>Diagramme en barres empilées GT3</title>
+      <link>/post/2021-12-09-gt3/</link>
+      <pubDate>Thu, 09 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-12-09-gt3/</guid>
+      <description>Pour ce troisième post de la série GT-graphe type, intéressons-nous à un autre type de diagramme à bâtons, celui avec des barres empilées (stacked bar chart).Il s’agit d’un graphe dans lequel les barres ordinaires sont découpées en fonction de l’effectif de sous-catégories. Cela permet de mettre en évidence comment ces dernières contribuent à la valeur décrite par la barre dans laquelle elles sont inclues. On peut ainsi mettre en évidence dans un seul graphe à la fois les proportions relatives des sous-catégories et le totale des effectifs des catégories.</description>
+    </item>
+    
+    <item>
+      <title>Diagramme à bâtons pairés GT2</title>
+      <link>/post/2021-12-09-gt2/</link>
+      <pubDate>Thu, 09 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-12-09-gt2/</guid>
+      <description>Pour le second post de la série, nous examinons les diagrammes à bâtons pairés. Il s’agit ici de comparer les fréquences des différentes modalités d’une variable en mettant en perspective la situation prévalent sur deux groupes en mettant côte à côte les barres (bâtons) les représentant. Ce type de graphe peut, sans grandes difficultés, être étendu à plus de groupes . Néanmoins, il faut veiller à ce que l’ensemble reste lisible.</description>
+    </item>
+    
+    <item>
+      <title>Diagramme à batons GT1</title>
+      <link>/post/2021-12-07-bar-chart-gt1/</link>
+      <pubDate>Tue, 07 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-12-07-bar-chart-gt1/</guid>
+      <description>Je propose ici le premier post d’une série inspirée de l’émission “One Chart at a Time” diffusée sur la chaîne Youtude du spécialiste en datavisualisation John Schwabish. Il s’agira dans chaque édition de décrire un type de graphe particulier, d’en rappeler les principes, de souligner les points importants à retenir les concernant, d’alerter sur ce que l’on devrait faire ou pas faire lorsqu’on les utilise. L’idée est d’aboutir à une lecture critique des graphes présentés et de voir comment on peut les réaliser de manière rigoureuse et esthétique.</description>
+    </item>
+    
+    <item>
+      <title>Le diagramme à bâtons</title>
+      <link>/post/2021-12-07-le-diagramme-b-tons/</link>
+      <pubDate>Tue, 07 Dec 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-12-07-le-diagramme-b-tons/</guid>
+      <description>Je propose ici le premier post d’une série inspirée de l’émission “One Chart at a Time” diffusée sur la chaîne Youtude du spécialiste en datavisualisation John Schwabish. Il s’agira dans chaque édition de décrire un type de graphe particulier, d’en rappeler les principes, de souligner les points importants à retenir les concernant, d’alerter sur ce que l’on devrait faire ou pas faire lorsqu’on les utilise. L’idée est d’aboutir à une lecture critique des graphes présentés et de voir comment on peut les réaliser de manière rigoureuse et esthétique.</description>
+    </item>
+    
+    <item>
+      <title>Mon premier flipbook avec R</title>
+      <link>/post/2021-11-17-mon-premier-flipbook-avec-r/</link>
+      <pubDate>Wed, 17 Nov 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-11-17-mon-premier-flipbook-avec-r/</guid>
+      <description>En lisant le mail hebdomadaire de la liste de diffusion R-bloggers, qui est une véritable mine d’or pour qui veut suivre l’actualité de communauté des utilisateurs de notre langage de préféré (nouveaux packages, tutoriels, évènements …), un post particulier à retenu mon attention. L’autrice, Gina Reynolds, y montrait comment il est possible à partir du package flipbookr de réaliser des présentations animées de code (code movies) sans trop d’effort.</description>
+    </item>
+    
+    <item>
+      <title>Les temperatures augmentent (1)</title>
+      <link>/post/2021-10-07-les-temperatures-augmentent-1/</link>
+      <pubDate>Thu, 07 Oct 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-10-07-les-temperatures-augmentent-1/</guid>
+      <description>Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l’Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d’images, couleurs rappelant le chaud et le froid…).</description>
+    </item>
+    
+    <item>
+      <title>Police academie</title>
+      <link>/post/2021-09-02-police-academie/</link>
+      <pubDate>Thu, 02 Sep 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-09-02-police-academie/</guid>
+      <description>La personnalisation d’un graphe passe aussi par celle des textes qui l’accompagnent. Que ce soit son titre, sa légende ou tout autres annotations, une mise en forme s’impose. Nous l’avons vu celle-ci est possible dans GGPLOT2 au travers des éléments du thème retenu. Il s’agit d’indiquer, au sein de l’ajout de mise en forme introduit par la fonction theme(), l’objet sur lequel vous voulez appliquer votre choix et de l’introduire par la fonction element_text().</description>
+    </item>
+    
+    <item>
+      <title>Variations sur les themes</title>
+      <link>/post/2021-08-29-variations-sur-les-themes/</link>
+      <pubDate>Sun, 29 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-08-29-variations-sur-les-themes/</guid>
+      <description>Dans le post précédent, “Premiers pas sur GGPLOT2”, nous avons commencer à explorer les fonctionnalités du package GGPLOT2. Il en est ressorti que celui-ci présente deux grandes forces: une syntaxe simplifiée et intuitive, et un nombre important de choix par défaut sur l’habillage du graphe réalisés (assez bien pensés). Ceux-ci sont regroupés au sein d’objets nommés thèmes. Dans ce nouveau post, je propose d’en examiner le contenu afin de voir comment les modifiés pour obtenir un rendu complètement personnalisé.</description>
+    </item>
+    
+    <item>
+      <title>Premiers pas sur GGPLOT2</title>
+      <link>/post/2021-08-23-premiers-pas-sur-ggplot2/</link>
+      <pubDate>Mon, 23 Aug 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-08-23-premiers-pas-sur-ggplot2/</guid>
+      <description>Au printemps prochain, je donnerai, dans mon université, un cours introductif sur la visualisation de données. L’idée est de conférer aux étudiants un savoir technique, afin qu’ils soient capables de réaliser des graphes rigoureux et esthétiques,et de cultiver chez eux un regard critique sur les représentations qui leur sontprésentées dans la presse, sur internet ou ailleurs. Pour ce faire, j’ai choisi d’utiliser R comme outil principal, plus spécifiquement le package GGPLOT2 (et ses compléments) qui permet d’obtenir très rapidement, au travers d’un codes intuitifs, des graphes qui ont de l’allure.</description>
+    </item>
+    
+  </channel>
+</rss>

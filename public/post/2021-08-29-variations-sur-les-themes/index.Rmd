@@ -1,0 +1,202 @@
+---
+title: Variations sur les themes
+author: Ludovic Vigneron
+date: '2021-08-29'
+slug: []
+categories:
+  - datavisualisation
+tags:
+  - Dataviz
+  - GGPLOT2
+---
+
+Dans le post précédent, ["Premiers pas sur GGPLOT2"](https://myecontricks.netlify.app/post/2021-08-23-premiers-pas-sur-ggplot2), nous avons commencer à explorer les fonctionnalités du package GGPLOT2. Il en est ressorti que celui-ci présente deux grandes forces: une syntaxe simplifiée et intuitive, et un nombre important de choix par défaut sur l'habillage du graphe réalisés (assez bien pensés). Ceux-ci sont regroupés au sein d'objets nommés thèmes. Dans ce nouveau post, je propose d'en examiner le contenu afin de voir comment les modifiés pour obtenir un rendu complètement personnalisé.
+
+Afin d'avoir une base de travail permettant de visualiser les différentes transformations réalisées, reprenons notre graphe sur l'évolution des moyennes annuelles de températures au centre de l'Angleterre dans sa forme la plus simple. Commençons donc par charger les données correspondant et mettons-les en forme.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+dat<-read.table("https://hadleyserver.metoffice.gov.uk/hadcet/cetdl1772on.dat")
+colnames(dat)<-c('year','day',paste0('month_',1:12))
+dat<-dat%>%pivot_longer(cols=starts_with('month_'),names_to="month",
+                         names_prefix='month_',values_to='d_t')%>%
+            mutate(date=as.Date(paste0(day,'/',month,'/',year),
+                                format='%d/%m/%Y',origin='1/1/1990'))%>%
+            select(date,d_t)%>%
+            arrange(date)%>%
+            mutate(d_t=ifelse(d_t==-999,NA,d_t),
+                   degre_C=d_t/10)%>%
+            filter(is.na(d_t)==FALSE)%>%
+            select(-d_t)
+dat<-dat%>%mutate(annee=lubridate::year(date))%>%
+            group_by(annee)%>%
+            summarise(deg_C=round(mean(degre_C),digits=2))
+head(dat)
+```
+
+Ceci fait, utilisons les données pour établir la représentation sans préciser de thème. Nommons le graphe G1 de manière à pourvoir facilement le manipulé par la suite sans touché à l'information de base.
+
+```{r}
+G1<-ggplot(dat,aes(x=annee,y=deg_C))+geom_point()+geom_smooth(se=FALSE,aes(colour="Courbe d'ajustement (loess)"))+
+           geom_hline(aes(yintercept=mean(deg_C),colour="Moyenne"))+
+           labs(title="Températures moyennes au centre de l'Angleterre (1772-2021)",
+               subtitle="Nuage de points",
+               caption="Données: centre Hadley [Parker, Legg et Folland (1992)]",
+               x='Années',y='°C')+
+           scale_colour_manual(name="Légende", values=c("blue", "red"))
+G1
+```
+
+On retrouve notre nuage de points et nos deux courbes, le tout sur fond gris avec quadrillage blancs assorti d'une légende et de différentes informations textuelles. Mais, plus concrètement qu'avons nous avec l'objet G1? Quel est son type et que contient-il?
+
+```{r}
+typeof(G1);names(G1)
+```
+
+Il s'agit d'une liste qui présente huit éléments: les données, les couches de traitements (les différents geom), les échelles retenues, le mapping des axes, le thème, le système de coordonnées (ici cartésien), les facettes (le nombre de figures portées sur le même graphe - ici une seule), l'environnement où sera stocké le graphe (global par défaut), et les étiquettes (les éléments de texte définis - titres, sous-titres...). Pour avoir un aperçu de ce qu'ils contiennent, il suffit de fait suivre le nom du graphe par $ et le nom de l'élément.Prenons l'élément data et voyons ce qu'il en est (juste sur les premières lignes pas la peine d'afficher les informations sur les 250 années incluses dans la base).
+
+```{r}
+head(G1$data)
+```
+
+On retrouve bien nos données. La même procédure peut être appliquer pour les autres éléments mais celui qui nous intéresse ici c'est le thème. Concentrons-nous donc sur lui.
+
+```{r}
+typeof(G1$theme);names(G1$theme)
+```
+
+Il prend également la forme d'une liste, qui est ici vide puisque nous avons choisi de travailler avec le thème par défaut. Voyons ce qu'il en est si on opte pour un set prédéfini. Créons le graphe G2, qui ne sera autre que G1 sur qui on applique le thème minimal.Regardons la taille de la liste associée.
+
+```{r}
+G2<-G1+theme_minimal()
+length(G2$theme)
+```
+
+Les choses sont alors bien différentes puisque elle comprend cette fois 93 éléments. Ceux-ci indiquent les différent choix réalisés pour la composition du thème. Voyons ce qu'il en est.
+
+```{r}
+names(G2$theme)
+```
+
+Il serait laborieux de les examiner un à un. Alors prenons-en juste quelques un. Commençons par text. Il définit la forme par défaut des textes accompagnant le graphe.
+
+```{r}
+G2$theme$text
+```
+
+Il s'agit également d'une liste qui comprend 11 éléments. On voit que la police (family) est celle du document, que l'encrage (face) est normal (plain), que la couleur du texte est noire, etc... Voyons ce qu'il en est de la position de la légende.
+
+```{r}
+G2$theme$legend.position
+```
+
+Il est indiqué qu'elle doit se situer à droite de graphe (et c'est le cas). Voyons ce qui est prévu pour les lignes marquant les axes (x et y).
+
+```{r}
+G2$theme$axis.line
+```
+
+L'indication element_blank pour la forme des axes marque le fait que ceux-ci ne doivent pas apparaître. Maintenant que nous avons vu comment tout cela se présente, abordons la question centrale de se post.
+
+**Comment modifier les éléments du thème pour personnaliser notre graphe ?**
+
+Il suffit d'utiliser la fonction **theme()**. Celle-ci va aller chercher les éléments indiqués comme argument pour leur appliquer le traitement que vous définissez. Pour encore une fois simplifier la syntaxe, des fonctions complémentaires ont été établies:
+
+-   **element_text()**, qui permet la mise en forme des éléments textuels (family, face, colour, size, hjust, vjust, angle...)
+
+-   **element_line()**, qui permet la mise en forme de lignes (colour, size, linetype, lineend...)
+
+-   **element_rect()**, qui permet la mise en forme des rectangles utilisés pour les différents cadres (fill, colour, size, linetype, color...).
+
+-   **element_blank()**, qui fait simplement disparaître l'élément.
+
+Appliquons-les pour établir les modifications suivantes: comme forme pour le texte optons pour la police Times new roman (serif ... nous y reviendrons promis) avec un encrage gras, comme emplacement pour la légende optons pour sous le graphe, et pour les axes et bien faisons les apparaître sous forme de lignes noires, fines et terminées d'une flèche.
+
+```{r}
+G2+theme(text=element_text(family='serif',face='bold'),legend.position='bottom',
+         axis.line=element_line(colour='black',size=0.5,arrow=arrow(length=unit(5,"pt"))))
+```
+
+Nous l'avons vu dans le post précédent le package ggtext permet d'ajouter au formatage des éléments textuels des informations en langage *markdown*. Pour ce faire, il propose de substituer la fonction **element_markdown()** à la fonction **element_text()** lors de la modification du thème. Mais, restons sur GGPLOT2 et abordons une autre question.
+
+**Que proposent les thèmes prédéfinis?**
+
+Pour répondre passons rapidement en revue les neuf que j'ai pu identifier: bw, classic, dark, grey (ou gray), light, linedrawn, test, minimal et void. Appliquons les à G1 pour observer le rendu.
+
+```{r}
+G1+theme_bw()
+G1+theme_classic()
+G1+theme_dark()
+G1+theme_grey()
+G1+theme_light()
+G1+theme_linedraw()
+G1+theme_test()
+G1+theme_minimal()
+G1+theme_void()
+```
+
+Notons que grey apparaît être le choix par défaut. Pour le reste, il faut considérer ces thèmes comme des points de départ potentiels de votre travail de mise en forme (et à ce stade j'ai une petite préférence pour le thème minimal). Pour le reste, tout peut être modifier afin d'obtenir le graphe de vos rèves ou au moins celui que vous souhaitez produire.
+
+**Comment créer son propre thème?**
+
+Plutôt que de travailler graphe par graphe, il peut s'avérer plus intéressant d'établir votre propre thème par défaut et de le voir appliquer à vos différentes analyses. Encore une fois, c'est assez simple, les développeurs ont prévu une commande à cette effet **theme_set()**. Elle fixe ce qui s'appliquera par la suite. On peut ainsi créer un thème que l'on nomme *flech* et qui reprend nos transformations précédentes du thème minimal (mise en forme du texte et des axes avec des flèches, d'où le nom, ainsi que déplacement de la légende). Ce travail fait, appelons notre graphe G1.
+
+```{r paged.print=TRUE}
+flech<-theme_set(theme_minimal()+theme(text=element_text(family='serif',face='bold'),
+                                       legend.position='bottom',
+                                       axis.line=element_line(colour='black',size=0.5,
+                                                              arrow=arrow(length=unit(5,"pt")))))
+G1
+```
+
+On constate que celui-ci à bien pris la forme demandée dans *flech*. Voyons ce que celui-ci contient sur les points modifiés.
+
+```{r,eval=FALSE}
+flech$text;flech$legend.position;flech$axis.line
+```
+
+
+```{r,echo=FALSE}
+flech<-theme_set(theme_minimal()+theme(text=element_text(family='serif',face='bold'),
+                                       legend.position='bottom',
+                                       axis.line=element_line(colour='black',size=0.5,
+                                                         arrow=arrow(length=unit(5,"pt")))))
+flech$text
+flech$legend.position
+flech$axis.line
+```
+
+On retrouve bien nos transformations. A ce stade, on peut continuer à modifier le thème à la volé en utilisant la commande **theme_update()**. Demandons lui de griser le fond de l'encadré consacré à la légende. Puis, rappelons G1.
+
+```{r}
+theme_update(legend.background=element_rect(fill='grey'))
+G1
+```
+
+La transformation a été appliquée au graphe, mais a t-on modifié pour de bon *flech*? Vérifions-le.
+
+```{r}
+flech$legend.background
+```
+
+*flech* est resté inchangé. Pour preuve, si on le rappel comme thème par défaut et que l'on rappel G1, on retrouve notre graphe sans légende grisée.
+
+```{r, eval=FALSE}
+theme_set(flech)
+G1
+```
+
+```{r,echo=FALSE}
+flech<-theme_set(theme_minimal()+theme(text=element_text(family='serif',face='bold'),
+                                       legend.position='bottom',
+                                       axis.line=element_line(colour='black',size=0.5,
+                                                         arrow=arrow(length=unit(5,"pt")))))
+G1
+```
+
+Pour intégrer durablement la transformation, il faut revenir sur la définition du thème.
+
+```{r}
+flech<-theme_set(flech)+theme(legend.background=element_rect(fill='grey'))
+flech$legend.background
+```

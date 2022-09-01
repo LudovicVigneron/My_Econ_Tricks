@@ -1,0 +1,17 @@
+---
+title: Quantitative Methods WRDS (1)
+author: Ludovic Vigneron
+date: '2022-09-01'
+slug: []
+categories:
+  - R
+  - Finance
+tags:
+  - R
+  - Finance
+---
+
+**Insert Lead paragraph here.**
+
+
+

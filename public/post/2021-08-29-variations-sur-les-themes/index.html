@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Variations sur les themes" />
+<meta property="og:description" content="Dans le post précédent, “Premiers pas sur GGPLOT2”, nous avons commencer à explorer les fonctionnalités du package GGPLOT2. Il en est ressorti que celui-ci présente deux grandes forces: une syntaxe simplifiée et intuitive, et un nombre important de choix par défaut sur l’habillage du graphe réalisés (assez bien pensés). Ceux-ci sont regroupés au sein d’objets nommés thèmes. Dans ce nouveau post, je propose d’en examiner le contenu afin de voir comment les modifiés pour obtenir un rendu complètement personnalisé." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2021-08-29-variations-sur-les-themes/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-08-29T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-08-29T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Variations sur les themes"/>
+<meta name="twitter:description" content="Dans le post précédent, “Premiers pas sur GGPLOT2”, nous avons commencer à explorer les fonctionnalités du package GGPLOT2. Il en est ressorti que celui-ci présente deux grandes forces: une syntaxe simplifiée et intuitive, et un nombre important de choix par défaut sur l’habillage du graphe réalisés (assez bien pensés). Ceux-ci sont regroupés au sein d’objets nommés thèmes. Dans ce nouveau post, je propose d’en examiner le contenu afin de voir comment les modifiés pour obtenir un rendu complètement personnalisé."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Variations sur les themes | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Dans le post précédent, “Premiers pas sur GGPLOT2”, nous avons commencer à explorer les fonctionnalités du package GGPLOT2. Il en est ressorti que celui-ci présente deux grandes forces: une syntaxe simplifiée et intuitive, et un nombre important de choix par défaut sur l’habillage du graphe réalisés (assez bien pensés). Ceux-ci sont regroupés au sein d’objets nommés thèmes. Dans ce nouveau post, je propose d’en examiner le contenu afin de voir comment les modifiés pour obtenir un rendu complètement personnalisé.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Variations sur les themes</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Aug 29, 2021&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/ggplot2/'>ggplot2</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-08-29-variations-sur-les-themes%2f&text=Variations%20sur%20les%20themes&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-08-29-variations-sur-les-themes%2f&t=Variations%20sur%20les%20themes" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-08-29-variations-sur-les-themes%2f&title=Variations%20sur%20les%20themes&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+<script src="/post/2021-08-29-variations-sur-les-themes/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Dans le post précédent, <a href="https://myecontricks.netlify.app/post/2021-08-23-premiers-pas-sur-ggplot2">“Premiers pas sur GGPLOT2”</a>, nous avons commencer à explorer les fonctionnalités du package GGPLOT2. Il en est ressorti que celui-ci présente deux grandes forces: une syntaxe simplifiée et intuitive, et un nombre important de choix par défaut sur l’habillage du graphe réalisés (assez bien pensés). Ceux-ci sont regroupés au sein d’objets nommés thèmes. Dans ce nouveau post, je propose d’en examiner le contenu afin de voir comment les modifiés pour obtenir un rendu complètement personnalisé.</p>
+<p>Afin d’avoir une base de travail permettant de visualiser les différentes transformations réalisées, reprenons notre graphe sur l’évolution des moyennes annuelles de températures au centre de l’Angleterre dans sa forme la plus simple. Commençons donc par charger les données correspondant et mettons-les en forme.</p>
+<pre class="r"><code>library(tidyverse)
+dat&lt;-read.table(&quot;https://hadleyserver.metoffice.gov.uk/hadcet/cetdl1772on.dat&quot;)
+colnames(dat)&lt;-c(&#39;year&#39;,&#39;day&#39;,paste0(&#39;month_&#39;,1:12))
+dat&lt;-dat%&gt;%pivot_longer(cols=starts_with(&#39;month_&#39;),names_to=&quot;month&quot;,
+                         names_prefix=&#39;month_&#39;,values_to=&#39;d_t&#39;)%&gt;%
+            mutate(date=as.Date(paste0(day,&#39;/&#39;,month,&#39;/&#39;,year),
+                                format=&#39;%d/%m/%Y&#39;,origin=&#39;1/1/1990&#39;))%&gt;%
+            select(date,d_t)%&gt;%
+            arrange(date)%&gt;%
+            mutate(d_t=ifelse(d_t==-999,NA,d_t),
+                   degre_C=d_t/10)%&gt;%
+            filter(is.na(d_t)==FALSE)%&gt;%
+            select(-d_t)
+dat&lt;-dat%&gt;%mutate(annee=lubridate::year(date))%&gt;%
+            group_by(annee)%&gt;%
+            summarise(deg_C=round(mean(degre_C),digits=2))
+head(dat)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   annee deg_C
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  1772  9.17
+## 2  1773  9.29
+## 3  1774  9.08
+## 4  1775 10.1 
+## 5  1776  9.01
+## 6  1777  9.11</code></pre>
+<p>Ceci fait, utilisons les données pour établir la représentation sans préciser de thème. Nommons le graphe G1 de manière à pourvoir facilement le manipulé par la suite sans touché à l’information de base.</p>
+<pre class="r"><code>G1&lt;-ggplot(dat,aes(x=annee,y=deg_C))+geom_point()+geom_smooth(se=FALSE,aes(colour=&quot;Courbe d&#39;ajustement (loess)&quot;))+
+           geom_hline(aes(yintercept=mean(deg_C),colour=&quot;Moyenne&quot;))+
+           labs(title=&quot;Températures moyennes au centre de l&#39;Angleterre (1772-2021)&quot;,
+               subtitle=&quot;Nuage de points&quot;,
+               caption=&quot;Données: centre Hadley [Parker, Legg et Folland (1992)]&quot;,
+               x=&#39;Années&#39;,y=&#39;°C&#39;)+
+           scale_colour_manual(name=&quot;Légende&quot;, values=c(&quot;blue&quot;, &quot;red&quot;))
+G1</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>On retrouve notre nuage de points et nos deux courbes, le tout sur fond gris avec quadrillage blancs assorti d’une légende et de différentes informations textuelles. Mais, plus concrètement qu’avons nous avec l’objet G1? Quel est son type et que contient-il?</p>
+<pre class="r"><code>typeof(G1);names(G1)</code></pre>
+<pre><code>## [1] &quot;list&quot;</code></pre>
+<pre><code>## [1] &quot;data&quot;        &quot;layers&quot;      &quot;scales&quot;      &quot;mapping&quot;     &quot;theme&quot;      
+## [6] &quot;coordinates&quot; &quot;facet&quot;       &quot;plot_env&quot;    &quot;labels&quot;</code></pre>
+<p>Il s’agit d’une liste qui présente huit éléments: les données, les couches de traitements (les différents geom), les échelles retenues, le mapping des axes, le thème, le système de coordonnées (ici cartésien), les facettes (le nombre de figures portées sur le même graphe - ici une seule), l’environnement où sera stocké le graphe (global par défaut), et les étiquettes (les éléments de texte définis - titres, sous-titres…). Pour avoir un aperçu de ce qu’ils contiennent, il suffit de fait suivre le nom du graphe par $ et le nom de l’élément.Prenons l’élément data et voyons ce qu’il en est (juste sur les premières lignes pas la peine d’afficher les informations sur les 250 années incluses dans la base).</p>
+<pre class="r"><code>head(G1$data)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   annee deg_C
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  1772  9.17
+## 2  1773  9.29
+## 3  1774  9.08
+## 4  1775 10.1 
+## 5  1776  9.01
+## 6  1777  9.11</code></pre>
+<p>On retrouve bien nos données. La même procédure peut être appliquer pour les autres éléments mais celui qui nous intéresse ici c’est le thème. Concentrons-nous donc sur lui.</p>
+<pre class="r"><code>typeof(G1$theme);names(G1$theme)</code></pre>
+<pre><code>## [1] &quot;list&quot;</code></pre>
+<pre><code>## NULL</code></pre>
+<p>Il prend également la forme d’une liste, qui est ici vide puisque nous avons choisi de travailler avec le thème par défaut. Voyons ce qu’il en est si on opte pour un set prédéfini. Créons le graphe G2, qui ne sera autre que G1 sur qui on applique le thème minimal.Regardons la taille de la liste associée.</p>
+<pre class="r"><code>G2&lt;-G1+theme_minimal()
+length(G2$theme)</code></pre>
+<pre><code>## [1] 93</code></pre>
+<p>Les choses sont alors bien différentes puisque elle comprend cette fois 93 éléments. Ceux-ci indiquent les différent choix réalisés pour la composition du thème. Voyons ce qu’il en est.</p>
+<pre class="r"><code>names(G2$theme)</code></pre>
+<pre><code>##  [1] &quot;line&quot;                       &quot;rect&quot;                      
+##  [3] &quot;text&quot;                       &quot;title&quot;                     
+##  [5] &quot;aspect.ratio&quot;               &quot;axis.title&quot;                
+##  [7] &quot;axis.title.x&quot;               &quot;axis.title.x.top&quot;          
+##  [9] &quot;axis.title.x.bottom&quot;        &quot;axis.title.y&quot;              
+## [11] &quot;axis.title.y.left&quot;          &quot;axis.title.y.right&quot;        
+## [13] &quot;axis.text&quot;                  &quot;axis.text.x&quot;               
+## [15] &quot;axis.text.x.top&quot;            &quot;axis.text.x.bottom&quot;        
+## [17] &quot;axis.text.y&quot;                &quot;axis.text.y.left&quot;          
+## [19] &quot;axis.text.y.right&quot;          &quot;axis.ticks&quot;                
+## [21] &quot;axis.ticks.x&quot;               &quot;axis.ticks.x.top&quot;          
+## [23] &quot;axis.ticks.x.bottom&quot;        &quot;axis.ticks.y&quot;              
+## [25] &quot;axis.ticks.y.left&quot;          &quot;axis.ticks.y.right&quot;        
+## [27] &quot;axis.ticks.length&quot;          &quot;axis.ticks.length.x&quot;       
+## [29] &quot;axis.ticks.length.x.top&quot;    &quot;axis.ticks.length.x.bottom&quot;
+## [31] &quot;axis.ticks.length.y&quot;        &quot;axis.ticks.length.y.left&quot;  
+## [33] &quot;axis.ticks.length.y.right&quot;  &quot;axis.line&quot;                 
+## [35] &quot;axis.line.x&quot;                &quot;axis.line.x.top&quot;           
+## [37] &quot;axis.line.x.bottom&quot;         &quot;axis.line.y&quot;               
+## [39] &quot;axis.line.y.left&quot;           &quot;axis.line.y.right&quot;         
+## [41] &quot;legend.background&quot;          &quot;legend.margin&quot;             
+## [43] &quot;legend.spacing&quot;             &quot;legend.spacing.x&quot;          
+## [45] &quot;legend.spacing.y&quot;           &quot;legend.key&quot;                
+## [47] &quot;legend.key.size&quot;            &quot;legend.key.height&quot;         
+## [49] &quot;legend.key.width&quot;           &quot;legend.text&quot;               
+## [51] &quot;legend.text.align&quot;          &quot;legend.title&quot;              
+## [53] &quot;legend.title.align&quot;         &quot;legend.position&quot;           
+## [55] &quot;legend.direction&quot;           &quot;legend.justification&quot;      
+## [57] &quot;legend.box&quot;                 &quot;legend.box.just&quot;           
+## [59] &quot;legend.box.margin&quot;          &quot;legend.box.background&quot;     
+## [61] &quot;legend.box.spacing&quot;         &quot;panel.background&quot;          
+## [63] &quot;panel.border&quot;               &quot;panel.spacing&quot;             
+## [65] &quot;panel.spacing.x&quot;            &quot;panel.spacing.y&quot;           
+## [67] &quot;panel.grid&quot;                 &quot;panel.grid.major&quot;          
+## [69] &quot;panel.grid.minor&quot;           &quot;panel.grid.major.x&quot;        
+## [71] &quot;panel.grid.major.y&quot;         &quot;panel.grid.minor.x&quot;        
+## [73] &quot;panel.grid.minor.y&quot;         &quot;panel.ontop&quot;               
+## [75] &quot;plot.background&quot;            &quot;plot.title&quot;                
+## [77] &quot;plot.title.position&quot;        &quot;plot.subtitle&quot;             
+## [79] &quot;plot.caption&quot;               &quot;plot.caption.position&quot;     
+## [81] &quot;plot.tag&quot;                   &quot;plot.tag.position&quot;         
+## [83] &quot;plot.margin&quot;                &quot;strip.background&quot;          
+## [85] &quot;strip.background.x&quot;         &quot;strip.background.y&quot;        
+## [87] &quot;strip.placement&quot;            &quot;strip.text&quot;                
+## [89] &quot;strip.text.x&quot;               &quot;strip.text.y&quot;              
+## [91] &quot;strip.switch.pad.grid&quot;      &quot;strip.switch.pad.wrap&quot;     
+## [93] &quot;strip.text.y.left&quot;</code></pre>
+<p>Il serait laborieux de les examiner un à un. Alors prenons-en juste quelques un. Commençons par text. Il définit la forme par défaut des textes accompagnant le graphe.</p>
+<pre class="r"><code>G2$theme$text</code></pre>
+<pre><code>## List of 11
+##  $ family       : chr &quot;&quot;
+##  $ face         : chr &quot;plain&quot;
+##  $ colour       : chr &quot;black&quot;
+##  $ size         : num 11
+##  $ hjust        : num 0.5
+##  $ vjust        : num 0.5
+##  $ angle        : num 0
+##  $ lineheight   : num 0.9
+##  $ margin       : &#39;margin&#39; num [1:4] 0points 0points 0points 0points
+##   ..- attr(*, &quot;unit&quot;)= int 8
+##  $ debug        : logi FALSE
+##  $ inherit.blank: logi TRUE
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;element_text&quot; &quot;element&quot;</code></pre>
+<p>Il s’agit également d’une liste qui comprend 11 éléments. On voit que la police (family) est celle du document, que l’encrage (face) est normal (plain), que la couleur du texte est noire, etc… Voyons ce qu’il en est de la position de la légende.</p>
+<pre class="r"><code>G2$theme$legend.position</code></pre>
+<pre><code>## [1] &quot;right&quot;</code></pre>
+<p>Il est indiqué qu’elle doit se situer à droite de graphe (et c’est le cas). Voyons ce qui est prévu pour les lignes marquant les axes (x et y).</p>
+<pre class="r"><code>G2$theme$axis.line</code></pre>
+<pre><code>##  list()
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;element_blank&quot; &quot;element&quot;</code></pre>
+<p>L’indication element_blank pour la forme des axes marque le fait que ceux-ci ne doivent pas apparaître. Maintenant que nous avons vu comment tout cela se présente, abordons la question centrale de se post.</p>
+<p><strong>Comment modifier les éléments du thème pour personnaliser notre graphe ?</strong></p>
+<p>Il suffit d’utiliser la fonction <strong>theme()</strong>. Celle-ci va aller chercher les éléments indiqués comme argument pour leur appliquer le traitement que vous définissez. Pour encore une fois simplifier la syntaxe, des fonctions complémentaires ont été établies:</p>
+<ul>
+<li><p><strong>element_text()</strong>, qui permet la mise en forme des éléments textuels (family, face, colour, size, hjust, vjust, angle…)</p></li>
+<li><p><strong>element_line()</strong>, qui permet la mise en forme de lignes (colour, size, linetype, lineend…)</p></li>
+<li><p><strong>element_rect()</strong>, qui permet la mise en forme des rectangles utilisés pour les différents cadres (fill, colour, size, linetype, color…).</p></li>
+<li><p><strong>element_blank()</strong>, qui fait simplement disparaître l’élément.</p></li>
+</ul>
+<p>Appliquons-les pour établir les modifications suivantes: comme forme pour le texte optons pour la police Times new roman (serif … nous y reviendrons promis) avec un encrage gras, comme emplacement pour la légende optons pour sous le graphe, et pour les axes et bien faisons les apparaître sous forme de lignes noires, fines et terminées d’une flèche.</p>
+<pre class="r"><code>G2+theme(text=element_text(family=&#39;serif&#39;,face=&#39;bold&#39;),legend.position=&#39;bottom&#39;,
+         axis.line=element_line(colour=&#39;black&#39;,size=0.5,arrow=arrow(length=unit(5,&quot;pt&quot;))))</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Nous l’avons vu dans le post précédent le package ggtext permet d’ajouter au formatage des éléments textuels des informations en langage <em>markdown</em>. Pour ce faire, il propose de substituer la fonction <strong>element_markdown()</strong> à la fonction <strong>element_text()</strong> lors de la modification du thème. Mais, restons sur GGPLOT2 et abordons une autre question.</p>
+<p><strong>Que proposent les thèmes prédéfinis?</strong></p>
+<p>Pour répondre passons rapidement en revue les neuf que j’ai pu identifier: bw, classic, dark, grey (ou gray), light, linedrawn, test, minimal et void. Appliquons les à G1 pour observer le rendu.</p>
+<pre class="r"><code>G1+theme_bw()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre class="r"><code>G1+theme_classic()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-2.png" width="672" /></p>
+<pre class="r"><code>G1+theme_dark()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-3.png" width="672" /></p>
+<pre class="r"><code>G1+theme_grey()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-4.png" width="672" /></p>
+<pre class="r"><code>G1+theme_light()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-5.png" width="672" /></p>
+<pre class="r"><code>G1+theme_linedraw()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-6.png" width="672" /></p>
+<pre class="r"><code>G1+theme_test()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-7.png" width="672" /></p>
+<pre class="r"><code>G1+theme_minimal()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-8.png" width="672" /></p>
+<pre class="r"><code>G1+theme_void()</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-12-9.png" width="672" /></p>
+<p>Notons que grey apparaît être le choix par défaut. Pour le reste, il faut considérer ces thèmes comme des points de départ potentiels de votre travail de mise en forme (et à ce stade j’ai une petite préférence pour le thème minimal). Pour le reste, tout peut être modifier afin d’obtenir le graphe de vos rèves ou au moins celui que vous souhaitez produire.</p>
+<p><strong>Comment créer son propre thème?</strong></p>
+<p>Plutôt que de travailler graphe par graphe, il peut s’avérer plus intéressant d’établir votre propre thème par défaut et de le voir appliquer à vos différentes analyses. Encore une fois, c’est assez simple, les développeurs ont prévu une commande à cette effet <strong>theme_set()</strong>. Elle fixe ce qui s’appliquera par la suite. On peut ainsi créer un thème que l’on nomme <em>flech</em> et qui reprend nos transformations précédentes du thème minimal (mise en forme du texte et des axes avec des flèches, d’où le nom, ainsi que déplacement de la légende). Ce travail fait, appelons notre graphe G1.</p>
+<pre class="r"><code>flech&lt;-theme_set(theme_minimal()+theme(text=element_text(family=&#39;serif&#39;,face=&#39;bold&#39;),
+                                       legend.position=&#39;bottom&#39;,
+                                       axis.line=element_line(colour=&#39;black&#39;,size=0.5,
+                                                              arrow=arrow(length=unit(5,&quot;pt&quot;)))))
+G1</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>On constate que celui-ci à bien pris la forme demandée dans <em>flech</em>. Voyons ce que celui-ci contient sur les points modifiés.</p>
+<pre class="r"><code>flech$text;flech$legend.position;flech$axis.line</code></pre>
+<pre><code>## List of 11
+##  $ family       : chr &quot;serif&quot;
+##  $ face         : chr &quot;bold&quot;
+##  $ colour       : chr &quot;black&quot;
+##  $ size         : num 11
+##  $ hjust        : num 0.5
+##  $ vjust        : num 0.5
+##  $ angle        : num 0
+##  $ lineheight   : num 0.9
+##  $ margin       : &#39;margin&#39; num [1:4] 0points 0points 0points 0points
+##   ..- attr(*, &quot;unit&quot;)= int 8
+##  $ debug        : logi FALSE
+##  $ inherit.blank: logi FALSE
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;element_text&quot; &quot;element&quot;</code></pre>
+<pre><code>## [1] &quot;bottom&quot;</code></pre>
+<pre><code>## List of 6
+##  $ colour       : chr &quot;black&quot;
+##  $ size         : num 0.5
+##  $ linetype     : NULL
+##  $ lineend      : NULL
+##  $ arrow        :List of 4
+##  $ angle : num 30
+##  $ length: &#39;simpleUnit&#39; num 5points
+##   ..- attr(*, &quot;unit&quot;)= int 8
+##  $ ends  : int 2
+##  $ type  : int 1
+##  $ inherit.blank: logi FALSE
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;element_line&quot; &quot;element&quot;</code></pre>
+<p>On retrouve bien nos transformations. A ce stade, on peut continuer à modifier le thème à la volé en utilisant la commande <strong>theme_update()</strong>. Demandons lui de griser le fond de l’encadré consacré à la légende. Puis, rappelons G1.</p>
+<pre class="r"><code>theme_update(legend.background=element_rect(fill=&#39;grey&#39;))
+G1</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>La transformation a été appliquée au graphe, mais a t-on modifié pour de bon <em>flech</em>? Vérifions-le.</p>
+<pre class="r"><code>flech$legend.background</code></pre>
+<pre><code>##  list()
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;element_blank&quot; &quot;element&quot;</code></pre>
+<p><em>flech</em> est resté inchangé. Pour preuve, si on le rappel comme thème par défaut et que l’on rappel G1, on retrouve notre graphe sans légende grisée.</p>
+<pre class="r"><code>theme_set(flech)
+G1</code></pre>
+<pre><code>## `geom_smooth()` using method = &#39;loess&#39; and formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-08-29-variations-sur-les-themes/index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>Pour intégrer durablement la transformation, il faut revenir sur la définition du thème.</p>
+<pre class="r"><code>flech&lt;-theme_set(flech)+theme(legend.background=element_rect(fill=&#39;grey&#39;))
+flech$legend.background</code></pre>
+<pre><code>## List of 5
+##  $ fill         : chr &quot;grey&quot;
+##  $ colour       : NULL
+##  $ size         : NULL
+##  $ linetype     : NULL
+##  $ inherit.blank: logi FALSE
+##  - attr(*, &quot;class&quot;)= chr [1:2] &quot;element_rect&quot; &quot;element&quot;</code></pre>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-08-29-variations-sur-les-themes%2f&text=Variations%20sur%20les%20themes&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-08-29-variations-sur-les-themes%2f&t=Variations%20sur%20les%20themes" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-08-29-variations-sur-les-themes%2f&title=Variations%20sur%20les%20themes&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>

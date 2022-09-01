@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Climat on My Econ Tricks</title>
+    <link>/tags/climat/</link>
+    <description>Recent content in Climat on My Econ Tricks</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <copyright>© Ludovic Vigneroin 2021–2022. All rights reserved.</copyright>
+    <lastBuildDate>Sun, 10 Apr 2022 00:00:00 +0000</lastBuildDate><atom:link href="/tags/climat/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Les heatmap et les calendar heatmap GT8</title>
+      <link>/post/2022-04-10-test/</link>
+      <pubDate>Sun, 10 Apr 2022 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2022-04-10-test/</guid>
+      <description>Dans ce nouveau post, nous allons traiter d’une forme de visualisation hybride entre le tableau et le graphe: la heatmap (ou en français carte thermique). Elle permet de présenter en un unique visuel une grande quantité de données ce qui autorise la réalisation de comparaisons multiples entre leur valeur. Le point de départ est un tableau à deux dimensions établis pour stocké les valeurs d’une variable.</description>
+    </item>
+    
+    <item>
+      <title>Mon premier flipbook avec R</title>
+      <link>/post/2021-11-17-mon-premier-flipbook-avec-r/</link>
+      <pubDate>Wed, 17 Nov 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-11-17-mon-premier-flipbook-avec-r/</guid>
+      <description>En lisant le mail hebdomadaire de la liste de diffusion R-bloggers, qui est une véritable mine d’or pour qui veut suivre l’actualité de communauté des utilisateurs de notre langage de préféré (nouveaux packages, tutoriels, évènements …), un post particulier à retenu mon attention. L’autrice, Gina Reynolds, y montrait comment il est possible à partir du package flipbookr de réaliser des présentations animées de code (code movies) sans trop d’effort.</description>
+    </item>
+    
+    <item>
+      <title>Les temperatures augmentent (1)</title>
+      <link>/post/2021-10-07-les-temperatures-augmentent-1/</link>
+      <pubDate>Thu, 07 Oct 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/post/2021-10-07-les-temperatures-augmentent-1/</guid>
+      <description>Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l’Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d’images, couleurs rappelant le chaud et le froid…).</description>
+    </item>
+    
+  </channel>
+</rss>
