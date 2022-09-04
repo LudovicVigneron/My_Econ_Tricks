@@ -19,7 +19,7 @@ Cela me permet de montrer aux étudiants une nouvelle fois comment extraire les 
 
 Vous trouverez les slides de cette séance en cliquant sur l'image suivante:
 
-[![FCapture_slide_2.PNG.png)](slide_2_v1.pdf)
+[![F](Capture_slide_2.png)](slide_2_v1.pdf)
 
 Les questions de construction de graphes et des tests de différences de moyennes sont également abordées.
 
