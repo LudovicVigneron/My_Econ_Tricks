@@ -2,16 +2,16 @@
 title: Diagramme à bâtons pairés GT2
 author: Ludovic Vigneron
 date: '2021-12-09'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
   - GGPLOT2
+  - GT
 ---
 
-<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
 
 
 <p><strong>Pour le second post de la série, nous examinons les diagrammes à bâtons pairés. Il s’agit ici de comparer les fréquences des différentes modalités d’une variable en mettant en perspective la situation prévalent sur deux groupes en mettant côte à côte les barres (bâtons) les représentant. Ce type de graphe peut, sans grandes difficultés, être étendu à plus de groupes . Néanmoins, il faut veiller à ce que l’ensemble reste lisible. Leur avantage est qu’ils facilitent les comparaisons en positionnant les valeurs sur une même échelle (qui dans l’idéal débute à 0). L’examen des positions des extrémités des barres donne une idée claire des proportions de différences entre les groupes. Ils ne sont par contre pas très efficaces pour mettre au jour des relations entre variables ou des tendances.</strong></p>
@@ -22,20 +22,22 @@ library(readxl)</code></pre>
 <p>Chargeons les données dans R (après les avoirs chargé sur votre machine) et regardons à quoi elles ressemblent.</p>
 <pre class="r"><code>dat &lt;- read_excel(&quot;WUP2018-F01-Total_Urban_Rural.xls&quot;,skip = 16)
 dat</code></pre>
-<pre><code>## # A tibble: 273 x 8
-##    Index `Region, subregion, countr~ Note  `Country\ncode`   Urban  Rural  Total
-##    &lt;dbl&gt; &lt;chr&gt;                       &lt;chr&gt;           &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
-##  1     1 WORLD                       &lt;NA&gt;              900  4.22e6 3.41e6 7.63e6
-##  2     2 More developed regions      a                 901  9.94e5 2.69e5 1.26e6
-##  3     3 Less developed regions      b                 902  3.23e6 3.14e6 6.37e6
-##  4     4 Least developed countries   c                 941  3.44e5 6.82e5 1.03e6
-##  5     5 Less developed regions, ex~ d                 934  2.88e6 2.46e6 5.34e6
-##  6     6 Less developed regions, ex~ &lt;NA&gt;              948  2.36e6 2.56e6 4.92e6
-##  7     7 High-income countries       e                1503  9.75e5 2.22e5 1.20e6
-##  8     8 Middle-income countries     e                1517  3.02e6 2.72e6 5.74e6
-##  9     9 Upper-middle-income countr~ e                1502  1.76e6 8.81e5 2.64e6
-## 10    10 Lower-middle-income countr~ e                1501  1.26e6 1.84e6 3.10e6
-## # ... with 263 more rows, and 1 more variable: Percentage urban &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 273 × 8
+##    Index Region, subregion, country…¹ Note  Count…²  Urban  Rural  Total Perce…³
+##    &lt;dbl&gt; &lt;chr&gt;                        &lt;chr&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt;
+##  1     1 WORLD                        &lt;NA&gt;      900 4.22e6 3.41e6 7.63e6    55.3
+##  2     2 More developed regions       a         901 9.94e5 2.69e5 1.26e6    78.7
+##  3     3 Less developed regions       b         902 3.23e6 3.14e6 6.37e6    50.6
+##  4     4 Least developed countries    c         941 3.44e5 6.82e5 1.03e6    33.6
+##  5     5 Less developed regions, exc… d         934 2.88e6 2.46e6 5.34e6    53.9
+##  6     6 Less developed regions, exc… &lt;NA&gt;      948 2.36e6 2.56e6 4.92e6    48.0
+##  7     7 High-income countries        e        1503 9.75e5 2.22e5 1.20e6    81.5
+##  8     8 Middle-income countries      e        1517 3.02e6 2.72e6 5.74e6    52.6
+##  9     9 Upper-middle-income countri… e        1502 1.76e6 8.81e5 2.64e6    66.6
+## 10    10 Lower-middle-income countri… e        1501 1.26e6 1.84e6 3.10e6    40.6
+## # … with 263 more rows, and abbreviated variable names
+## #   ¹​`Region, subregion, country or area`, ²​`Country\ncode`,
+## #   ³​`Percentage urban`</code></pre>
 <p>Il y a bien plus de données que nécessaires. Limitons donc le contenu à ce que l’on veut traiter.</p>
 <pre class="r"><code>dat&lt;-dat %&gt;% 
   select(`Region, subregion, country or area`,Urban,Rural) %&gt;% 
@@ -43,7 +45,7 @@ dat</code></pre>
   filter(Reg%in%c(&#39;Eastern Africa&#39;,&#39;Middle Africa&#39;,&#39;Northern Africa&#39;,
                   &#39;Southern Africa&#39;,&#39;Western Africa&#39;))
 dat</code></pre>
-<pre><code>## # A tibble: 5 x 3
+<pre><code>## # A tibble: 5 × 3
 ##   Reg               Urban   Rural
 ##   &lt;chr&gt;             &lt;dbl&gt;   &lt;dbl&gt;
 ## 1 Eastern Africa  121316. 312328.
@@ -54,7 +56,7 @@ dat</code></pre>
 <p>On note que les données ne se présentent pas dans une configuration directement utilisable. Nous aimerions avoir une variable zone (Reg), une variable pour la population (value) et une variable indiquant si l’observation est faite sur une zone rurale ou urbaine (type). Pour aboutir à ce résultat, utilisons la fonction <strong>pivot_longer()</strong>. Indiquons que les colonnes à la base de le transformation sont Urban et Rural et que le nom de la nouvelle variable générée est type.</p>
 <pre class="r"><code>dat&lt;-dat %&gt;% pivot_longer(cols=c(Urban,Rural),names_to=&#39;type&#39;)
 dat</code></pre>
-<pre><code>## # A tibble: 10 x 3
+<pre><code>## # A tibble: 10 × 3
 ##    Reg             type    value
 ##    &lt;chr&gt;           &lt;chr&gt;   &lt;dbl&gt;
 ##  1 Eastern Africa  Urban 121316.
@@ -75,7 +77,7 @@ dat</code></pre>
                         ifelse(Reg==&quot;Middle Africa&quot;,&quot;Afrique centrale&quot;,
                         ifelse(Reg==&quot;Southern Africa&quot;,&quot;Afrique du sud&quot;,&quot;&quot;))))))
 dat</code></pre>
-<pre><code>## # A tibble: 10 x 3
+<pre><code>## # A tibble: 10 × 3
 ##    Reg                type      value
 ##    &lt;chr&gt;              &lt;chr&gt;     &lt;dbl&gt;
 ##  1 Afrique de l&#39;est   Urbaine 121316.
@@ -114,6 +116,8 @@ dat</code></pre>
   scale_fill_manual(values=c(&#39;#F1D739&#39;,&#39;#399CF1&#39;))+
   coord_flip()+
   theme_minimal()</code></pre>
+<pre><code>## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+## ℹ Please use `linewidth` instead.</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>L’axe reprenant valeur de population est peu lisible arrangeons cela en utilisant la fonction <strong>unit_format()</strong> du package scale. Affichons le nombre de milliers avec un chiffre après l’unité suivie de la lettre M.</p>
 <pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+

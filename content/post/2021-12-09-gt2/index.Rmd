@@ -2,13 +2,14 @@
 title: Diagramme à bâtons pairés GT2
 author: Ludovic Vigneron
 date: '2021-12-09'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
   - GGPLOT2
+  - GT
 ---
 
 **Pour le second post de la série, nous examinons les diagrammes à bâtons pairés. Il s'agit ici de comparer les fréquences des différentes modalités d'une variable en mettant en perspective la situation prévalent sur deux groupes en mettant côte à côte les barres (bâtons) les représentant. Ce type de graphe peut, sans grandes difficultés, être étendu à plus de groupes . Néanmoins, il faut veiller à ce que l'ensemble reste lisible. Leur avantage est qu'ils facilitent les comparaisons en positionnant les valeurs sur une même échelle (qui dans l'idéal débute à 0). L'examen des positions des extrémités des barres donne une idée claire des proportions de différences entre les groupes. Ils ne sont par contre pas très efficaces pour mettre au jour des relations entre variables ou des tendances.**
