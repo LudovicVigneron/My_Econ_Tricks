@@ -2,13 +2,14 @@
 title: Le diagramme à bâtons divergents GT4
 author: Ludovic Vigneron
 date: '2021-12-13'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
   - GGPLOT2
+  - GT
 ---
 
 **Intéressons-nous, pour ce quatrième post de la série GT, à une autre manière d'illustrer des différences en deux groupes pour une variables catégorielles: le diagramme à bâtons divergents (diverging bars chart). Celui-ci est également connu sous d'autres noms comme le diagramme en tornade ou en papillon. Il consiste à adosser des diagrammes à bâtons représentant la variable étudiée, un pour chacun des deux groupes impliqués dans la comparaison. Le repaire utilisé prend la forme d'un T inversé avec comme axe central l'origine des barres. Cela change par rapport aux représentations vues précédemment qui utilisent le classique repaire en L. L'étendue des valeurs présentées sur l'axe horizontal de chaque coté correspond généralement (sauf si une autre valeur à plus de sens) au maximum de la variable représentée (de la fréquence de la modalité) sur les deux groupes. L'étude de la forme des diagrammes de chaque coté de l'axe centrale (le degré de symétrie) permet de comprendre les similarités ou différence entre les groupes.**

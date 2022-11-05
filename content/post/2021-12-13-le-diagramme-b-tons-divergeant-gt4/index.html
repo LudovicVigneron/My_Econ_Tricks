@@ -2,16 +2,16 @@
 title: Le diagramme à bâtons divergents GT4
 author: Ludovic Vigneron
 date: '2021-12-13'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
   - GGPLOT2
+  - GT
 ---
 
-<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
 
 
 <p><strong>Intéressons-nous, pour ce quatrième post de la série GT, à une autre manière d’illustrer des différences en deux groupes pour une variables catégorielles: le diagramme à bâtons divergents (diverging bars chart). Celui-ci est également connu sous d’autres noms comme le diagramme en tornade ou en papillon. Il consiste à adosser des diagrammes à bâtons représentant la variable étudiée, un pour chacun des deux groupes impliqués dans la comparaison. Le repaire utilisé prend la forme d’un T inversé avec comme axe central l’origine des barres. Cela change par rapport aux représentations vues précédemment qui utilisent le classique repaire en L. L’étendue des valeurs présentées sur l’axe horizontal de chaque coté correspond généralement (sauf si une autre valeur à plus de sens) au maximum de la variable représentée (de la fréquence de la modalité) sur les deux groupes. L’étude de la forme des diagrammes de chaque coté de l’axe centrale (le degré de symétrie) permet de comprendre les similarités ou différence entre les groupes.</strong></p>
@@ -25,21 +25,22 @@ library(ggtext)</code></pre>
 <p>Ceci fait, chargeons les données et regardons ce que la base contient avant commencer le travail.</p>
 <pre class="r"><code>dat &lt;- read_excel(&quot;Women in the House of Representatives.xlsx&quot;)
 dat</code></pre>
-<pre><code>## # A tibble: 51 x 9
-##    Congress Years     `Women total` Republican `% of women (Re~ `% of party (Re~
-##    &lt;chr&gt;    &lt;chr&gt;             &lt;dbl&gt;      &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
-##  1 65th     1917–1919             1          1            1                0.005
-##  2 66th     1919–1921             0          0            0                0    
-##  3 67th     1921–1923             3          3            1                0.003
-##  4 68th     1923–1925             1          1            1                0.004
-##  5 69th     1925–1927             3          2            0.667            0.004
-##  6 70th     1927–1929             5          3            0.6              0.013
-##  7 71st     1929–1931             9          5            0.556            0.019
-##  8 72nd     1931–1933             7          3            0.429            0.014
-##  9 73rd     1933–1935             7          3            0.429            0.017
-## 10 74th     1935–1937             6          2            0.333            0.019
-## # ... with 41 more rows, and 3 more variables: Democratic &lt;dbl&gt;,
-## #   % of women (Dem) &lt;dbl&gt;, % of party (Dem) &lt;dbl&gt;</code></pre>
+<pre><code>## # A tibble: 51 × 9
+##    Congress Years     Women to…¹ Repub…² % of …³ % of …⁴ Democ…⁵ % of …⁶ % of …⁷
+##    &lt;chr&gt;    &lt;chr&gt;          &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+##  1 65th     1917–1919          1       1   1       0.005       0   0       0    
+##  2 66th     1919–1921          0       0   0       0           0   0       0    
+##  3 67th     1921–1923          3       3   1       0.003       0   0       0    
+##  4 68th     1923–1925          1       1   1       0.004       0   0       0    
+##  5 69th     1925–1927          3       2   0.667   0.004       1   0.333   0.005
+##  6 70th     1927–1929          5       3   0.6     0.013       2   0.4     0.005
+##  7 71st     1929–1931          9       5   0.556   0.019       4   0.444   0.018
+##  8 72nd     1931–1933          7       3   0.429   0.014       4   0.571   0.014
+##  9 73rd     1933–1935          7       3   0.429   0.017       4   0.571   0.01 
+## 10 74th     1935–1937          6       2   0.333   0.019       4   0.667   0.012
+## # … with 41 more rows, and abbreviated variable names ¹​`Women total`,
+## #   ²​Republican, ³​`% of women (Rep)`, ⁴​`% of party (Rep)`, ⁵​Democratic,
+## #   ⁶​`% of women (Dem)`, ⁷​`% of party (Dem)`</code></pre>
 <p>On 51 observations (une par congrès entre 1917 et 2019) sur 9 variables. Elles présentent pour chaque congrès et pour les deux grands parties aux Etats-Unis le nombre de femmes élues à la chambre des représentants, ainsi que leur proportion d’élus et parmi eux la proportion de femmes. C’est de dernier élément qui va nous intéresser. Nous allons établir une illustration permettant de comparer sur les différentes mandatures la proportion de femmes parmi les élus de chaque partie. L’idée est de documenter la féminisation de la vie politique aux Etats-Unis sur un siècle en comparant les Républicains et les Démocrates.</p>
 <p>Commençons par dresser un diagramme à bâtons de la proportion de femmes parmi les élus pour chaque parti. Prenons d’abord les républicains.</p>
 <pre class="r"><code>ggplot(data=dat,aes(x=Congress,y=`% of party (Rep)`))+
@@ -98,7 +99,7 @@ dat</code></pre>
                names_to = &#39;parti&#39;) %&gt;% 
   mutate(partie=ifelse(parti==&#39;% of party (Rep)&#39;,&#39;Républicains&#39;,&#39;Démocrates&#39;))
 dat_</code></pre>
-<pre><code>## # A tibble: 102 x 4
+<pre><code>## # A tibble: 102 × 4
 ##    Congress parti            pr_fem partie      
 ##    &lt;fct&gt;    &lt;chr&gt;             &lt;dbl&gt; &lt;chr&gt;       
 ##  1 65th     % of party (Rep)  0.005 Républicains
@@ -111,7 +112,7 @@ dat_</code></pre>
 ##  8 68th     % of party (Dem)  0     Démocrates  
 ##  9 69th     % of party (Rep)  0.004 Républicains
 ## 10 69th     % of party (Dem)  0.005 Démocrates  
-## # ... with 92 more rows</code></pre>
+## # … with 92 more rows</code></pre>
 <p>Ceci fait. Allons-y pour le graphe. Changeons le titre pour quelque chose de plus global puis intégrons <strong>facet_grid(.~parti)</strong> sans oublié de s’assurer que les couleurs seront maintenues (fill et <strong>scale_fill_manual()</strong>).</p>
 <pre class="r"><code>ggplot(data=dat_,aes(x=Congress,y=pr_fem,fill=parti))+
   geom_bar(stat=&#39;identity&#39;)+
@@ -211,5 +212,7 @@ ggplot(data=dat_,aes(x=Congress,y=pr_fem,fill=part))+
         axis.text.y = element_text(size=4),
         panel.grid = element_blank(),
         legend.position=&#39;none&#39;)</code></pre>
+<pre><code>## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+## ℹ Please use `linewidth` instead.</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
 <p>Le graphe obtenu est à la fois simple, rigoureux et parlant. C’est ce que l’on recherche lorsque l’on fait de la datavisualisation. Cela donne un aperçu des possibilités qu’offre les diagrammes à bâtons divergents. Ici, la valeur centrale est 0 (aucune femme au congrès pour parti, 0%). Même si ce n’est pas le cas pour le graphe que nous venons de faire, il peut parfois être plus parlant de travailler avec une autre référence (la moyenne, la médiane, ou autres établis sur un groupe qui sert à la mise en perspective). Celle-ci sert alors d’élément marquant la séparation entre les groupes comparés et de base à la divergence des barres. Nous y reviendrons sûrement dans un prochain post pour illustrer la procédure.</p>
