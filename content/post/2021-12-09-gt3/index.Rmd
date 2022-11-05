@@ -2,14 +2,15 @@
 title: Diagramme en barres empilées GT3
 author: Ludovic Vigneron
 date: '2021-12-09'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
   - GGPLOT2
   - R
+  - GT
 ---
 
 **Pour ce troisième post de la série GT-graphe type, intéressons-nous à un autre type de diagramme à bâtons, celui avec des barres empilées (stacked bar chart).Il s’agit d’un graphe dans lequel les barres ordinaires sont découpées en fonction de l’effectif de sous-catégories. Cela permet de mettre en évidence comment ces dernières contribuent à la valeur décrite par la barre dans laquelle elles sont inclues. On peut ainsi mettre en évidence dans un seul graphe à la fois les proportions relatives des sous-catégories et le totale des effectifs des catégories. Cela multiplie les possibilités comparaisons. C’est là qu’il faut être prudent. S’il y a trop de sous-catégories, le graphe devient vite illisible. On se limitera dans l’idéal à trois ou quatre. Par ailleurs, une seule de ces sous-catégories ne sera accolée à l’origine et donc offrira une base de comparaison rapide et fiable entre les différentes catégories (barres). Il est conseillé d’y placer celle qui vous intéresse le plus. Vous pouvez également jouer sur les couleurs et/ou les valeurs (plus ou moins sombre) pour renforcer sa mise en avant.**

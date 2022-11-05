@@ -2,17 +2,17 @@
 title: Diagramme en barres empilées GT3
 author: Ludovic Vigneron
 date: '2021-12-09'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
   - GGPLOT2
   - R
+  - GT
 ---
 
-<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
 
 
 <p><strong>Pour ce troisième post de la série GT-graphe type, intéressons-nous à un autre type de diagramme à bâtons, celui avec des barres empilées (stacked bar chart).Il s’agit d’un graphe dans lequel les barres ordinaires sont découpées en fonction de l’effectif de sous-catégories. Cela permet de mettre en évidence comment ces dernières contribuent à la valeur décrite par la barre dans laquelle elles sont inclues. On peut ainsi mettre en évidence dans un seul graphe à la fois les proportions relatives des sous-catégories et le totale des effectifs des catégories. Cela multiplie les possibilités comparaisons. C’est là qu’il faut être prudent. S’il y a trop de sous-catégories, le graphe devient vite illisible. On se limitera dans l’idéal à trois ou quatre. Par ailleurs, une seule de ces sous-catégories ne sera accolée à l’origine et donc offrira une base de comparaison rapide et fiable entre les différentes catégories (barres). Il est conseillé d’y placer celle qui vous intéresse le plus. Vous pouvez également jouer sur les couleurs et/ou les valeurs (plus ou moins sombre) pour renforcer sa mise en avant.</strong></p>
@@ -42,7 +42,7 @@ library(formattable)</code></pre>
                                &quot;Amérique
   du nord&quot;,&quot;Océanie&quot;))))))
 dat</code></pre>
-<pre><code>## # A tibble: 12 x 3
+<pre><code>## # A tibble: 12 × 3
 ##    Reg                              type       value
 ##    &lt;chr&gt;                            &lt;chr&gt;      &lt;dbl&gt;
 ##  1 &quot;Afrique&quot;                        Urbaine  547602.
@@ -183,6 +183,8 @@ dat</code></pre>
         panel.grid = element_blank(),
         legend.position = c(0.85, 0.15),
         legend.title = element_blank())</code></pre>
+<pre><code>## Warning: `stat(y)` was deprecated in ggplot2 3.4.0.
+## ℹ Please use `after_stat(y)` instead.</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="816" /></p>
 <p>Notez que les valeurs portées à l’extrémité des barres ne sont pas très lisible. Améliorons cela en utilisant la fonction <strong>comma()</strong> sur package formattable. Indiquons que l’on ne veut que des valleurs entière (digits=0) et que le séparateur des milliers (big.mark) sera un simple espace.</p>
 <pre class="r"><code>ggplot(dat,aes(x=Reg,y=value,fill=type))+
