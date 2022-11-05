@@ -1,15 +1,16 @@
 ---
-title: "Techniques Quantitatives de Gestion : exploitation des données (6)"
+title: 'Techniques Quantitatives de Gestion : exploitation des données (6)'
 author: Ludovic Vigneron
 date: '2022-10-30'
-slug: []
 categories:
   - Cours
   - R
+  - TQG
 tags:
   - Cours
   - Exercice
   - R
+  - TQG
 ---
 
 
@@ -53,7 +54,9 @@ ggplot(data=res_,aes(x=str,y=resid))+
   geom_smooth(method=&#39;lm&#39;,size=0.5)+
   coord_cartesian(expand=FALSE,xlim=c(13.5,26),ylim=c(-50,50))+
   theme_minimal()</code></pre>
-<pre><code>## `geom_smooth()` using formula &#39;y ~ x&#39;</code></pre>
+<pre><code>## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+## ℹ Please use `linewidth` instead.</code></pre>
+<pre><code>## `geom_smooth()` using formula = &#39;y ~ x&#39;</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
 <p>La droite passant au milieu du nuage le résume. La bande grise présente un intervalle de confiance pour chaque valeur. Son élargissement aux extrémités laisse penser à la présence d’hétéroscédasticité.</p>
 <p>Approfondissons la question à partir de la procédure proposée par Breusch et Pagan en 1979. Commençons par régresser le carré des résidus de notre régression sur la variable explicative. Stockons le résumé de la régression dans un objet et affichons son contenu.</p>
