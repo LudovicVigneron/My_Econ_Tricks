@@ -1,15 +1,16 @@
 ---
-title: "Techniques Quantitatives de Gestion : exploitation des données (6)"
+title: 'Techniques Quantitatives de Gestion : exploitation des données (6)'
 author: Ludovic Vigneron
 date: '2022-10-30'
-slug: []
 categories:
   - Cours
   - R
+  - TQG
 tags:
   - Cours
   - Exercice
   - R
+  - TQG
 ---
 
 **Dans ce dernier post de la série, nous allons aborder la question des problèmes d'hétérosdasticité qui peuvent affecter les régressions estimées via les moindres carrés ordinaires (MCO). Il s'agit des cas où le nuages de points représentant les erreurs d'estimation en fonction des valeurs de la variable explicative présente une forme d'hétérosgénéité. Cette forme indique que la variance de l'erreur en fonction de ces valeurs n'est pas homogène. Dans ce cas, les MCO ne sont plus BLUE (Best Linear Unbiased Estimator). Ils demeurent sans biais, mais l'erreur type est fausse. Cela signifie que les tests statistiques portant sur les coefficients sont moins fiables.**
