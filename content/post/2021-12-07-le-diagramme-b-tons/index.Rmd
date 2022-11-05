@@ -2,10 +2,10 @@
 title: Le diagramme à bâtons
 author: Ludovic Vigneron
 date: '2021-12-07'
-slug: []
 categories:
   - datavisualisation
   - R
+  - GT
 tags:
   - Dataviz
 ---
