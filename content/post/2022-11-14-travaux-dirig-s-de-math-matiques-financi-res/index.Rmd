@@ -1,0 +1,34 @@
+---
+title: Travaux dirigés de Mathématiques Financières
+author: Ludovic Vigneron
+date: '2022-11-14'
+slug: []
+categories:
+  - Cours
+  - Mathematique
+  - Finance
+tags:
+  - Cours
+  - Finance
+  - Exercice
+---
+
+**Vous trouverez ici à la fois les énoncés des exercices traités lors des séances de travaux dirigés et leurs corrigés. Cliquez sur les différents liens. La liste peut évoluer en fonction de ce qui sera traité au fils du temps.**
+
+Énoncés:
+
+* [Intérêts simples](enconce/td1_en_v1.pdf)
+
+* [Intérêts composés](enconce/td2_en_v1.pdf)
+
+* [Annuités](enconce/td3_en_v1.pdf)
+
+Corrigés: 
+
+* [Intérêts simples](correction/td1_rep_v1.pdf)
+
+* [Intérêts composés](correction/td2_rep_v1.pdf)
+
+* [Annuités](correction/td3_rep_v1.pdf)
+
+
