@@ -17,11 +17,11 @@ tags:
 
 Énoncés:
 
-* [Intérêts simples](enconce/td1_en_v1.pdf)
+* [Intérêts simples](enonce/td1_en_v1.pdf)
 
-* [Intérêts composés](enconce/td2_en_v1.pdf)
+* [Intérêts composés](enonce/td2_en_v1.pdf)
 
-* [Annuités](enconce/td3_en_v1.pdf)
+* [Annuités](enonce/td3_en_v1.pdf)
 
 Corrigés: 
 
