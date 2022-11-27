@@ -33,4 +33,4 @@ Corrigés:
 
 * [Annuités](correction/td3_rep_v1.pdf)
 
-* [Amortissements](enonce/td4_rep_v1.pdf)
+* [Amortissements](correction/td4_rep_v1.pdf)
