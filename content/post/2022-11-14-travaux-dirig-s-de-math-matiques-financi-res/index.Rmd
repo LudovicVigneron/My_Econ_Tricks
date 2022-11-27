@@ -23,6 +23,8 @@ tags:
 
 * [Annuités](enonce/td3_en_v1.pdf)
 
+* [Amortissements](enonce/td4_en_v1.pdf)
+
 Corrigés: 
 
 * [Intérêts simples](correction/td1_rep_v1.pdf)
@@ -31,4 +33,4 @@ Corrigés:
 
 * [Annuités](correction/td3_rep_v1.pdf)
 
-
+* [Amortissements](enonce/td4_rep_v1.pdf)
