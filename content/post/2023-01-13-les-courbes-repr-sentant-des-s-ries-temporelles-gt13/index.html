@@ -1,0 +1,431 @@
+---
+title: "Les courbes représentant des séries temporelles GT13"
+author: "Ludovic Vigneron"
+date: "2023-01-13"
+output: pdf_document
+categories:
+- datavisualisation
+- dataviz
+- gt
+- R
+tags:
+- Dataviz
+- ggplot2
+- gt
+- R
+slug: []
+---
+
+
+
+<p><strong>Après une pause relativement longue, il est temps de reprendre la série GT (graph type) et à cette occasion de considérer une nouvelle catégorie de graphe. Il s’agira, dans un groupe de post, de traiter des représentations des séries temporelles toujours en nous basant sur les vidéos proposées par Josh Schwabish dans sa playlist One Chart at a time. Ces différents posts auront ainsi comme point commun de présenter différentes manière d’illustrer l’évolution des valeurs d’une ou de plusieurs variables au travers le temps.</strong></p>
+<p>Commençons avec la représentation plus simple et la plus connue, la courbe ou en anglais le line chart. Elle présente l’avantage important de ne pas devoir être expliqué lorsque vous l’utilisez. Comme avec le bar chart tous le monde a déjà été confronté à ce type de graphe. Basiquement, elle articule deux mesures continues, le temps et la variable d’intérêt, en présentant la première en abscisse et la seconde en ordonnée. Chacun des points déterminés par leur intersection est relié au précédent pour former une ligne continue. La forme de cette ligne indique alors le sens de variation de la variable d’intérêt en fonction de l’écoulement du temps. Le focus de ce type de graphe est sur cette évolution et donc il n’est pas nécessaire de faire partir les axes de la valeur 0 (elle n’a généralement que peut de sens). De même, l’échelle utilisée pour représenter la variable d’intérêt ne doit forcément être linéaire. Une échelle logarithmique peut être mobilisé dans certain cas pour rendre l’ensemble plus pertinent.</p>
+<p>Considérons à titre d’illustration trois cas: une série simple (le taux de change EURO/DOLLAR), une série simple enrichie d’annotation (la fréquence du prénom Neil) et la réunion de plusieurs séries avec les courbes en escalier (nombre de titres NBA part équipe dans le temps).</p>
+<p>En préalable chargeons une série de package de base qui seront utiles pour l’ensemble.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(ggtext)</code></pre>
+<div id="le-taux-de-change-eurodollar" class="section level2">
+<h2>le taux de change EURO/DOLLAR</h2>
+<p>Chargeons de données. Pour ce faire, nous allons utiliser un package spécifique au traitement des données financières <em>quantmod</em> qui propose une série de fonctions de type wrapper API permettant d’obtenir des informations via différents serveurs.</p>
+<pre class="r"><code>library(quantmod)</code></pre>
+<p>Utilisons celle dédiée aux taux de change <strong>getFX()</strong>. Précisons que l’on veut obtenir le cours Euro/Dollar et qu’on le veut du premier janvier 2022 à aujourd’hui par exemple.</p>
+<pre class="r"><code>getFX(&quot;EUR/USD&quot;,from=&quot;2022-01-01&quot;)</code></pre>
+<pre><code>## Warning in doTryCatch(return(expr), name, parentenv, handler): Oanda only
+## provides historical data for the past 180 days. Symbol: EUR/USD</code></pre>
+<pre><code>## [1] &quot;EUR/USD&quot;</code></pre>
+<p>Notez que le fournisseur de donnée Oanda ne fourni qu’un historique de 180 jours et donc nous n’obtenons pas l’ensemble des données demandées. Ici, ce n’est pas vraiment un problème, nous nous en contenterons.</p>
+<p>Notez également que les données sont fournis dans un format inhabituel le format xts qui est l’un des format facilitant le traitement des données de séries temporelles.</p>
+<pre class="r"><code>str(EURUSD)</code></pre>
+<pre><code>## An &#39;xts&#39; object on 2022-07-27/2023-01-22 containing:
+##   Data: num [1:180, 1] 1.02 1.02 1.02 1.02 1.02 ...
+##  - attr(*, &quot;dimnames&quot;)=List of 2
+##   ..$ : NULL
+##   ..$ : chr &quot;EUR.USD&quot;
+##   Indexed by objects of class: [Date] TZ: UTC
+##   xts Attributes:  
+## List of 2
+##  $ src    : chr &quot;oanda&quot;
+##  $ updated: POSIXct[1:1], format: &quot;2023-01-23 22:08:33&quot;</code></pre>
+<p>Le package <em>quantmod</em> propose une fonction dédiée pour établir le graphe à partir d’un objet xts. Appliquons-la au cours EURO/Dollar (combien d’Euros pour un Dollar).</p>
+<pre class="r"><code>plot(EURUSD)</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Le graphe obtenu est pas mal. Mais, vous vous en doutez je trouve qu’il manque d’éléments personnalisés. En plus, il est réalisé à partir du système R base auquel je préfère l’univers <em>GGPLOT2</em>.</p>
+<p>Passons donc l’ensemble sous ggplot. Pour cela, il y a deux stratégies possibles transformer l’objet xts en une data frame classique (passer les dates qui sont en nom de ligne dans une variable avec la fonction <strong>index()</strong>), ou utiliser la fonction <strong>autoplot.zoo()</strong> pour initier le graphe.</p>
+<p>Nous retiendrons ici la seconde solution.</p>
+<pre class="r"><code>autoplot.zoo(EURUSD)</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Bon, le résultat de base n’est pas très engageant. Commençons donc la personnalisation en ajoutant des points pour marquer les valeurs, en limitant la plage de valeur visible et en adoptant un thème plus sobre.</p>
+<pre class="r"><code>autoplot.zoo(EURUSD)+
+  geom_point()+
+  coord_cartesian(expand = FALSE)+
+  theme_minimal()</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Ajoutons des titres, habillons les axes et simplifions l’ensemble.</p>
+<pre class="r"><code>autoplot.zoo(EURUSD)+
+  geom_point()+
+labs(title=&quot;Cours de l&#39;Euro face au Dollar&quot;,
+     subtitle = &quot;(nb. d&#39;Euro pour un Dollar)&quot;)+
+scale_y_continuous(labels=label_dollar(
+  prefix=&#39;&#39;,suffix=&#39; Euros&#39;))+
+coord_cartesian(expand=FALSE,ylim=c(0.96,1.1))+
+theme_minimal()+
+theme(plot.title = element_text(hjust=0.5),
+      plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+      axis.line = element_line(color=&#39;dark gray&#39;),
+      axis.title = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Réduisons la taille des points et passons-les en rouge.</p>
+<pre class="r"><code>autoplot.zoo(EURUSD)+
+  geom_point(size=0.8,color=&#39;red&#39;)+
+labs(title=&quot;Cours de l&#39;Euro face au Dollar&quot;,
+     subtitle = &quot;(nb. d&#39;Euro pour un Dollar)&quot;)+
+scale_y_continuous(labels=label_dollar(
+  prefix=&#39;&#39;,suffix=&#39; Euros&#39;))+
+coord_cartesian(expand=FALSE,ylim=c(0.96,1.1))+
+theme_minimal()+
+theme(plot.title = element_text(hjust=0.5),
+      plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+      axis.line = element_line(color=&#39;dark gray&#39;),
+      axis.title = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Le résultat est intéressant. Nous pourrions nous arrêter là. Mais, avant de passer à la seconde illustration, revenant sur les données au format xts. Leur structure permet de mobiliser des fonctions redéfinisant le découpage temporelle de la série. Testons-en une. Passons à une série hebdomadaire avec la fonction <strong>to.weekly()</strong>.</p>
+<pre class="r"><code>red_EURUSD&lt;-to.weekly(EURUSD,name=&quot;mon&quot;)
+head(red_EURUSD)</code></pre>
+<pre><code>##            mon.Open mon.High  mon.Low mon.Close
+## 2022-07-31 1.015301 1.022655 1.015301  1.022520
+## 2022-08-07 1.024690 1.024690 1.016956  1.018053
+## 2022-08-14 1.019062 1.031758 1.019062  1.025914
+## 2022-08-21 1.020464 1.020464 1.004107  1.004107
+## 2022-08-28 0.998768 0.998768 0.994914  0.996164
+## 2022-09-04 0.997102 1.002861 0.995213  0.995213</code></pre>
+<p>Traçons la courbe du taux de change EURO/UDS en fréquence hebdomadaire ne choisissant pour chaque semaine le dernier cours disponible (le cours de clôture).</p>
+<pre class="r"><code>autoplot.zoo(red_EURUSD$mon.Close)+
+  geom_point(size=0.8,color=&#39;red&#39;)+
+  labs(title=&quot;Cours de l&#39;Euro face au Dollar&quot;,
+       subtitle = &quot;(nb. d&#39;Euro pour un Dollar)&quot;)+
+  scale_y_continuous(labels=label_dollar(prefix=&#39;&#39;,suffix=&#39; Euros&#39;))+
+  coord_cartesian(expand=FALSE,ylim=c(0.96,1.1))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+      plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+      axis.line = element_line(color=&#39;dark gray&#39;),
+      axis.title = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+</div>
+<div id="la-fréquence-du-prénom-masculin-neil" class="section level2">
+<h2>La fréquence du prénom masculin Neil</h2>
+<p>Ce nouveau graphe est une réplication de celui réalisé par Neil Richards pour le <img src="https://twitter.com/hashtag/SWDChallenge?src=hashtag_click" alt="SWD challenge" /> (Story With Data). Son point de départ est la base de des prénoms attribués aux Etats Unis que l’on peut charger <img src="https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-national-data/resource/746392ff-35f6-446d-9bf5-a611011ee3f8" alt="ici" />. L’ensemble prend la forme d’un fichier zip nommé names.zip. Il contient une série de fichiers correspondant à des année et indiquant la fréquence de différents prénoms pour différent sexes. Chargez l’archive et décompressez-la dans votre environnement de travail.</p>
+<p>Reste alors à la traité pour obtenir une data frame unique facilement manipulable pour créer notre graphe. Pour cela, nous utiliserons un fonction permettant de créer une boucle pour charger chaque fichier et les abouter. Il s’agit de la fonction <strong>map_df()</strong> du package <em>purrr</em> qui fait partie du tidyverse. Elle prend pour premier argument le vecteur définissant l’itération et comme suivant la fonction itérée ainsi que ses arguments. Profitons-en pour procéder à quelques mises en forme.</p>
+<pre class="r"><code>nom_f&lt;-paste0(&quot;yob&quot;,1880:2021)
+nom&lt;-paste0(&#39;names/&#39;,nom_f,&#39;.txt&#39;)
+dat&lt;-map_df(nom,read_csv,col_names = FALSE,id=&quot;annee&quot;) %&gt;% 
+  rename(prenom=X1,sex=X2,effectif=X3) %&gt;% 
+  mutate(annee= as.numeric(gsub(&#39;\\D+&#39;,&#39;&#39;, annee)))</code></pre>
+<pre><code>## Rows: 2052781 Columns: 5
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;;&quot;
+## chr (2): X3, X4
+## dbl (3): X1, X2, X5
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Voyons le résultat.</p>
+<pre class="r"><code>head(dat)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   annee prenom    sexe  effectif
+##   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt;    &lt;dbl&gt;
+## 1  1880 Mary      F         7065
+## 2  1880 Anna      F         2604
+## 3  1880 Emma      F         2003
+## 4  1880 Elizabeth F         1939
+## 5  1880 Minnie    F         1746
+## 6  1880 Margaret  F         1578</code></pre>
+<p>Nous ne voulons que le prénom Neil attribué à des garçons après l’année 1911. Filtrons la base en conséquence.</p>
+<pre class="r"><code>dat_neil&lt;-dat %&gt;% filter(prenom==&#39;Neil&#39;&amp;sexe==&#39;M&#39;&amp;annee&gt;1911)
+head(dat_neil)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   annee prenom sexe  effectif
+##   &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    &lt;dbl&gt;
+## 1  1912 Neil   M          151
+## 2  1913 Neil   M          184
+## 3  1914 Neil   M          232
+## 4  1915 Neil   M          289
+## 5  1916 Neil   M          375
+## 6  1917 Neil   M          356</code></pre>
+<p>Maintenant que les données sont prêtes, nous pouvons commencer à travailler notre graphe.</p>
+<pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
+  geom_line()+
+  theme_minimal()</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Ajoutons des titres et mettons en forme les axes (supprimons l’axe des ordonnées et habillons celui des abscisses).</p>
+<pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
+  geom_line()+
+  labs(title=&quot;Rise and Fall of the name Neil in the USA&quot;,
+       subtitle = &quot;Births 1912-2021&quot;,
+       caption=&quot;Source: data.gov &quot;)+
+  theme_minimal()+
+  theme(plot.title = element_markdown(),
+        axis.line.x = element_line(color=&#39;dark gray&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p>Ajoutons de la couleur et recadrons la courbe.</p>
+<pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
+  geom_line(color=&quot;#ECB84F&quot;,linewidth=0.8)+
+  labs(title=&quot;Rise and Fall of the name &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil&lt;/b&gt; in the USA&quot;,
+       subtitle = &quot;Births 1912-2021&quot;,
+       caption=&quot;Source: data.gov &quot;)+
+  scale_x_continuous(breaks = seq(1915,2015,10))+
+  coord_cartesian(expand=FALSE,ylim=c(100,2050))+ 
+  theme_minimal()+
+  theme(plot.title = element_markdown(),
+        axis.line.x = element_line(color=&#39;dark gray&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>On a une bonne base ajoutons les annotations. Pour ce faire, fixons les dimensions du graph.</p>
+<pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
+  geom_line(color=&quot;#ECB84F&quot;,linewidth=0.8)+
+    # annotation 1 
+  geom_textbox(aes(x=1915,y=151,
+                   label=&quot;Popularity of &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil&lt;/b&gt; before WW1 is low &lt;br&gt;
+                   Neils born is 1912: **151**&quot;),
+               nudge_x =18, nudge_y = 40,width =unit(6, &quot;cm&quot;),
+               size=3,box.colour=&#39;white&#39;)+
+  geom_segment(aes(x=1912,y=151,xend=1917,yend=185),linewidth=0.1,color=&#39;dark gray&#39;)+
+  geom_segment(aes(x=1917,y=146,xend=1917,yend=225),linewidth=0.1,color=&quot;#ECB84F&quot;)+
+  ##
+  labs(title=&quot;Rise and Fall of the name &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil&lt;/b&gt; in the USA&quot;,
+       subtitle = &quot;Births 1912-2021&quot;,
+       caption=&quot;Source: data.gov &quot;)+
+  scale_x_continuous(breaks = seq(1915,2015,10))+
+  coord_cartesian(expand=FALSE,ylim=c(100,2050))+ 
+  theme_minimal()+
+  theme(plot.title = element_markdown(),
+        axis.line.x = element_line(color=&#39;dark gray&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-19-1.png" width="755.52" /></p>
+<p>Intégrons l’ensemble des étiquettes.</p>
+<pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
+  geom_line(color=&quot;#ECB84F&quot;,linewidth=0.8)+
+    # annotation 1 
+  geom_textbox(aes(x=1915,y=151,
+                   label=&quot;Popularity of &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil&lt;/b&gt; before WW1 is low &lt;br&gt;
+                   Neils born is 1912: **151**&quot;),
+               nudge_x =18, nudge_y = 40,width =unit(6, &quot;cm&quot;),
+               size=3,box.colour=&#39;white&#39;)+
+  geom_segment(aes(x=1912,y=151,xend=1917,yend=185),linewidth=0.1,color=&#39;dark gray&#39;)+
+  geom_segment(aes(x=1917,y=146,xend=1917,yend=225),linewidth=0.1,color=&quot;#ECB84F&quot;)+
+   # annotation 2
+  geom_textbox(aes(x=1915,y=1926,
+                   label=&quot;&lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil Johnson&lt;/b&gt; leads NBA scoring &lt;br&gt;
+                   for three successive seassons 1952-55 &lt;br&gt;
+                   Neils born is 1954: **1956**&quot;),
+               nudge_x =18, nudge_y = 40,width =unit(6, &quot;cm&quot;),halign=1,
+               size=3,box.colour=&#39;white&#39;)+
+  geom_segment(aes(x=1954,y=1956,xend=1949,yend=1960),linewidth=0.1,color=&#39;dark gray&#39;)+
+  geom_segment(aes(x=1949,y=1915,xend=1949,yend=2010),linewidth=0.1,color=&quot;#ECB84F&quot;)+
+  # annotation 3
+  geom_textbox(aes(x=1968,y=1689,
+                   label=&quot;&lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil Amstrong&lt;/b&gt; lands of on the moon &lt;br&gt;
+                   Neils born is 1969: **1683**&quot;),
+               nudge_x =20, nudge_y = 40,width =unit(6, &quot;cm&quot;),
+               size=3,box.colour=&#39;white&#39;)+
+  geom_segment(aes(x=1969,y=1683,xend=1972,yend=1720),linewidth=0.1,color=&#39;dark gray&#39;)+
+  geom_segment(aes(x=1972,y=1680,xend=1972,yend=1760),linewidth=0.1,color=&quot;#ECB84F&quot;)+  
+  # annotation 4
+  geom_textbox(aes(x=1978,y=1530,
+                   label=&quot;Peack popularity of musicians 1972-1979 &lt;br&gt;
+                   &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil Young, Neil Sedaka, Neil Diamond&lt;/b&gt; lands of on the moon &lt;br&gt;
+                   Neils born is 1978: **1530**&quot;),
+               nudge_x =20, nudge_y = 30,width =unit(6, &quot;cm&quot;),
+               size=3,box.colour=&#39;white&#39;)+
+  geom_segment(aes(x=1978,y=1530,xend=1981,yend=1560),linewidth=0.1,color=&#39;dark gray&#39;)+
+  geom_segment(aes(x=1981,y=1480,xend=1981,yend=1620),linewidth=0.1,color=&quot;#ECB84F&quot;)+ 
+  # annotation 5
+  geom_textbox(aes(x=1950,y=400,
+                   label=&quot;Modern Neils like &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil DeGrasse Tyson&lt;/b&gt; &lt;br&gt;
+                   ensure steady level of popularity post 2005 &lt;br&gt;
+                   Neils born is 2009: **396**&quot;),
+               nudge_x =20, nudge_y = 30,width =unit(9, &quot;cm&quot;),
+               size=3,box.colour=&#39;white&#39;,halign=1)+
+  geom_segment(aes(x=2009,y=396,xend=1995,yend=399),linewidth=0.1,color=&#39;dark gray&#39;)+
+  geom_segment(aes(x=1995,y=360,xend=1995,yend=490),linewidth=0.1,color=&quot;#ECB84F&quot;)+ 
+  ##
+  labs(title=&quot;Rise and Fall of the name &lt;b style=&#39;color:#ECB84F;&#39;&gt;Neil&lt;/b&gt; in the USA&quot;,
+       subtitle = &quot;Births 1912-2021&quot;,
+       caption=&quot;Source: data.gov &quot;)+
+  scale_x_continuous(breaks = seq(1915,2015,10))+
+  coord_cartesian(expand=FALSE,ylim=c(100,2050))+ 
+  theme_minimal()+
+  theme(plot.title = element_markdown(),
+        axis.line.x = element_line(color=&#39;dark gray&#39;),
+        axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-20-1.png" width="755.52" /></p>
+<p>Le placement des étiquettes n’est ce qui est le plus pratique avec R mais on y arrive en tâtonnant pas mal.</p>
+</div>
+<div id="le-nombre-titres-nba" class="section level2">
+<h2>Le nombre titres NBA</h2>
+<p>Passons à notre dernier graphe. Il s’agit d’établir pour chaque équipe ayant gagné au moins un titre un courbe en escalier marquant l’évolution du nombre de titres qu’elle a remporté depuis la création de la ligue. Pour ce faire, nous allons chercher les données sur Wikipedia. Utilisons pour ce faire le package <em>rvest</em> qui permet de scraper la page et le package <em>janitor</em> qui aide à la mise en forme des données.</p>
+<pre class="r"><code>library(rvest)
+library(janitor)</code></pre>
+<p>Chargeons les données brutes.</p>
+<pre class="r"><code>content_nba&lt;-read_html(&#39;https://fr.wikipedia.org/wiki/Liste_des_champions_NBA&#39;)
+tables_nba&lt;- content_nba %&gt;%  html_table(fill = TRUE)
+tab_brute_&lt;-tables_nba[[3]]%&gt;% clean_names() %&gt;% 
+  mutate(team_f=equipe,id=1:33) %&gt;% 
+  filter(victoires&gt;0)
+tab_brute_</code></pre>
+<pre><code>## # A tibble: 20 × 7
+##    equipe                           victo…¹ defai…² total…³ annee…⁴ team_f    id
+##    &lt;chr&gt;                            &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;   &lt;chr&gt;  &lt;int&gt;
+##  1 Lakers de Los Angeles(inclus le… 17      15      32      1949, … Laker…     1
+##  2 Celtics de Boston                17      4       21      1957, … Celti…     2
+##  3 Warriors de Golden State(inclus… 7       5       12      1947, … Warri…     3
+##  4 Bulls de Chicago                 6       0       6       1991, … Bulls…     4
+##  5 Spurs de San Antonio             5       1       6       1999, … Spurs…     5
+##  6 76ers de Philadelphie(inclus le… 3       6       9       1955, … 76ers…     6
+##  7 Pistons de Détroit(inclus le bi… 3       4       7       1989, … Pisto…     7
+##  8 Heat de Miami                    3       3       6       2006, … Heat …     8
+##  9 Knicks de New York               2       6       8       1970, … Knick…     9
+## 10 Rockets de Houston               2       2       4       1994, … Rocke…    10
+## 11 Bucks de Milwaukee               2       1       3       1971, … Bucks…    11
+## 12 Cavaliers de Cleveland           1       4       5       2016    Caval…    12
+## 13 Hawks d&#39;Atlanta(inclus le bilan… 1       3       4       1958    Hawks…    13
+## 14 Wizards de Washington(inclus le… 1       3       4       1978    Wizar…    14
+## 15 Thunder d&#39;Oklahoma City(inclus … 1       3       4       1979    Thund…    15
+## 16 Trail Blazers de Portland        1       2       3       1977    Trail…    16
+## 17 Mavericks de Dallas              1       1       2       2011    Maver…    17
+## 18 Raptors de Toronto               1       0       1       2019    Rapto…    18
+## 19 Bullets de Baltimore (disparue … 1       0       1       1948    Bulle…    19
+## 20 Kings de Sacramento(inclus le b… 1       0       1       1951    Kings…    20
+## # … with abbreviated variable names ¹​victoires, ²​defaites, ³​total_de_finales,
+## #   ⁴​annees_victorieuses</code></pre>
+<p>Nous avons limité la base aux seules (20) équipes qui ont gagnées au moins un titre. Les années de victoires sont indiquées dans une seule variable ce qui n’est pas très pratique. Isolons les informations par année la variable et établissons les cumuls correspondant.</p>
+<pre class="r"><code>annee&lt;-1947:2022
+for(i in 1:20){
+  assign(paste0(&quot;equ_&quot;,i),
+         cumsum(annee%in%as.numeric(str_split_1(tab_brute_$annees_victorieuses[i],&quot;,&quot;))))}
+dtf&lt;-data.frame(annee,mget(paste0(&quot;equ_&quot;,1:20)))
+colnames(dtf)&lt;-c(&quot;annee&quot;,&quot;LAK&quot;,&quot;CELT&quot;,&quot;WAR&quot;,&quot;BULL&quot;,&quot;SPURS&quot;,&quot;t76ers&quot;,&quot;PISTONS&quot;,&quot;HEAT&quot;,&quot;KNICKS&quot;,
+                 &quot;ROCKETS&quot;,&quot;BUCKS&quot;,&quot;CAV&quot;,&quot;HAWKS&quot;,&quot;WIZ&quot;,&quot;THUND&quot;,&quot;TRAILBL&quot;,&quot;MAV&quot;,&quot;RAPT&quot;,
+                 &quot;BULLET_BALT&quot;,&quot;KINGS&quot;)
+head(dtf)</code></pre>
+<pre><code>##   annee LAK CELT WAR BULL SPURS t76ers PISTONS HEAT KNICKS ROCKETS BUCKS CAV
+## 1  1947   0    0   1    0     0      0       0    0      0       0     0   0
+## 2  1948   0    0   1    0     0      0       0    0      0       0     0   0
+## 3  1949   1    0   1    0     0      0       0    0      0       0     0   0
+## 4  1950   2    0   1    0     0      0       0    0      0       0     0   0
+## 5  1951   2    0   1    0     0      0       0    0      0       0     0   0
+## 6  1952   3    0   1    0     0      0       0    0      0       0     0   0
+##   HAWKS WIZ THUND TRAILBL MAV RAPT BULLET_BALT KINGS
+## 1     0   0     0       0   0    0           0     0
+## 2     0   0     0       0   0    0           1     0
+## 3     0   0     0       0   0    0           1     0
+## 4     0   0     0       0   0    0           1     0
+## 5     0   0     0       0   0    0           1     1
+## 6     0   0     0       0   0    0           1     1</code></pre>
+<p>On voit bien que les Warriors ont gagné leur premier titre en 1947 puis attendu longtemps pour le second alors que les Lakers ont enchainé les titres à partir de 1949. La configuration de la base n’est pas idéale. Passons les données du format large au format long en utilisant la fonction <strong>pivot_longer()</strong>.</p>
+<pre class="r"><code>dd_&lt;-pivot_longer(dtf,cols=c(LAK,CELT,WAR,BULL,SPURS,t76ers,PISTONS,HEAT,KNICKS,
+                             ROCKETS,BUCKS,CAV,HAWKS,WIZ,THUND,TRAILBL,MAV,RAPT,
+                             BULLET_BALT,KINGS),
+                 names_to=&quot;equipe&quot;,
+                 values_to = &#39;victoires&#39;)
+head(dd_)</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   annee equipe victoires
+##   &lt;int&gt; &lt;chr&gt;      &lt;int&gt;
+## 1  1947 LAK            0
+## 2  1947 CELT           0
+## 3  1947 WAR            1
+## 4  1947 BULL           0
+## 5  1947 SPURS          0
+## 6  1947 t76ers         0</code></pre>
+<p>Maintenant que les données ont le bon format attaquons-nous à l’élaboration de notre graphe. Commençons par un version comprenant un minimum de mise en forme. Le géome centrale ici sera le <strong>geom_step()</strong>.</p>
+<pre class="r"><code>gr1&lt;-ggplot(data=dd_,aes(x=annee,y=victoires,color=equipe))+
+  geom_step()+
+  scale_x_continuous(breaks = seq(1947,2022,5))+
+  scale_y_continuous(breaks = 1:18)+
+  coord_cartesian(expand = FALSE)+
+  theme_minimal()+
+  theme(
+    axis.title = element_blank(),
+    panel.grid = element_blank())
+gr1</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p>L’ensemble est fort chargé. Supprimons la légende et limitons les couleurs aux équipes cumulant au final le plus de titres (Lakers, Celtics et Warriors). Changeons la couleur de fond pour mettre l’ensemble en valeur.</p>
+<pre class="r"><code>gr2&lt;-gr1+
+  geom_step(data=filter(dd_,equipe==&quot;LAK&quot;),linewidth=0.8)+
+  geom_step(data=filter(dd_,equipe==&quot;CELT&quot;),linewidth=0.8)+
+  geom_step(data=filter(dd_,equipe==&quot;WAR&quot;),linewidth=0.8)+
+  scale_color_manual(values = c(rep(&quot;grey&quot;,4),&quot;#30AF1E&quot;,rep(&quot;grey&quot;,4),&quot;purple&quot;,rep(&quot;grey&quot;,8),
+                               &quot;blue&quot;,&#39;grey&#39;))+
+  coord_cartesian(expand = FALSE,xlim=c(1946,2023),ylim=c(0,20))+
+  theme(
+    axis.line.x = element_line(color=&#39;black&#39;),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    panel.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
+    plot.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
+    legend.position = &quot;none&quot;)</code></pre>
+<pre><code>## Coordinate system already present. Adding new coordinate system, which will
+## replace the existing one.</code></pre>
+<pre class="r"><code>gr2</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p>Ajoutons un titre, un sous-titre et un caption. Puis, marquons quelques points remarquables.</p>
+<pre class="r"><code>gr3&lt;-gr2+
+  geom_point(aes(x=1962,y=5),color=&#39;#30AF1E&#39;)+
+  geom_point(aes(x=2020,y=17),color=&#39;#9370DB&#39;)+
+  geom_point(aes(x=2022,y=7),color=&#39;#0000FF&#39;)+
+  labs(title=&quot;Les &lt;b style=&#39;color:#9370DB;&#39;&gt;Lakers&lt;/b&gt; et les &lt;b style=&#39;color:#30AF1E;&#39;&gt;Celtics&lt;/b&gt; à égalité avec 17 titres chacun sont largement devant&quot;,
+       subtitle = &#39;les deux équipes combinent à elles seules 45% des titres&#39;,
+       caption=&#39;Source: Wikipedia&#39;)+
+  theme(
+    plot.title = element_markdown(face=&#39;bold&#39;),
+    plot.subtitle = element_text(face=&#39;italic&#39;),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    axis.line.x = element_line(color=&#39;black&#39;),
+    panel.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
+    plot.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
+    legend.position = &quot;none&quot;)
+gr3</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p>Pour finir, ajoutons des étiquettes expliquant nos points remarquables et agrandissons la taille du graphe.</p>
+<pre class="r"><code>gr4&lt;-gr3+
+  # annotation 1
+  geom_textbox(aes(x=1962,y=5,
+                    label=&quot;Les &lt;b style=&#39;color:#30AF1E;&#39;&gt;Celtics&lt;/b&gt; égalise &lt;br&gt;les &lt;b style=&#39;color:#9370DB;&#39;&gt;Lakers&lt;/b&gt; en nombre &lt;br&gt; de titres&quot;),
+                nudge_x =-5, nudge_y = 1,size=2, fill=&#39;#FBFAF5&#39;,color=&#39;black&#39;,
+                box.colour=&#39;#FBFAF5&#39;,box.padding = unit(c(0, 0, 0, 0), &quot;pt&quot;),
+               width = unit(1, &quot;inch&quot;),)+
+  # annotation 2
+  geom_textbox(aes(x=2020,y=17,
+                   label=&quot;Les &lt;b style=&#39;color:#9370DB;&#39;&gt;Lakers&lt;/b&gt; égalise &lt;br&gt; les &lt;b style=&#39;color:#30AF1E;&#39;&gt;Celtics&lt;/b&gt; en nombre de titres&quot;),
+               nudge_x =-2, nudge_y = 1,size=2, fill=&#39;#FBFAF5&#39;,color=&#39;black&#39;,
+                box.colour=&#39;#FBFAF5&#39;,box.padding = unit(c(0, 0, 0, 0), &quot;pt&quot;))+
+  # annotation 3
+  geom_textbox(aes(x=2022,y=7,
+                   label=&quot;Les &lt;b style=&#39;color:#0000FF;&#39;&gt;Warriors&lt;/b&gt; obtiennent leur 7ème titres&quot;),nudge_x =-6,nudge_y = 0.5,size=2, fill=&#39;#FBFAF5&#39;,color=&#39;black&#39;,
+                box.colour=&#39;#FBFAF5&#39;,box.padding = unit(c(0, 0, 0, 0), &quot;pt&quot;))+
+  theme(
+    plot.title = element_markdown(face=&#39;bold&#39;),
+    plot.subtitle = element_text(face=&#39;italic&#39;),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    panel.grid = element_blank(),
+    axis.line.x = element_line(color=&#39;black&#39;),
+    panel.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
+    plot.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
+    legend.position = &quot;none&quot;)
+gr4</code></pre>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+</div>
