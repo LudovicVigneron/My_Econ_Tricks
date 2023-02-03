@@ -32,7 +32,7 @@ library(ggtext)
 
 ## le taux de change EURO/DOLLAR
 
-Chargeons de données. Pour ce faire, nous allons utiliser un package spécifique au traitement des données financières *quantmod* qui propose une série de fonctions de type wrapper API permettant d'obtenir des informations via différents serveurs. 
+Chargeons de données. Pour ce faire, nous allons utiliser un package spécifique au traitement des données financières *quantmod* qui propose une série de fonctions de type wrapper API permettant d'obtenir des informations via différents serveurs.
 
 ```{r message=FALSE, warning=FALSE}
 library(quantmod)
@@ -58,7 +58,7 @@ Le package *quantmod* propose une fonction dédiée pour établir le graphe à p
 plot(EURUSD)
 ```
 
-Le graphe obtenu est pas mal. Mais, vous vous en doutez je trouve qu'il manque d'éléments personnalisés. En plus, il est réalisé à partir du système R base auquel je préfère l'univers *GGPLOT2*. 
+Le graphe obtenu est pas mal. Mais, vous vous en doutez je trouve qu'il manque d'éléments personnalisés. En plus, il est réalisé à partir du système R base auquel je préfère l'univers *GGPLOT2*.
 
 Passons donc l'ensemble sous ggplot. Pour cela, il y a deux stratégies possibles transformer l'objet xts en une data frame classique (passer les dates qui sont en nom de ligne dans une variable avec la fonction **index()**), ou utiliser la fonction **autoplot.zoo()** pour initier le graphe.
 
@@ -77,7 +77,7 @@ autoplot.zoo(EURUSD)+
   theme_minimal()
 ```
 
-Ajoutons des titres, habillons les axes et simplifions l'ensemble. 
+Ajoutons des titres, habillons les axes et simplifions l'ensemble.
 
 ```{r}
 autoplot.zoo(EURUSD)+
@@ -118,7 +118,7 @@ red_EURUSD<-to.weekly(EURUSD,name="mon")
 head(red_EURUSD)
 ```
 
-Traçons la courbe du taux de change EURO/UDS en fréquence hebdomadaire ne choisissant pour chaque semaine le dernier cours disponible (le cours de clôture). 
+Traçons la courbe du taux de change EURO/UDS en fréquence hebdomadaire ne choisissant pour chaque semaine le dernier cours disponible (le cours de clôture).
 
 ```{r}
 autoplot.zoo(red_EURUSD$mon.Close)+
@@ -136,9 +136,9 @@ autoplot.zoo(red_EURUSD$mon.Close)+
 
 ## La fréquence du prénom masculin Neil
 
-Ce nouveau graphe est une réplication de celui réalisé par Neil Richards pour le ![SWD challenge](https://twitter.com/hashtag/SWDChallenge?src=hashtag_click) (Story With Data). Son point de départ est la base de des prénoms attribués aux Etats Unis que l'on peut charger ![ici](https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-national-data/resource/746392ff-35f6-446d-9bf5-a611011ee3f8). L'ensemble prend la forme d'un fichier zip nommé names.zip. Il contient une série de fichiers correspondant à des année et indiquant la fréquence de différents prénoms pour différent sexes. Chargez l'archive et décompressez-la dans votre environnement de travail. 
+Ce nouveau graphe est une réplication de celui réalisé par Neil Richards pour le [SWD challenge](https://twitter.com/hashtag/SWDChallenge?src=hashtag_click) (Story With Data). Son point de départ est la base de des prénoms attribués aux Etats Unis que l'on peut charger [ici](https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-national-data/resource/746392ff-35f6-446d-9bf5-a611011ee3f8). L'ensemble prend la forme d'un fichier zip nommé names.zip. Il contient une série de fichiers correspondant à des année et indiquant la fréquence de différents prénoms pour différent sexes. Chargez l'archive et décompressez-la dans votre environnement de travail.
 
-Reste alors à la traité pour obtenir une data frame unique facilement manipulable pour créer notre graphe. Pour cela, nous utiliserons un fonction permettant de créer une boucle pour charger chaque fichier et les abouter. Il s'agit de la fonction **map_df()** du package *purrr* qui fait partie du tidyverse. Elle prend pour premier argument le vecteur définissant l'itération et comme suivant la fonction itérée ainsi que ses arguments. Profitons-en pour procéder à quelques mises en forme. 
+Reste alors à la traité pour obtenir une data frame unique facilement manipulable pour créer notre graphe. Pour cela, nous utiliserons un fonction permettant de créer une boucle pour charger chaque fichier et les abouter. Il s'agit de la fonction **map_df()** du package *purrr* qui fait partie du tidyverse. Elle prend pour premier argument le vecteur définissant l'itération et comme suivant la fonction itérée ainsi que ses arguments. Profitons-en pour procéder à quelques mises en forme.
 
 ```{r , eval=FALSE, message=FALSE, warning=FALSE}
 nom_f<-paste0("yob",1880:2021)
@@ -300,9 +300,9 @@ ggplot(data=dat_neil,aes(x = annee, y=effectif))+
 
 Le placement des étiquettes n'est ce qui est le plus pratique avec R mais on y arrive en tâtonnant pas mal.
 
-## Le nombre titres NBA 
+## Le nombre titres NBA
 
-Passons à notre dernier graphe. Il s'agit d'établir pour chaque équipe ayant gagné au moins un titre un courbe en escalier marquant l'évolution du nombre de titres qu'elle a remporté depuis la création de la ligue. Pour ce faire, nous allons chercher les données sur Wikipedia. Utilisons pour ce faire le package *rvest* qui permet de scraper la page et le package *janitor* qui aide à la mise en forme des données. 
+Passons à notre dernier graphe. Il s'agit d'établir pour chaque équipe ayant gagné au moins un titre un courbe en escalier marquant l'évolution du nombre de titres qu'elle a remporté depuis la création de la ligue. Pour ce faire, nous allons chercher les données sur Wikipedia. Utilisons pour ce faire le package *rvest* qui permet de scraper la page et le package *janitor* qui aide à la mise en forme des données.
 
 ```{r message=FALSE, warning=FALSE}
 library(rvest)
@@ -434,7 +434,3 @@ gr4<-gr3+
     legend.position = "none")
 gr4
 ```
-
-
-
-

@@ -37,8 +37,8 @@ library(ggtext)</code></pre>
 <p>Notez que le fournisseur de donnée Oanda ne fourni qu’un historique de 180 jours et donc nous n’obtenons pas l’ensemble des données demandées. Ici, ce n’est pas vraiment un problème, nous nous en contenterons.</p>
 <p>Notez également que les données sont fournis dans un format inhabituel le format xts qui est l’un des format facilitant le traitement des données de séries temporelles.</p>
 <pre class="r"><code>str(EURUSD)</code></pre>
-<pre><code>## An &#39;xts&#39; object on 2022-07-27/2023-01-22 containing:
-##   Data: num [1:180, 1] 1.02 1.02 1.02 1.02 1.02 ...
+<pre><code>## An &#39;xts&#39; object on 2022-08-07/2023-02-02 containing:
+##   Data: num [1:180, 1] 1.02 1.02 1.02 1.03 1.03 ...
 ##  - attr(*, &quot;dimnames&quot;)=List of 2
 ##   ..$ : NULL
 ##   ..$ : chr &quot;EUR.USD&quot;
@@ -46,21 +46,21 @@ library(ggtext)</code></pre>
 ##   xts Attributes:  
 ## List of 2
 ##  $ src    : chr &quot;oanda&quot;
-##  $ updated: POSIXct[1:1], format: &quot;2023-01-23 22:08:33&quot;</code></pre>
+##  $ updated: POSIXct[1:1], format: &quot;2023-02-03 15:12:58&quot;</code></pre>
 <p>Le package <em>quantmod</em> propose une fonction dédiée pour établir le graphe à partir d’un objet xts. Appliquons-la au cours EURO/Dollar (combien d’Euros pour un Dollar).</p>
 <pre class="r"><code>plot(EURUSD)</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
 <p>Le graphe obtenu est pas mal. Mais, vous vous en doutez je trouve qu’il manque d’éléments personnalisés. En plus, il est réalisé à partir du système R base auquel je préfère l’univers <em>GGPLOT2</em>.</p>
 <p>Passons donc l’ensemble sous ggplot. Pour cela, il y a deux stratégies possibles transformer l’objet xts en une data frame classique (passer les dates qui sont en nom de ligne dans une variable avec la fonction <strong>index()</strong>), ou utiliser la fonction <strong>autoplot.zoo()</strong> pour initier le graphe.</p>
 <p>Nous retiendrons ici la seconde solution.</p>
 <pre class="r"><code>autoplot.zoo(EURUSD)</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
 <p>Bon, le résultat de base n’est pas très engageant. Commençons donc la personnalisation en ajoutant des points pour marquer les valeurs, en limitant la plage de valeur visible et en adoptant un thème plus sobre.</p>
 <pre class="r"><code>autoplot.zoo(EURUSD)+
   geom_point()+
   coord_cartesian(expand = FALSE)+
   theme_minimal()</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
 <p>Ajoutons des titres, habillons les axes et simplifions l’ensemble.</p>
 <pre class="r"><code>autoplot.zoo(EURUSD)+
   geom_point()+
@@ -74,7 +74,7 @@ theme(plot.title = element_text(hjust=0.5),
       plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
       axis.line = element_line(color=&#39;dark gray&#39;),
       axis.title = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
 <p>Réduisons la taille des points et passons-les en rouge.</p>
 <pre class="r"><code>autoplot.zoo(EURUSD)+
   geom_point(size=0.8,color=&#39;red&#39;)+
@@ -88,17 +88,17 @@ theme(plot.title = element_text(hjust=0.5),
       plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
       axis.line = element_line(color=&#39;dark gray&#39;),
       axis.title = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 <p>Le résultat est intéressant. Nous pourrions nous arrêter là. Mais, avant de passer à la seconde illustration, revenant sur les données au format xts. Leur structure permet de mobiliser des fonctions redéfinisant le découpage temporelle de la série. Testons-en une. Passons à une série hebdomadaire avec la fonction <strong>to.weekly()</strong>.</p>
 <pre class="r"><code>red_EURUSD&lt;-to.weekly(EURUSD,name=&quot;mon&quot;)
 head(red_EURUSD)</code></pre>
 <pre><code>##            mon.Open mon.High  mon.Low mon.Close
-## 2022-07-31 1.015301 1.022655 1.015301  1.022520
-## 2022-08-07 1.024690 1.024690 1.016956  1.018053
+## 2022-08-07 1.018053 1.018053 1.018053  1.018053
 ## 2022-08-14 1.019062 1.031758 1.019062  1.025914
 ## 2022-08-21 1.020464 1.020464 1.004107  1.004107
 ## 2022-08-28 0.998768 0.998768 0.994914  0.996164
-## 2022-09-04 0.997102 1.002861 0.995213  0.995213</code></pre>
+## 2022-09-04 0.997102 1.002861 0.995213  0.995213
+## 2022-09-11 0.992168 1.005845 0.992168  1.005046</code></pre>
 <p>Traçons la courbe du taux de change EURO/UDS en fréquence hebdomadaire ne choisissant pour chaque semaine le dernier cours disponible (le cours de clôture).</p>
 <pre class="r"><code>autoplot.zoo(red_EURUSD$mon.Close)+
   geom_point(size=0.8,color=&#39;red&#39;)+
@@ -111,11 +111,11 @@ head(red_EURUSD)</code></pre>
       plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
       axis.line = element_line(color=&#39;dark gray&#39;),
       axis.title = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
 </div>
 <div id="la-fréquence-du-prénom-masculin-neil" class="section level2">
 <h2>La fréquence du prénom masculin Neil</h2>
-<p>Ce nouveau graphe est une réplication de celui réalisé par Neil Richards pour le <img src="https://twitter.com/hashtag/SWDChallenge?src=hashtag_click" alt="SWD challenge" /> (Story With Data). Son point de départ est la base de des prénoms attribués aux Etats Unis que l’on peut charger <img src="https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-national-data/resource/746392ff-35f6-446d-9bf5-a611011ee3f8" alt="ici" />. L’ensemble prend la forme d’un fichier zip nommé names.zip. Il contient une série de fichiers correspondant à des année et indiquant la fréquence de différents prénoms pour différent sexes. Chargez l’archive et décompressez-la dans votre environnement de travail.</p>
+<p>Ce nouveau graphe est une réplication de celui réalisé par Neil Richards pour le <a href="https://twitter.com/hashtag/SWDChallenge?src=hashtag_click">SWD challenge</a> (Story With Data). Son point de départ est la base de des prénoms attribués aux Etats Unis que l’on peut charger <a href="https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-national-data/resource/746392ff-35f6-446d-9bf5-a611011ee3f8">ici</a>. L’ensemble prend la forme d’un fichier zip nommé names.zip. Il contient une série de fichiers correspondant à des année et indiquant la fréquence de différents prénoms pour différent sexes. Chargez l’archive et décompressez-la dans votre environnement de travail.</p>
 <p>Reste alors à la traité pour obtenir une data frame unique facilement manipulable pour créer notre graphe. Pour cela, nous utiliserons un fonction permettant de créer une boucle pour charger chaque fichier et les abouter. Il s’agit de la fonction <strong>map_df()</strong> du package <em>purrr</em> qui fait partie du tidyverse. Elle prend pour premier argument le vecteur définissant l’itération et comme suivant la fonction itérée ainsi que ses arguments. Profitons-en pour procéder à quelques mises en forme.</p>
 <pre class="r"><code>nom_f&lt;-paste0(&quot;yob&quot;,1880:2021)
 nom&lt;-paste0(&#39;names/&#39;,nom_f,&#39;.txt&#39;)
@@ -157,7 +157,7 @@ head(dat_neil)</code></pre>
 <pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
   geom_line()+
   theme_minimal()</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
 <p>Ajoutons des titres et mettons en forme les axes (supprimons l’axe des ordonnées et habillons celui des abscisses).</p>
 <pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
   geom_line()+
@@ -170,7 +170,7 @@ head(dat_neil)</code></pre>
         axis.title = element_blank(),
         axis.text.y = element_blank(),
         panel.grid = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
 <p>Ajoutons de la couleur et recadrons la courbe.</p>
 <pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
   geom_line(color=&quot;#ECB84F&quot;,linewidth=0.8)+
@@ -185,7 +185,7 @@ head(dat_neil)</code></pre>
         axis.title = element_blank(),
         axis.text.y = element_blank(),
         panel.grid = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <p>On a une bonne base ajoutons les annotations. Pour ce faire, fixons les dimensions du graph.</p>
 <pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
   geom_line(color=&quot;#ECB84F&quot;,linewidth=0.8)+
@@ -209,7 +209,7 @@ head(dat_neil)</code></pre>
         axis.title = element_blank(),
         axis.text.y = element_blank(),
         panel.grid = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-19-1.png" width="755.52" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-19-1.png" width="755.52" /></p>
 <p>Intégrons l’ensemble des étiquettes.</p>
 <pre class="r"><code>ggplot(data=dat_neil,aes(x = annee, y=effectif))+
   geom_line(color=&quot;#ECB84F&quot;,linewidth=0.8)+
@@ -268,7 +268,7 @@ head(dat_neil)</code></pre>
         axis.title = element_blank(),
         axis.text.y = element_blank(),
         panel.grid = element_blank())</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-20-1.png" width="755.52" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-20-1.png" width="755.52" /></p>
 <p>Le placement des étiquettes n’est ce qui est le plus pratique avec R mais on y arrive en tâtonnant pas mal.</p>
 </div>
 <div id="le-nombre-titres-nba" class="section level2">
@@ -359,7 +359,7 @@ head(dd_)</code></pre>
     axis.title = element_blank(),
     panel.grid = element_blank())
 gr1</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
 <p>L’ensemble est fort chargé. Supprimons la légende et limitons les couleurs aux équipes cumulant au final le plus de titres (Lakers, Celtics et Warriors). Changeons la couleur de fond pour mettre l’ensemble en valeur.</p>
 <pre class="r"><code>gr2&lt;-gr1+
   geom_step(data=filter(dd_,equipe==&quot;LAK&quot;),linewidth=0.8)+
@@ -378,7 +378,7 @@ gr1</code></pre>
 <pre><code>## Coordinate system already present. Adding new coordinate system, which will
 ## replace the existing one.</code></pre>
 <pre class="r"><code>gr2</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
 <p>Ajoutons un titre, un sous-titre et un caption. Puis, marquons quelques points remarquables.</p>
 <pre class="r"><code>gr3&lt;-gr2+
   geom_point(aes(x=1962,y=5),color=&#39;#30AF1E&#39;)+
@@ -398,7 +398,7 @@ gr1</code></pre>
     plot.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
     legend.position = &quot;none&quot;)
 gr3</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
 <p>Pour finir, ajoutons des étiquettes expliquant nos points remarquables et agrandissons la taille du graphe.</p>
 <pre class="r"><code>gr4&lt;-gr3+
   # annotation 1
@@ -427,5 +427,5 @@ gr3</code></pre>
     plot.background=element_rect(fill=&quot;#FBFAF5&quot;,color=&quot;#FBFAF5&quot;),
     legend.position = &quot;none&quot;)
 gr4</code></pre>
-<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_1_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p><img src="/post/2023-01-13-les-courbes-repr-sentant-des-s-ries-temporelles-gt13/index_h_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
 </div>
