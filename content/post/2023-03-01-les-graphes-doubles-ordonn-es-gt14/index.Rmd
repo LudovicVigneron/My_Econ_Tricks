@@ -1,0 +1,360 @@
+---
+title: Les graphes à doubles ordonnées  GT14
+author: Ludovic Vigneron
+date: '2023-03-01'
+slug: []
+categories:
+  - datavisualisation
+  - dataviz
+  - ggplot2
+tags:
+  - Climat
+  - dataviz
+  - Dataviz
+  - ggplot2
+  - GGPLOT2
+---
+
+**Une fois n'est pas coutume, nous aborderons dans ce post un type de graphe qui, à mon avis, ne devrait quasiment jamais être utilisé. En effet, il peut être trompeur en donnant l'illusion que deux séries données sont liées alors qu'elles ne le sont pas. Il s'agit des graphes comprenant deux axes des ordonnées établis dans des unités différentes (les dual axis plots). Nous allons présenter des séries temporelles établies pour la même période mais pour des mesure différentes au sein d'un même graphe. Pour l'exemple nous travaillerons sur les écarts de températures par rapport à la moyenne du siècle dernier et la concentration en CO2 de l'atmosphère. Evidemment, il ne fait pas de doute que les deux sont liés. Le consensus scientifique est sans appel. Néanmoins, nous verrons que présenter ce lien au travers d'un graphe à deux axes n'est pas forcément une bonne idée. Nous terminerons ce post à montrant une représentation alternative de ce lien plus rigoureuse (au travers d'un nuage de points colorés).**
+
+Mais avant d'aller plus loin, commençons par charger quelques packages contenant des fonctions utiles pour la suite.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+library(ggtext)
+library(patchwork)
+library(viridis)
+```
+
+Ceci fait, chargeons les données. Commençons par celles associées aux températures. Elles sont issues des travaux du NOAA[^1]. Vous pouvez les charger à partir de l'interface que vous retrouvez au lien suivant: [ici](https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series). Il s'agit des écarts de températures constatés au regard de la moyenne établie sur la période 1901-2000. L'ensemble est réalisé à partir d'estimations globales de moyennes annuelles réalisées pour la surface terrestre, océans et terres émergées. La période couverte correspond à 1850-2023. Notez que les fichiers .csv obtenu comprend quatre lignes de présentation des données qu'il convient d'exclure à l'importation.
+
+```{r}
+temp <- read_csv("1850-2023.csv", skip = 4)
+```
+
+Jetons un œil rapide sur le début de la série.
+
+```{r}
+head(temp)
+```
+
+Chargeons également les données de concentration en CO2 estimé à la surface du globe. Nous les avons obtenu au travers du site de l'European Environnement Agency[^2] via son interface de data visualisation. Vous pouvez les télécharger à partir du lien suivant: [ici](https://www.eea.europa.eu/data-and-maps/daviz/atmospheric-concentration-of-carbon-dioxide-5#tab-chart_5_filters=%7B%22rowFilters%22%3A%7B%7D%3B%22columnFilters%22%3A%7B%22pre_config_polutant%22%3A%5B%22CH4%20(ppb)%22%5D%7D%7D). Les données présentées sont issues des travaux de la NOAA comme les précédentes. Elles sont justes présentées sous une format plus directement exploitable. Bref. Importons-les.
+
+```{r}
+CO2 <- read_csv("atmospheric-concentration-of-carbon-dioxide-5.csv")
+```
+
+Jetons un œil à leur présentation.
+
+```{r}
+head(CO2)
+```
+
+Notons que les deux bases importées présentent des informations qui ne seront pas mobilisées dans notre croisement. Procédons donc à des ajustements et mises en forme avant de réunir l'ensemble dans une base unique. 
+
+```{r}
+temp <- temp %>% rename(ec_deg_C=Value)
+CO2 <- CO2 %>% filter(`Polutant:text`=="CO2 (ppm)") %>% 
+  rename(Year=`Year:year`,
+         CO2_ppm=`Value:number`) %>% 
+  select(-`Polutant:text`) %>% 
+  filter(Year>=1850)
+```
+
+Fusionnons l'ensemble pour obtenir notre base de travail.
+
+```{r}
+dat <- left_join(x=temp,y=CO2,by='Year',copy=FALSE) %>% 
+  filter(Year<=2018)
+head(dat)
+```
+
+Créons une variable manquant le fait d'être en présence d'un écart positif ou négatif. Nous l'utiliserons pas la suite pour colorer les données (en rouge pour les écart positif et en blue pour les négatifs).
+
+```{r}
+dat<-dat %>% mutate(ect_p=ec_deg_C>0)
+```
+
+Ceci fait, établissons un graphe de base pour les écarts de températures par rapport à la moyenne. 
+
+```{r}
+ggplot(data=dat,aes(x=Year))+
+  geom_line(aes(y=ec_deg_C))+
+  labs(y="Ecarts de température en °C 
+       par rapport à la moyenne 1901-2000")+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"))+
+  coord_cartesian(xlim=c(1848,2018),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        legend.position = 'none')
+```
+
+Ajoutons une ligne pour marquer le zéro et marquons les points reprenant les écarts de températures en leur attribuant une couleur en fonction que l'écart soit positif, rouge, ou négatif, bleu. Marquons cette répartition de couleur dans la légende de l'axe.
+
+```{r}
+ggplot(data=dat,aes(x=Year))+
+  geom_line(aes(y=ec_deg_C))+
+  geom_point(aes(y=ec_deg_C,color=ect_p))+
+  geom_hline(yintercept=0)+  
+  labs(y="Ecarts de température en °C (<b style='color:red;'>+ red</b>/<b style='color:blue;'>- blue</b>)<br>
+       par rapport à la moyenne 1901-2000")+
+  scale_color_manual(values=c('blue','red'))+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"))+
+  coord_cartesian(xlim=c(1848,2018),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_markdown(size=10,margin=margin(r=2,l=2)),
+        legend.position = 'none')
+```
+
+La courbe avec les points est très parlante. Mais on peut faire mieux. Essayons une alternative, un graphe avec des segments marquant l'écart à la moyenne.
+
+```{r}
+ggplot(data=dat,aes(x=Year))+
+  geom_segment(aes(xend=Year, 
+                   y=0, 
+                   yend=ec_deg_C,
+                   color=ect_p),linewidth=1)+
+  geom_hline(yintercept=0)+
+  labs(y="Ecarts de température en °C (<b style='color:red;'>+ red</b>/<b style='color:blue;'>- blue</b>)<br>
+       par rapport à la moyenne 1901-2000")+
+  scale_color_manual(values=c('blue','red'))+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"))+
+  coord_cartesian(xlim=c(1848,2018),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_markdown(size=10,margin=margin(r=2,l=2)),
+        legend.position = 'none')
+```
+
+C'est mieux restons la dessus pour l'instant et passons à la concentration en CO2. Mais avant d'aller plus loin, comblons les trous dans la base. Faisons-le en répliquant les valeurs antérieures.
+
+```{r}
+dat1<-dat %>% fill(CO2_ppm)
+```
+
+Établissons un graphe à partir de là.
+
+```{r}
+ggplot(data=dat1,aes(x=Year,y=CO2_ppm))+
+  geom_line(linewidth=1,color="darkgray")+
+  labs(y="Concentration en CO2 en ppm")+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks=seq(260,410,10))+
+  coord_cartesian(xlim=c(1848,2018),
+                  ylim=c(280,415),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(axis.title.x = element_blank())
+```
+
+Bon maintenant que l'on a nos deux graphes de base, voyons comment les intégrer dans une représentation unique. Pour cela, il nous faut trouver une clé de conversion pour exprimer la valeur de la seconde série dans une unité proche de celle de la première. Ici, multiplions la valeur de CO2 par 0,005 et soustrayons 1,5. Ces valeurs ont été obtenues par tâtonnement pour obtenir quelque choses de visuellement pertinent. Nous ajoutons le second axe à partir de l'option sec.axis et la fonction associée **second.axis()** qui fixe l'échelle et non de l'axe.
+
+```{r}
+ggplot(data=dat1,aes(x=Year))+
+  geom_segment(aes(xend=Year, 
+                   y=0, 
+                   yend=ec_deg_C,
+                   color=ect_p),linewidth=1)+
+  geom_hline(yintercept=0)+
+  geom_line(aes(y=CO2_ppm*0.005-1.5),
+            linewidth=1,color="#77706E")+
+  labs(y="Ecarts de température en °C 
+       par rapport à la moyenne 1901-2000")+
+  scale_color_manual(values=c('blue','red'))+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"),
+    sec.axis = sec_axis(~.*0.005-1.5,
+                        name="Concentration en CO2"))+
+  coord_cartesian(xlim=c(1848,2018),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        legend.position = 'none')
+```
+
+L'ensemble est plaisant mais il manque un peu d'habillage. Etendons le graphe et ajoutons un titre et un caption. Notons également que l'échelle du second axe n'est pas correcte. Modifions cela l'idée ici c'est que les mesures reportées sur l'axe correspondent à l'échelle de mesures de la base en CO2 ppm tout en restons visible. Pour cela, divisons les inputs de l'axe par 0,005 et ajoutons 300.
+
+```{r fig.height=5, fig.width=8}
+ggplot(data=dat1,aes(x=Year))+
+  geom_segment(aes(xend=Year, 
+                   y=0,yend=ec_deg_C,
+                   color=ect_p),linewidth=1)+
+  geom_hline(yintercept=0)+
+  geom_line(aes(y=CO2_ppm*0.005-1.5),
+            linewidth=1,color="#544D4B")+
+  labs(title="Atmospheric carbon dioxide and Earth's surface temperature 1880-2023",
+       caption="Data Sources: NOAA and EEA",
+       y="Ecarts de température en °C (<b style='color:red;'>+ red</b>/<b style='color:blue;'>- blue</b>)<br> par rapport à la moyenne 1901-2000")+
+  scale_color_manual(values=c('blue','red'))+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"),
+                     sec.axis = sec_axis(~./0.005+300,
+                                        name="Concentration en CO2 (in ppm)",
+                                        breaks=seq(175,550,25),
+                                        labels=seq(175,550,25)))+
+  coord_cartesian(xlim=c(1848,2018),expand = FALSE)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,face="italic"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_markdown(size=10,margin=margin(r=2,l=2)),
+        axis.text = element_text(size=8),
+        legend.position = 'none')
+```
+
+Le résultat est bien meilleur. Mais bon... On voit bien que la courbe du CO2 croit sur la partie ou les écarts de température positifs s'accumulent. Cela laisse à penser à une corrélation positive entre les deux séries (ce qui est le cas). Néanmoins, cette impression est conditionnée à la manière dont nous avons géré l'échelle de la seconde série. Pour l'illustrer, prenons des valeurs appaltissant fortement la courbe au point de rendre la tendance très peu lisible.
+
+```{r fig.height=5, fig.width=8}
+ggplot(data=dat1,aes(x=Year))+
+  geom_segment(aes(xend=Year, 
+                   y=0,yend=ec_deg_C,
+                   color=ect_p),linewidth=1)+
+  geom_hline(yintercept=0)+
+  geom_line(aes(y=CO2_ppm*0.0001),
+            linewidth=1,color="#544D4B")+
+  labs(title="Atmospheric carbon dioxide and Earth's surface temperature 1880-2023",
+       caption="Data Sources: NOAA and EEA",
+       y="Ecarts de température en °C (<b style='color:red;'>+ red</b>/<b style='color:blue;'>- blue</b>)<br> par rapport à la moyenne 1901-2000")+
+  scale_color_manual(values=c('blue','red'))+
+  scale_x_continuous(breaks=seq(1850,2020,10))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"),
+                     sec.axis = sec_axis(~./0.0001,
+                                        name="Concentration en CO2 (in ppm)",
+                                        breaks=seq(0,5500,500),
+                                        labels=seq(0,5500,500)))+
+  coord_cartesian(xlim=c(1848,2018),expand = FALSE)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,face="italic"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_markdown(size=10,margin=margin(r=2,l=2)),
+        axis.text = element_text(size=8),
+        legend.position = 'none')
+```
+
+On comprend bien qu'avec se type de graphe les liens mis en évidence ou du moins leur importance peuvent être la résultante d'un jeu d'échelle. Le graphe peut être trompeur. C'est pourquoi je l'évite (les tâtonnements associés à la mise à l'échelle sont aussi une bonne raison de l'éviter).
+
+Il est ici à mon avis préférable de juxtaposer les graphes qui conservent leur propres échelles. Faisons-le pour illustrer. Commençons par créer des objets contenant les graphes.
+
+```{r }
+g1<-ggplot(data=dat1,aes(x=Year))+
+  geom_segment(aes(xend=Year, 
+                   y=0, 
+                   yend=ec_deg_C,
+                   color=ect_p),linewidth=1)+
+  geom_hline(yintercept=0)+
+  labs(caption="Data Sources: NOAA",
+       y="Ecarts de température en °C (<b style='color:red;'>+ red</b>/<b style='color:blue;'>- blue</b>)<br>
+       par rapport à la moyenne 1901-2000")+
+  scale_color_manual(values=c('blue','red'))+
+  scale_x_continuous(breaks=seq(1850,2020,20))+
+  scale_y_continuous(breaks = seq(-0.80, 1.40, 0.2),
+                     labels=label_number(suffix = "°"))+
+  coord_cartesian(xlim=c(1848,2018),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,face="italic"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_markdown(size=10,
+                                    margin=margin(r=2,l=2)),
+        axis.text = element_text(size=8),
+        legend.position = 'none')
+g2<-ggplot(data=dat1,aes(x=Year))+
+  geom_line(aes(y=CO2_ppm),
+            linewidth=1,color="#544D4B")+
+  labs(caption="Data Sources: NOAA and EEA",
+       y="Concentration en CO2 (in ppm)")+
+  scale_x_continuous(breaks=seq(1850,2020,20))+
+  scale_y_continuous(breaks=seq(250,400,25),labels=seq(250,400,25))+
+  coord_cartesian(xlim=c(1848,2018),expand = FALSE)+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,face="italic"),
+        axis.title.x = element_blank(),
+        axis.title.y = element_markdown(size=10,margin=margin(r=2,l=2)),
+        axis.text = element_text(size=8),
+        legend.position = 'none')
+```
+
+Puis, assemblons-les dans une représentation incluant un titre commun. Utilisons pour cela, le package patchwork.
+
+```{r fig.height=5, fig.width=10}
+g1+g2+
+  plot_annotation(title="Atmospheric carbon dioxide and Earth's surface temperature 1880-2023")&
+  theme(plot.title = element_text(hjust=0.5))
+```
+
+Si votre intérêt est d'insister sur le liens entre les deux variables représentées, à mon avis, le plus simple est de calculer un coefficient de corrélation qui rendra un seul chiffre le degré d'association linéaire entre elles.
+
+```{r}
+cor(dat1$ec_deg_C,dat1$CO2_ppm)
+```
+
+Avec un valeur positive de 0.86, on a une corrélation forte entre les écarts de température et la concentration en CO2. La statistique est parlante. On pourrait même l'accompagner d'un test d'hypothèse contre la valeur 0.
+
+```{r}
+cor.test(dat1$ec_deg_C,dat1$CO2_ppm)$p.value
+```
+
+L'absence de corrélation est très clairement rejeté à la lecture de la p-value. Néanmoins, ce la reste peu parlant. Il est plus intéressant d'illustrer cela à partir d'un graphe.
+
+Si l'on veut représenter graphiquement le lien entre les deux séries, il est plus judicieux d'utiliser un nuages de points.
+
+```{r}
+ggplot(dat1,aes(x =CO2_ppm,y =ec_deg_C))+
+  geom_point()+
+  labs(title="Atmospheric carbon dioxide and Earth's surface temperature 1880-2023",
+       caption="Data Sources: NOAA and EEA",
+       x="Concentration en CO2 (in ppm)",
+       y="Ecarts de température en °C
+       par rapport à la moyenne 1901-2000")+
+  scale_x_continuous(breaks=seq(250,400,20),labels=seq(250,400,20))+
+  coord_cartesian(expand=FALSE,ylim=c(-0.8,1.2),xlim=c(280,410))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,face="italic"))
+```
+
+L'articulation entre les deux séries est bien marquée par la forme ascendante du nuage. La corrélation est nette. On perd néanmoins la dimension temporelle des séries. Pour y remédier, colorons les points en fonction de l'avancé de la mesure dans le temps.
+
+```{r}
+ggplot(dat1,aes(x=CO2_ppm,y=ec_deg_C,color=Year))+
+  geom_point()+
+  labs(title="Atmospheric carbon dioxide and Earth's surface temperature 1880-2023",
+       caption="Data Sources: NOAA and EEA",
+       x="Concentration en CO2 (in ppm)",
+       y="Ecarts de température en °C
+       par rapport à la moyenne 1901-2000")+
+  scale_x_continuous(breaks=seq(250,400,20),labels=seq(250,400,20))+
+  scale_color_viridis(option='turbo')+
+  coord_cartesian(expand=FALSE,ylim=c(-0.8,1.2),xlim=c(280,410))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust=0.5),
+        plot.caption = element_text(hjust=1,face="italic"),
+        panel.background=element_rect(fill="#FBFAF5",color="black"),
+        legend.position = "top")
+```
+
+
+
+
+[^1]: NOAA National Centers for Environmental information, Climate at a Glance: Global Time Series, published February 2023, retrieved on February 25, 2023 from https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/global/time-series
+
+[^2]: https://www.eea.europa.eu/
+
+
