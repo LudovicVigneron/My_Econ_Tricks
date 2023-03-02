@@ -13,24 +13,26 @@ tags:
 
 
 
-<p><strong>Bon! J’aurais peut-être dû commencer par là. Les données de panel présentent une structure particulière la répétition des observations dans le temps permet d’appréhender à la fois des différences entre individus et entre périodes mais aussi pour les individus sur les périodes ou pour les périodes en fonction des individus… Cela se concrétise par des tendances au niveau de données plus précisément au niveau de la variation de leur valeurs des variables. C’est autour de à l’appréhension de cette variabilité, à sa mesure, que ce court billet s’organise.</strong></p>
+<p><strong>Bon! J’aurais peut-être dû commencer par là. Les données de panel présentent une structure particulière. La répétition des observations dans le temps permet d’appréhender à la fois des différences entre individus et entre périodes, mais aussi des différences pour un même individu observé à différents point du temps ou pour un point du temps donné des différences entre individus… Cela se concrétise par des tendances au niveau de données, plus précisément au niveau de la variation de leur valeurs. C’est autour de l’appréhension de cette variabilité que ce court billet s’organise.</strong></p>
 <pre class="r"><code>library(tidyverse)
 library(plm)
 library(panelr)</code></pre>
 <p>Rechargeons le jeu de données.</p>
 <pre class="r"><code>wages&lt;-WageData</code></pre>
-<p>Revenons sur nos données de base et intéressons-nous à la variabilité de notre variable expliquée (lwage). Cette variabilité est généralement exprimée par la variance (<span class="math inline">\(s^2\)</span>) ou l’écart type (<span class="math inline">\(s\)</span>) (construit à partir de somme des écarts carrés à la moyenne - sec). Recalculons-les.</p>
+<p>Revenons sur nos données de base et intéressons-nous à la variabilité de notre variable expliquée (lwage). Cette variabilité est généralement exprimée par sa variance (<span class="math inline">\(s^2\)</span>) ou son écart type (<span class="math inline">\(s\)</span>) (construit à partir de la somme des écarts carrés à la moyenne - sec par la suite). Recalculons-les.</p>
 <pre class="r"><code>wages %&gt;% select(lwage) %&gt;% 
   summarise_all(c(var,sd,function(x){var(x)*(n()-1)})) %&gt;% 
   round(digits=5) %&gt;% 
-  rename(variance=fn1,ecart_type=fn2,somme_écarts_carrés=fn3)</code></pre>
-<pre><code>##   variance ecart_type somme_écarts_carrés
-## 1  0.21299    0.46151            886.9049</code></pre>
-<p>Dans le cadre de données de panel, ces indicateurs est leur sous-jacent sont qualifiés de globaux (Overall). La variance (échantillon) globale correspond à la variance classique.</p>
+  rename(variance=fn1,ecart_type=fn2,somme_écarts_carrés_sec=fn3)</code></pre>
+<pre><code>##   variance ecart_type somme_écarts_carrés_sec
+## 1  0.21299    0.46151                886.9049</code></pre>
+<p>Dans le cadre de données de panel, ces indicateurs sont qualifiés de globaux (Overall). La variance (échantillon) globale correspond à la variance classique.</p>
 <p><span class="math display">\[s^2=\frac{1}{N.T-1}\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y})^2=\frac{1}{N.T-1}.sec\]</span></p>
 <p>où N est le nombre total d’individus et T le nombre de périodes sur lesquels ils sont observés.</p>
 <p>Les dimensions individuelles et temporelles des données permettent de décomposer cette variabilité pour mieux la comprendre. A ce niveau, il y plusieurs possibilités.</p>
-<p>La plus courante consiste à distinguer la variabilité associée aux différences entre individus (Between individuals) indépendamment du temps (variabilité inter-individuelle) et la variabilité associée à l’évolution de chaque individu dans le temps (Within individuals) indépendamment de ses caractéristiques invariable (variabilité intra-individuelle). Ces deux sources de variabilité se cumulent pour former la variabilité globale. On a ainsi:</p>
+<div id="between-individual-et-within-individual" class="section level1">
+<h1>Between individual et Within individual</h1>
+<p>La plus courante consiste à distinguer la variabilité associée aux différences entre individus (Between individuals) indépendamment du temps (=&gt; la variabilité inter-individuelle) et la variabilité associée à l’évolution de chaque individu dans le temps (Within individuals) indépendamment de leurs caractéristiques invariables (=&gt; la variabilité intra-individuelle). Ces deux sources de variabilité se cumulent pour former la variabilité globale. On a ainsi:</p>
 <p><span class="math display">\[ sec= sec_{B_i} + sec_{W_i} \]</span></p>
 <p>La variabilité inter-individuelle (<span class="math inline">\(sec_{B_i}\)</span>) se mesure par la somme des écarts carrés des moyennes individuelles calculées sur l’ensemble des périodes à la moyenne globale.</p>
 <p><span class="math display">\[ sec_{B_i}=T\sum^{N}_{i=1}(\bar{y_{i}}-\bar{y})^2\]</span></p>
@@ -43,13 +45,13 @@ sec_Bi&lt;-wages %&gt;% select(lwage,id) %&gt;% group_by(id) %&gt;%
                   unlist() %&gt;% unname()
 sec_Bi</code></pre>
 <pre><code>## [1] 646.2537</code></pre>
-<p>On retrouve souvent cette valeur présentée sous forme de la variance inter-individuelle (Between variance ou Between individual variance). Elle est juste normé par le nombre d’individus moins (puisque l’on est sur une variance échantillon).</p>
+<p>On retrouve souvent cette valeur présentée sous forme de la variance inter-individuelle (Between variance ou Between individual variance). Elle est juste normée par le nombre d’individus moins 1 (puisque l’on est sur une variance échantillon).</p>
 <p><span class="math display">\[ s^2_{B_i}=\frac{1}{N-1}\sum^{N}_{i=1}(\bar{y_{i}}-\bar{y})^2=\frac{1}{N-1}.sec_{B_i} \]</span></p>
 <p>Calculons la.</p>
 <pre class="r"><code>var_bi&lt;-sec_Bi/(length(unique(wages$id))-1)
 var_bi</code></pre>
 <pre><code>## [1] 1.087969</code></pre>
-<p>La variabilité intra-individuelle (<span class="math inline">\(sec_{W_i}\)</span>) se mesure par la somme des écarts carrés valeurs individuelles aux moyennes individuelles sur l’ensemble de la période.</p>
+<p>La variabilité intra-individuelle (<span class="math inline">\(sec_{W_i}\)</span>) se mesure par la somme des écarts carrés des valeurs individuelles aux moyennes individuelles sur l’ensemble de la période.</p>
 <p><span class="math display">\[ sec_{W_i}=\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y_i})^2 \]</span></p>
 <p>Voyons ce que cela donne sur nos données.</p>
 <pre class="r"><code>sec_Wi&lt;-wages %&gt;% group_by(id) %&gt;% 
@@ -70,6 +72,9 @@ var_wi</code></pre>
 <p>La somme des variances between et within doit être ajusté pour correspondre à la variance totale.</p>
 <pre class="r"><code>(var_bi*(length(unique(wages$id))-1))/(nrow(wages)-1)+var_wi</code></pre>
 <pre><code>## [1] 0.2129935</code></pre>
+</div>
+<div id="between-time-et-within-time" class="section level1">
+<h1>Between time et Within time</h1>
 <p>Une autre manière d’appréhender (moins usitée) la variabilité de nos données consiste à organiser la décomposition non plus sur les individus mais sur les périodes. On a ainsi la variabilité globale qui se décompose en variabilité inter-temportelle (between time) et variabilité intra-temporelle (within time).</p>
 <p><span class="math display">\[ sec= sec_{B_t} + sec_{W_t} \]</span></p>
 <p>La variabilité inter-temporelle (<span class="math inline">\(sec_{B_t}\)</span>) se mesure par la somme des écarts carrés des moyennes sur les périodes calculées sur l’ensemble des individus à la moyenne globale.</p>
@@ -82,7 +87,7 @@ var_wi</code></pre>
                   unlist() %&gt;% unname()
 sec_Bt</code></pre>
 <pre><code>## [1] 157.4736</code></pre>
-<p>Cette valeur peut être présentée sous forme de la variance inter-temporelle (Between variance ou Between time variance). Elle est juste normé par le nombre de périodes moins une (puisque l’on est sur une variance échantillon).</p>
+<p>Cette valeur peut être présentée sous forme de la variance inter-temporelle (Between variance ou Between time variance). Elle est juste normée par le nombre de périodes moins une (puisque l’on est sur une variance échantillon).</p>
 <p><span class="math display">\[s^2_{B_t}=\frac{1}{T-1}\sum^{T}_{i=1}(\bar{y_{t}}-\bar{y})^2=\frac{1}{T-1}.sec_{B_t} \]</span></p>
 <p>Sa valeur sur nos données est la suivante:</p>
 <pre class="r"><code>var_bt&lt;-sec_Bt/(length(unique(wages$t))-1)
@@ -100,19 +105,22 @@ sec_Wt</code></pre>
 <p>En additionnant cette variabilité intra-temporelle (<span class="math inline">\(sec_{W_t}\)</span>) et la variabilité inter-temporelle (<span class="math inline">\(sec_{B_t}\)</span>), on retrouve bien la variabilité globale (<span class="math inline">\(sec\)</span>).</p>
 <pre class="r"><code>sec_Bt+sec_Wt</code></pre>
 <pre><code>## [1] 886.9049</code></pre>
-<p>Encore une fois la variabilité intra-temporelle est plus généralement présenté via la variance associée dont l’expression est la suivante:</p>
+<p>Encore une fois, la variabilité intra-temporelle est plus généralement présentée via la variance associée dont l’expression est la suivante:</p>
 <p><span class="math display">\[s^2_{W_t}=\frac{1}{N.T-1}\sum^{N}_{i=1}\sum^{T}_{t=1}(y_{it}-\bar{y_t})^2=\frac{1}{N.T-1}.sec_{W_t}\]</span></p>
 <p>Sa valeur sur nos données est :</p>
 <pre class="r"><code>var_wt&lt;-sec_Wt/(nrow((wages)-1))
 var_wt</code></pre>
 <pre><code>## [1] 0.1751336</code></pre>
-<p>La variance globale peut être retrouvé en ajustant la somme des variances between time et within time.</p>
+<p>La variance globale peut être retrouvée en ajustant la somme des variances between time et within time.</p>
 <pre class="r"><code>(var_bt*(length(unique(wages$t))-1))/(nrow((wages)-1))+var_wt</code></pre>
 <pre><code>## [1] 0.2129424</code></pre>
+</div>
+<div id="calucler-lensemble-rapidement" class="section level1">
+<h1>Calucler l’ensemble rapidement</h1>
 <p>Le package <em>plm</em> fournit quelques éléments permettant de déterminer rapidement l’importance des variabilités individuelles et temporelles (within et between). Pour y accéder, il faut au préalable déclarer la structure de données au travers de la fonction <strong>pdata.frame()</strong>. Celles-ci prendront alors la forme d’une data frame spécifique au panel (des attributs indiquant les indexations des individus et des périodes). Créons dat_pan en l’utilisant et demandons l’affichage de ses attributs.</p>
 <pre class="r"><code>dat_pan &lt;- pdata.frame(wages,index=c(&#39;id&#39;,&#39;t&#39;))
 str(attr(dat_pan,&quot;index&quot;))</code></pre>
-<pre><code>## Classes &#39;pindex&#39; and &#39;data.frame&#39;:   4165 obs. of  2 variables:
+<pre><code>## Classes &#39;pindex&#39; and &#39;data.frame&#39;:	4165 obs. of  2 variables:
 ##  $ id: Factor w/ 595 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,..: 1 1 1 1 1 1 1 2 2 2 ...
 ##  $ t : Factor w/ 7 levels &quot;1&quot;,&quot;2&quot;,&quot;3&quot;,&quot;4&quot;,..: 1 2 3 4 5 6 7 1 2 3 ...</code></pre>
 <p>Pour avoir une idée de la décomposition sommaire de la variabilité de notre variable explicative, il suffit d’appeler la fonction <strong>summary()</strong>.</p>
@@ -123,7 +131,7 @@ str(attr(dat_pan,&quot;index&quot;))</code></pre>
 ## 
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##   4.605   6.395   6.685   6.676   6.953   8.537</code></pre>
-<p>En plus de la variabilité d’une série de statistiques descriptives classiques on nous donne la variabilité globale (somme des carrés des écarts) ainsi qu’une décomposition id time correspondant à la part de la variabilité between de ces dimensions dans la variabilité totale.</p>
+<p>En plus d’une série de statistiques descriptives classiques, on nous donne la variabilité globale (somme des carrés des écarts) ainsi qu’une décomposition id time correspondant à la part de la variabilité between de ces dimensions dans la variabilité totale.</p>
 <pre class="r"><code>summary(dat_pan$lwage)[1:3]</code></pre>
 <pre><code>##        total   between_id between_time 
 ##     886.9049     646.2537     157.4736</code></pre>
@@ -132,7 +140,7 @@ str(attr(dat_pan,&quot;index&quot;))</code></pre>
 <pre><code>##   between_id between_time 
 ##    0.7286618    0.1775542</code></pre>
 <p>On voit bien ici que la variabilité entre individus indépendamment de la période (73% de variabilité totale) est plus importante que celles entre périodes indépendamment des caractéristiques propres (invariables) des individus (18%).</p>
-<p>L’ensemble peut être avec un peu de travail étendue et synthétisé dans un tableau unique. Commençons par créer des fonctions nous permettant de sortir les variations within et between.</p>
+<p>L’ensemble peut être avec un peu de travail étendue et synthétisée dans un tableau unique. Commençons par créer des fonctions nous permettant de sortir les variations within et between.</p>
 <pre class="r"><code>sec_W&lt;-function(dat,x,type=&quot;id&quot;){
   attach(dat,warn.conflicts = FALSE)
   if(type==&quot;t&quot;){
@@ -176,9 +184,10 @@ tab_sec(wages,lwage)</code></pre>
 ## sec within  240.6512 729.4313   27.13     82.24
 ## sec between 646.2537 157.4736   72.87     17.76
 ## sec         886.9049 886.9049  100.00    100.00</code></pre>
-<p>L’analyse peut être appliqué à notre variable explicative (wks).</p>
+<p>L’analyse peut être appliquée à notre variable explicative (wks).</p>
 <pre class="r"><code>tab_sec(wages,wks)</code></pre>
 <pre><code>##                   id_       time_ prct_id prct_time
 ## sec within   64702.00 109138.7496   59.06     99.63
 ## sec between  44843.05    406.2972   40.94      0.37
 ## sec         109545.05 109545.0468  100.00    100.00</code></pre>
+</div>
