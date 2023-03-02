@@ -2,17 +2,20 @@
 title: Les graphes à doubles ordonnées  GT14
 author: Ludovic Vigneron
 date: '2023-03-01'
-slug: []
 categories:
   - datavisualisation
   - dataviz
   - ggplot2
+  - GT
+  - gt
 tags:
   - Climat
   - dataviz
   - Dataviz
   - ggplot2
   - GGPLOT2
+  - gt
+  - GT
 ---
 
 **Une fois n'est pas coutume, nous aborderons dans ce post un type de graphe qui, à mon avis, ne devrait quasiment jamais être utilisé. En effet, il peut être trompeur en donnant l'illusion que deux séries données sont liées alors qu'elles ne le sont pas. Il s'agit des graphes comprenant deux axes des ordonnées établis dans des unités différentes (les dual axis plots). Nous allons présenter des séries temporelles établies pour la même période mais pour des mesure différentes au sein d'un même graphe. Pour l'exemple nous travaillerons sur les écarts de températures par rapport à la moyenne du siècle dernier et la concentration en CO2 de l'atmosphère. Evidemment, il ne fait pas de doute que les deux sont liés. Le consensus scientifique est sans appel. Néanmoins, nous verrons que présenter ce lien au travers d'un graphe à deux axes n'est pas forcément une bonne idée. Nous terminerons ce post à montrant une représentation alternative de ce lien plus rigoureuse (au travers d'un nuage de points colorés).**
