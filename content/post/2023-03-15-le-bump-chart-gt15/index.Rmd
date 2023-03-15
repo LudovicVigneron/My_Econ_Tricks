@@ -1,0 +1,232 @@
+---
+title: Le Bump chart GT15
+author: Ludovic Vigneron
+date: '2023-03-15'
+slug: []
+categories:
+  - datavisualisation
+  - dataviz
+  - ggplot2
+  - gt
+  - GT
+  - R
+tags:
+  - dataviz
+  - Dataviz
+  - GGPLOT2
+  - gt
+  - GT
+  - R
+  - r
+---
+
+**Allez, on enchaîne avec le bump chart. Il s'agit d'un graphe qui permet de rendre compte de l'évolution d'un classement dans le temps. On a ainsi trois variables illustrées: une définissant les individus ou groupes classés (un identifiant), une, ordinale, indiquant le classement de ces derniers relevé à un moment donné et une temporelle indiquant la date de chacun de ces relevés de positions. Une ligne relie pour chaque individu sa position dans le classement à différents instant, position qui est généralement marquée par un point.** 
+
+Comme à chaque fois, nous présenterons la construction de cette catégorie de graphe au travers d'un exemple. Mais avant de nous occuper des données, commençons par charger les packages que l'on utilisera par la suite. On a bien sûr ici le *tidyverse* mais aussi le package *ggbump* qui facilite leur création dans un contexte ggplot. Si vous ne l'avez pas installé, vous pouvez le faire sans difficultés à partir du CRAN.
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggbump)
+```
+
+Ceci fait, attaquons-nous aux données. Ce type de graphe est idéal pour rendre compte d'une course ou d'autres phénomènes se résumant à une lutte de places avec des changements dans le temps. 
+
+Considérons ici la consommation d'énergies renouvelables par habitant des différents pays de la zone Euro (hors Malte) que nous tirons du site [Our World in data](https://ourworldindata.org). Elles peuvent être chargées directement [ici](per-capita-renewables.csv).
+
+Nous les avons chargées dans notre dossier de travail, puis importées dans R.
+
+```{r}
+dat <- read_csv("per-capita-renewables.csv")
+```
+
+La base comprend bien plus de pays que nécessaire. Limitons-la aux seules membres de la zone Euro hors Malte. Les données sur l'île sont trop peu nombreuses pour être utilisées. Profitons-en pour renommer les variables afin de pouvoir travailler sur des choses plus simples. Excluons la variable Code qui est inutile et limitons l'ensemble à la période 2010-2019. 
+
+```{r}
+pays<-c("Germany","Austria","Belgium","Croatia","Spain","Estonia","Finland",
+        "France","Greece","Ireland","Italy","Latvia","Lithuania","Luxembourg","Netherlands",
+        "Portugal","Slovakia","Slovenia")
+dat<-dat %>% filter(Entity%in%pays) %>% 
+  rename(Pays=Entity,An=Year,kwh="Renewables per capita (kWh - equivalent)") %>% 
+  select(-Code) %>% 
+  filter(An>=2010&An<2020)
+```
+
+Maintenant que nous avons la base. Créons une variable de classement en utilisant fonction **rank()**. Celle-ci attribue un rang aux observations qui sont classées en ordre croissant. Les rangs sont affectés sur chaque années en veillant à transformer le classement de manière à ce que le pays consommant le plus d'énergies renouvelables soit classé 1 et que le pays en consommant le moins soit classé 18. 
+
+```{r}
+dat<-dat %>% group_by(An) %>% 
+  mutate(class=19-rank(kwh))
+```
+
+Commençons notre graphe. Utilisons le **geom_bump()** issue du package ggbump.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()
+```
+
+C'est une base de travail. Essayons d'améliorer le rendu. Commençons par passer au thème void qui est plus minimaliste de tous.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  theme_void()
+```
+
+Réintégrons le marquage des années sur l'axe des abscisses.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    axis.text.x = element_text(size=6,vjust=0.9),
+  )
+```
+
+Passons le nom des pays de la légende à l'axe des ordonnées ce qui rendra les choses bien plus facile à lire. Pour celan utilisons le **geom_text()**.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  geom_text(data = dat %>% filter(An == 2010),
+            aes(x = 2010 - 0.4, label = Pays),
+            size = 1.8, hjust = 0.6) +
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    axis.text.x = element_text(size=6,vjust=0.9),
+    legend.position = 'none'
+  )
+```
+
+Marquons de la même manière les rangs de classement verticalement à droite.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  geom_text(data = dat %>% filter(An == 2010),
+            aes(x = 2010 - 0.4, label = Pays),
+            size = 1.8, hjust = 0.6) +
+  geom_text(data = dat %>% filter(An == 2019),
+            aes(x = 2019 + 0.4, label = class),
+            size = 2, hjust = 0.5) +
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    axis.text.x = element_text(size=6,vjust=0.9),
+    legend.position = 'none'
+  )
+```
+
+Ajoutons des points pour marquer les années sur les courbes de chaque pays.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  geom_point(size = 2) +
+  geom_text(data = dat %>% filter(An == 2010),
+            aes(x = 2010 - 0.4, label = Pays),
+            size = 1.8, hjust = 0.6) +
+  geom_text(data = dat %>% filter(An == 2019),
+            aes(x = 2019 + 0.4, label = class),
+            size = 2, hjust = 0.5) +
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    axis.text.x = element_text(size=6,vjust=0.9),
+    legend.position = 'none'
+  )
+```
+
+Titrons le graphe, sous-titrons-le également et indiquons en caption l'origine des données.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  geom_point(size = 2) +
+  geom_text(data = dat %>% filter(An == 2010),
+            aes(x = 2010 - 0.4, label = Pays),
+            size = 1.8, hjust = 0.6) +
+  geom_text(data = dat %>% filter(An == 2019),
+            aes(x = 2019 + 0.4, label = class),
+            size = 2, hjust = 0.5) +
+  labs(title="Consommation d'énergies renouvelables par habitant",
+       subtitle = "-classement annuel sur la zone Euro (hors Malte)-",
+       caption="Source: Our World in Data")+
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,
+                                 face='italic'),
+    plot.caption = element_text(hjust=0.95,
+                                face='italic',size=5),
+    axis.text.x = element_text(size=6,vjust=0.9),
+    legend.position = 'none'
+  )
+```
+
+On pourrait peut-être gagner en lisibilité en intégrant un fond noir pour le graphe. Ici, il ne faut pas oublier de passer les éléments de texte noirs en blanc.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  geom_point(size = 2) +
+  geom_text(data = dat %>% filter(An == 2010),
+            aes(x = 2010 - 0.4, label = Pays),
+            size = 1.8, hjust = 0.6) +
+  geom_text(data = dat %>% filter(An == 2019),
+            aes(x = 2019 + 0.4, label = class),
+            size = 2, hjust = 0.5) +
+  labs(title="Consommation d'énergies renouvelables par habitant",
+       subtitle = "-classement annuel sur la zone Euro (hors Malte)-",
+       caption="Source: Our World in Data")+
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold',color='white'),
+    plot.subtitle = element_text(hjust=0.5,color='white',
+                                 face='italic'),
+    plot.caption = element_text(hjust=0.95,color='white',
+                                face='italic',size=5),
+    plot.background = element_rect(fill='black'),
+    axis.text.x = element_text(size=6,vjust=0.9,color='white'),
+    panel.background = element_rect(fill='black'),
+    legend.position = 'none'
+  )
+```
+
+On peut également envisager une version avec l'ensemble des textes en blanc.
+
+```{r}
+ggplot(dat, aes(x = An, y = -class, color = Pays)) +
+  geom_bump()+
+  geom_point(size = 2) +
+  geom_text(data = dat %>% filter(An == 2010),
+            aes(x = 2010 - 0.4, label = Pays),
+            size = 2, hjust = 0.6,color='white') +
+  geom_text(data = dat %>% filter(An == 2019),
+            aes(x = 2019 + 0.4, label = class),
+            size = 2, hjust = 0.5,color='white') +
+  labs(title="Consommation d'énergies renouvelables par habitant",
+       subtitle = "-classement annuel sur la zone Euro (hors Malte)-",
+       caption="Source: Our World in Data")+
+  scale_x_continuous(breaks=2010:2019,labels=2010:2019)+
+  theme_void()+
+  theme(
+    plot.title = element_text(color='white',hjust=0.5,face='bold'),
+    plot.subtitle = element_text(color='white',hjust=0.5,
+                                 face='italic'),
+    plot.caption = element_text(color='white',hjust=0.95,
+                                face='italic',size=5),
+    plot.background = element_rect(fill='black'),    
+    axis.text.x = element_text(size=6,color='white',vjust=0.9),
+    panel.background = element_rect(fill='black'),
+    legend.position = 'none'
+  )
+```
+
+Voilà un bump chart parlant (je l'espère). On peut noter que la Finlande et l'Autriche se dispute sur la période d'étude le premier rang en terme de consommation d'énergies renouvelable par habitant ou que l'Allemagne a connu une progression impressionnante dans le classement passant de la 8ème place à la 3ème...
+
