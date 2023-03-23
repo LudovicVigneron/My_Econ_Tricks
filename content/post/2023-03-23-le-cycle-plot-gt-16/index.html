@@ -1,0 +1,240 @@
+---
+title: Le Cycle plot GT16
+author: Ludovic Vigneron
+date: '2023-03-23'
+slug: []
+categories:
+  - datavisualisation
+  - dataviz
+  - ggplot2
+  - GT
+  - R
+tags:
+  - Climat
+  - dataviz
+  - Dataviz
+  - GGPLOT2
+  - GT
+  - R
+---
+
+
+
+<p><strong>Laissons de côté les données de classement et revenons à des séries temporelles plus classiques. Ces séries sont généralement caractérisées de deux éléments structurant se cumulant avec la dimension aléatoire: une saisonnalité et une tendance de long terme. Si ces dimensions peuvent être observées sur les courbes des séries. Néanmoins, sauf cas particuliers où les choses sont fort marquées, le visuel classique trouve rapidement ses limites. Cela conduit généralement à travailler à partir de décomposition des séries en trois courbes (effet saisonnier, tendance, aléa). Le cycle graphe permet d’avoir une présentation plus simple et agrégée sur une seule figure. Il permet de montrer une tendance de long terme sur une série de segments de tendance saisonnière.</strong></p>
+<p>Commençons donc par charger le <em>tidyverse</em> et <em>ggtext</em>.</p>
+<pre class="r"><code>library(tidyverse)
+library(ggtext)</code></pre>
+<p>Travaillons une nouvelle fois à partir de données climatiques. Laissons un temps de coté les températures et tournons-nous vers les surfaces gelées en Arctique. Les données sont issues des travaux du NSIDC (National Snow and Ice Data Center). Nous avons chargé à partir du site <a href="https://www.kaggle.com/datasets/nsidcorg/daily-sea-ice-extent-data?resource=download">Kaggle.com</a>. Vous pouvez également les trouvez <a href="seaice.csv">ici</a>. L’unité de mesure est ici <span class="math inline">\(10^6km^2\)</span> (Millions de <span class="math inline">\(km^2\)</span>).</p>
+<p>Chargeons-les dans notre dossier de travail. Puis, importons-les dans R.</p>
+<pre class="r"><code>seaice &lt;- read_csv(&quot;seaice.csv&quot;)</code></pre>
+<pre><code>## Rows: 26354 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (2): Source Data, hemisphere
+## dbl (5): Year, Month, Day, Extent, Missing
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Visualisons-les rapidement.</p>
+<pre class="r"><code>head(seaice)</code></pre>
+<pre><code>## # A tibble: 6 × 7
+##    Year Month   Day Extent Missing `Source Data`                         hemis…¹
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;                                 &lt;chr&gt;  
+## 1  1978    10    26   10.2       0 [&#39;ftp://sidads.colorado.edu/pub/DATA… north  
+## 2  1978    10    28   10.4       0 [&#39;ftp://sidads.colorado.edu/pub/DATA… north  
+## 3  1978    10    30   10.6       0 [&#39;ftp://sidads.colorado.edu/pub/DATA… north  
+## 4  1978    11     1   10.7       0 [&#39;ftp://sidads.colorado.edu/pub/DATA… north  
+## 5  1978    11     3   10.8       0 [&#39;ftp://sidads.colorado.edu/pub/DATA… north  
+## 6  1978    11     5   11.0       0 [&#39;ftp://sidads.colorado.edu/pub/DATA… north  
+## # … with abbreviated variable name ¹​hemisphere</code></pre>
+<p>Il y a pas mal de manipulations à faire pour rendre la base opérationnelle. Commençons par limiter la base à l’hémisphère Nord et de créons une variable unique indiquant les dates d’observations.</p>
+<pre class="r"><code>dat&lt;-seaice %&gt;%  
+  filter(hemisphere==&#39;north&#39;) %&gt;% 
+  mutate(date_=as.Date(paste0(as.character(Day),&#39;/&#39;,
+                           as.character(Month),&#39;/&#39;,
+                           as.character(Year)),
+                       format=&#39;%d/%m/%Y&#39;)) %&gt;% 
+  select(date_,Extent) </code></pre>
+<p>Voyons ce que l’on obtient.</p>
+<pre class="r"><code>head(dat)</code></pre>
+<pre><code>## # A tibble: 6 × 2
+##   date_      Extent
+##   &lt;date&gt;      &lt;dbl&gt;
+## 1 1978-10-26   10.2
+## 2 1978-10-28   10.4
+## 3 1978-10-30   10.6
+## 4 1978-11-01   10.7
+## 5 1978-11-03   10.8
+## 6 1978-11-05   11.0</code></pre>
+<p>Avant de réaliser notre cycle plot, explorons les données avec des graphes plus classique. Commençons par une simple courbe reprenant les relevés journaliers sur l’entièreté de la période d’observation.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=date_,y=Extent))+
+  geom_line()+
+  labs(title=&#39;Surface Gélée en Article&#39;,
+       subtitle =&#39;(en millions de km&lt;SUP&gt;2&lt;/SUP&gt; évolutions entre le 26/10/1978 et le 31/5/2019)&#39;,
+       caption=&#39;Source: NSIDC&#39;)+
+  coord_cartesian(expand=FALSE,ylim=c(2,18))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_markdown(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Deux éléments apparaissent comme marquant sur la série. Les vagues régulières sont le signe d’une saisonnalité dans les données. L’inclinaison générale de la courbe indique la présente d’un tendance baissière. Les surfaces gelées semblent diminuer. Néanmoins, concernant ce dernier point, les choses ne sont pas nettes sur la représentation.</p>
+<p>Pour y voir plus clair sur cette tendance globale, on peut limiter la représentation aux seule moyenne annuelle. Celles-ci ne semble pas être affecté par par la saisonnalité. Pour cela, calculons ces moyennes.</p>
+<pre class="r"><code>dat_an&lt;-dat %&gt;% mutate(an=year(date_)) %&gt;% 
+  group_by(an) %&gt;% 
+  summarise(moy_a=mean(Extent))</code></pre>
+<p>Utilisons un diagramme à bâtons pour illustrer la tendance.</p>
+<pre class="r"><code>ggplot(data=dat_an,aes(x=an,y=moy_a))+
+  geom_col()+
+  labs(title=&#39;Surface Gélée en Article&#39;,
+       subtitle =&#39;(moyenne annuelles en millions de km&lt;SUP&gt;2&lt;/SUP&gt; entre 1978-2019)&#39;,
+       caption=&#39;Source: NSIDC&#39;)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_markdown(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>On voit bien que la surface gelée moyenne diminue sur la période avec une certaine régularité. Le pic constaté en 2019 est dû au fait que les mesures ne couvrent pas l’année entière (juste de janvier à mai). Il faut donc être prudent au sujet de cette observation tronquée. Il serait plus pertinent de l’ignorer. Profitons-en pour ajouter un peu de couleur et de texte.</p>
+<pre class="r"><code>ggplot(data=filter(dat_an,an!=2019),
+       aes(x=an,y=moy_a))+
+  geom_col(fill=&#39;#0D8EA2&#39;)+
+  geom_text(aes(label=round(moy_a,digits=1)),nudge_y = -0.5,
+            color=&#39;white&#39;,size=1.5)+
+  labs(title=&#39;Surface Gélée en Article&#39;,
+       subtitle =&#39;(moyenne annuelles en millions de km&lt;SUP&gt;2&lt;/SUP&gt; entre 1978-2018)&#39;,
+       caption=&#39;Source: NSIDC&#39;)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_markdown(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>L’évolution est plus nette comme ça mais on perd la saisonnalité. Une autre solution qui met en évidence cette saisonnalité. Il s’agit d’établir une courbe par an établie sur chaque jour de l’année. Toutes les courbes sont alors inclues dans le même graphe avec une tinte différente. Ici, nous utiliserons des niveau de gris. Les plus sombres sont les plus récentes.</p>
+<p>Préparons nos données en isolant les années et les jours au sein de ces années.</p>
+<pre class="r"><code>dat_an_&lt;-dat %&gt;%  mutate(an=year(date_),
+                         y_d=yday(date_)) %&gt;% 
+  filter(an!=1978 &amp; an!=2019) </code></pre>
+<p>Établissons le graphe. Pour notre dégradé de couleur, utilisons la fonction <strong>gray()</strong>. Celle-ci génère le code couleur d’un gris dont la nuance plus ou moins foncée est établie par le premier argument une valeur comprise entre 0 (gris clair) et 1 (gris foncé). Dans la mesure où nous avons 40 années de données, établissons une progression de 1/40ème.</p>
+<pre class="r"><code>ggplot(data=dat_an_,aes(x=y_d))+
+  geom_line(data=filter(dat_an_,an==1979),aes(y=Extent),color=gray(40/40))+
+  geom_line(data=filter(dat_an_,an==1980),aes(y=Extent),color=gray(39/40))+
+  geom_line(data=filter(dat_an_,an==1981),aes(y=Extent),color=gray(38/40))+
+  geom_line(data=filter(dat_an_,an==1982),aes(y=Extent),color=gray(37/40))+
+  geom_line(data=filter(dat_an_,an==1983),aes(y=Extent),color=gray(36/40))+
+  geom_line(data=filter(dat_an_,an==1984),aes(y=Extent),color=gray(35/40))+
+  geom_line(data=filter(dat_an_,an==1985),aes(y=Extent),color=gray(34/40))+
+  geom_line(data=filter(dat_an_,an==1986),aes(y=Extent),color=gray(33/40))+
+  geom_line(data=filter(dat_an_,an==1987),aes(y=Extent),color=gray(32/40))+
+  geom_line(data=filter(dat_an_,an==1988),aes(y=Extent),color=gray(31/40))+
+  geom_line(data=filter(dat_an_,an==1989),aes(y=Extent),color=gray(30/40))+
+  geom_line(data=filter(dat_an_,an==1990),aes(y=Extent),color=gray(29/40))+
+  geom_line(data=filter(dat_an_,an==1991),aes(y=Extent),color=gray(28/40))+
+  geom_line(data=filter(dat_an_,an==1992),aes(y=Extent),color=gray(27/40))+
+  geom_line(data=filter(dat_an_,an==1993),aes(y=Extent),color=gray(26/40))+
+  geom_line(data=filter(dat_an_,an==1994),aes(y=Extent),color=gray(25/40))+
+  geom_line(data=filter(dat_an_,an==1995),aes(y=Extent),color=gray(24/40))+
+  geom_line(data=filter(dat_an_,an==1996),aes(y=Extent),color=gray(23/40))+
+  geom_line(data=filter(dat_an_,an==1997),aes(y=Extent),color=gray(22/40))+
+  geom_line(data=filter(dat_an_,an==1998),aes(y=Extent),color=gray(21/40))+
+  geom_line(data=filter(dat_an_,an==1999),aes(y=Extent),color=gray(20/40))+
+  geom_line(data=filter(dat_an_,an==2000),aes(y=Extent),color=gray(19/40))+
+  geom_line(data=filter(dat_an_,an==2001),aes(y=Extent),color=gray(18/40))+
+  geom_line(data=filter(dat_an_,an==2002),aes(y=Extent),color=gray(17/40))+
+  geom_line(data=filter(dat_an_,an==2003),aes(y=Extent),color=gray(16/40))+
+  geom_line(data=filter(dat_an_,an==2004),aes(y=Extent),color=gray(15/40))+
+  geom_line(data=filter(dat_an_,an==2005),aes(y=Extent),color=gray(14/40))+
+  geom_line(data=filter(dat_an_,an==2006),aes(y=Extent),color=gray(13/40))+
+  geom_line(data=filter(dat_an_,an==2007),aes(y=Extent),color=gray(12/40))+
+  geom_line(data=filter(dat_an_,an==2008),aes(y=Extent),color=gray(11/40))+
+  geom_line(data=filter(dat_an_,an==2009),aes(y=Extent),color=gray(10/40))+
+  geom_line(data=filter(dat_an_,an==2010),aes(y=Extent),color=gray(9/40))+
+  geom_line(data=filter(dat_an_,an==2011),aes(y=Extent),color=gray(8/40))+
+  geom_line(data=filter(dat_an_,an==2012),aes(y=Extent),color=gray(7/40))+
+  geom_line(data=filter(dat_an_,an==2013),aes(y=Extent),color=gray(6/40))+
+  geom_line(data=filter(dat_an_,an==2014),aes(y=Extent),color=gray(5/40))+
+  geom_line(data=filter(dat_an_,an==2015),aes(y=Extent),color=gray(4/40))+
+  geom_line(data=filter(dat_an_,an==2016),aes(y=Extent),color=gray(3/40))+
+  geom_line(data=filter(dat_an_,an==2017),aes(y=Extent),color=gray(2/40))+
+  geom_line(data=filter(dat_an_,an==2018),aes(y=Extent),color=gray(1/40))+
+  labs(title=&#39;Surface Gélée en Article&#39;,
+       subtitle =&quot;(en millions de km&lt;SUP&gt;2&lt;/SUP&gt; évolutions sur l&#39;année|1979-2018)&quot;,
+       caption=&#39;Source: NSIDC&#39;)+
+  scale_x_continuous(breaks=seq(0,365,15),
+                     labels=c(&#39;&#39;,&#39;Jan.&#39;,&#39;&#39;,&#39;Fev.&#39;,&#39;&#39;,&#39;Mar.&#39;,&#39;&#39;,&#39;Avr.&#39;,&#39;&#39;,
+                              &#39;Mai&#39;,&#39;&#39;,&#39;Juin&#39;,&#39;&#39;,&#39;Juil.&#39;,&#39;&#39;,&#39;Aou.&#39;,&#39;&#39;,
+                              &#39;Sep.&#39;,&#39;&#39;,&#39;Oct.&#39;,&#39;&#39;,&#39;Nov.&#39;,&#39;&#39;,&#39;Dec.&#39;,&#39;&#39;))+
+  theme_minimal()+
+  coord_cartesian(expand=FALSE)+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_markdown(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Le graphe obtenu marque bien la saisonnalité avec un pique de surface en février-Mars et un pique bas en Septembre. Par ailleurs, on note que les couleurs sombre se retrouvent en bas du ruban formé par les observations. Les années les plus récentes sont celles pour lesquelles les surfaces gelées sont les plus faibles.</p>
+<p>La saisonnalité peut être mis en avant comme nous l’avons fait avec la tendance à partir d’un diagramme à bâtons illustrant les moyennes mensuelles.</p>
+<pre class="r"><code>dat_m&lt;-dat %&gt;% 
+  mutate(mois=month(date_)) %&gt;% 
+  group_by(mois) %&gt;% 
+  summarise(moy_m=mean(Extent))</code></pre>
+<p>Établissons le graphe en retenant les mêmes couleurs et textes.</p>
+<pre class="r"><code>ggplot(data=dat_m,aes(x=mois,y=moy_m))+
+  geom_col(fill=&#39;#3493A2&#39;)+
+  geom_text(aes(label=round(moy_m,digits=1)),nudge_y = -0.5,
+            color=&#39;white&#39;)+
+  labs(title=&#39;Surface Gélée en Article&#39;,
+       subtitle =&quot;(en millions de km&lt;SUP&gt;2&lt;/SUP&gt; moyenne sur chaque mois entre 1978 et 2019)&quot;,
+       caption=&#39;Source: NSIDC&#39;)+
+  coord_cartesian(expand=FALSE,ylim=c(0,17))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_markdown(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>On retrouve les formes globales des courbes annuelles mais on perd l’évolution sur la période d’étude. Néanmoins, même avec les courbes annuelles, la tendance sur longue période était difficile à discerner.</p>
+<p>Le cycle graphe permet d’illustrer clairement les deux éléments l’évolution saisonnière et la tendance de long terme.Préparons les données pour le réaliser. Isolons une variable indiquant le mois et calculons la moyenne des observations pour les différents mois.</p>
+<pre class="r"><code>dat_cyc&lt;-dat %&gt;% 
+  mutate(mois=month(date_,label=TRUE)) %&gt;% 
+  group_by(mois) %&gt;% 
+  mutate(moy_m=mean(Extent))</code></pre>
+<p>Traçons le graphe. On aura une facet par mois avec à l’intérieure une courbe pour les différentes valeurs de surface gelée et un droit horizontale marquant en rouge la moyenne du mois.</p>
+<pre class="r"><code>ggplot(data=dat_cyc,aes(x=date_,y=Extent))+
+  geom_line()+
+  geom_hline(aes(yintercept=moy_m),color=&#39;red&#39;)+
+  facet_grid(~ mois, switch = &quot;x&quot;) +
+  theme_minimal()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>Le résultat nécessite en pas mal de travail pour être acceptable. Réduisons l’épaisseur de la courbe. Changeons la couleur. Modifions le fond du graphe ainsi que les annotations des axes. Ajoutons des éléments de texte (titre, sous-titre et caption).</p>
+<pre class="r"><code>ggplot(data=dat_cyc,aes(x=date_,y=Extent))+
+  geom_line(linewidth=0.2,color=&#39;#5996A0&#39;)+
+  geom_hline(aes(yintercept=moy_m),color=&#39;red&#39;)+
+  labs(title=&#39;Surface Gélée en Article&#39;,
+       subtitle =&#39;(en millions de km&lt;SUP&gt;2&lt;/SUP&gt; évolutions entre le 26/10/1978 et le 31/5/2019)&#39;,
+       caption=&#39;Source: NSIDC&#39;)+
+  facet_grid(~ mois, switch = &quot;x&quot;) +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_markdown(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.text.x = element_blank(),
+    axis.line.x = element_line(colour=&#39;black&#39;),
+    panel.grid = element_blank(),
+    panel.background = element_rect(fill=&#39;#E7E6E3&#39;,color=&#39;white&#39;)
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Le résultat est bien meilleur. Le graphe permet bien de mettre en évidence la saisonnalité des données avec des niveaux différents mois par mois et la tendance générale à la baisse des valeurs avec la forme décroissante des courbes des observations au sein de ces mois. On voit bien que le maximum annuel est intervient en mars et le minimum en septembre et que les surfaces gelées indépendamment des mois de mesure baissent.</p>
+<p>`</p>
