@@ -1,0 +1,311 @@
+---
+title: Les Area chart GT17
+author: Ludovic Vigneron
+date: '2023-04-28'
+categories:
+  - datavisualisation
+  - ggplot2
+  - GT
+  - R
+tags:
+  - Dataviz
+  - GGPLOT2
+  - gt
+  - R
+---
+
+
+
+<p><strong>Revenons sur nos graphes présentant des séries temporelles. Leur représentation la plus classique, nous l’avons vu, consiste à établir une courbe associant en ordonnées les valeurs aux dates de mesure en abscisses. Cela permet d’obtenir une vision claire des tendances mais laisse généralement peu de place à la mise en valeur des effets cumulés des évolutions. Une possibilité pour remédier à cette relative faiblesse est de mettre en avant l’aire sous la courbe. Pour cela, on peut utiliser un area chart (une graphe d’aire). Voyons cela dans ce nouveau poste.</strong></p>
+<p>Commençons par charger quelques packages utiles pour la suite.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(viridis)</code></pre>
+<p>Ceci fait, il nous faut des données pour les besoins de l’illustration. J’ai choisi de reprendre ici les mêmes que celle utilisée par Jon Swabish dans son livre ‘Better Data Visualizations’, les morts par overdoses aux Etats-Unis par type de substance. Je les ai trouver sur <a href="https://ourworldindata.org/">ourworldindata.org</a>. Le premier jeu utilisé peut-être obtenu <a href="https://ourworldindata.org/illicit-drug-use?insight=opioids-were-responsible-for-the-largest-number-of-drug-overdoses#key-insights-on-illicit-drug-use">ici</a>. Chargeons-le dans notre dossier de travail puis dans R.</p>
+<pre class="r"><code>dat &lt;- read_csv(&quot;deaths-drug-overdoses.csv&quot;)</code></pre>
+<pre><code>## Rows: 6840 Columns: 7
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (2): Entity, Code
+## dbl (5): Year, Deaths - Opioid use disorders - Sex: Both - Age: All Ages (Nu...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Le jeu de données comprend plus d’information que nécessaire. Limitons-le aux seules informations concernant les Etats-Unis à partir de l’année 2000. Profitons-en également pour renommer les variables pour avoir quelque chose de plus opérationnelle.</p>
+<pre class="r"><code>dat_&lt;-dat %&gt;% filter(Entity==&#39;United States&#39;&amp;Year&gt;1999) %&gt;% 
+  select(-Entity,-Code) %&gt;% 
+  rename(Opioide=&quot;Deaths - Opioid use disorders - Sex: Both - Age: All Ages (Number)&quot;,
+         Cocaine=&quot;Deaths - Cocaine use disorders - Sex: Both - Age: All Ages (Number)&quot;,
+         Autre=&quot;Deaths - Other drug use disorders - Sex: Both - Age: All Ages (Number)&quot;,
+         Amphetamine=&quot;Deaths - Amphetamine use disorders - Sex: Both - Age: All Ages (Number)&quot;)</code></pre>
+<p>Commençons par établir la courbe des morts par overdose d’opioïdes sur la période. Procédons directement à une série de mise en forme pour rendre le graphe attractif (titre, soustritre captions…).</p>
+<pre class="r"><code>ggplot(dat_,aes(x=Year,y=Opioide))+
+  geom_line(color=&#39;red&#39;,linewidth=1)+
+  labs(title = &quot;Nombre de décès par overdose d&#39;Opioïde&quot;,
+       subtitle = &quot;(par an aux Etats-Unis)&quot;,
+       caption = &quot;Source: OurWorldinData.org&quot;)+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  scale_y_continuous(labels=label_number_auto())+
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.2),ylim=c(0,50000))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>La courbe permet bien de rendre compte de l’évolution croissante du nombre de décès. Néanmoins, elle ne met pas en valeur le cumul de ceux-ci dans le temps. Sur la période, 525 910 individus sont morts d’overdose. Il s’agit simplement de la somme des distances entre le sommet de la courbe chaque année et l’axe des abscisses. Cette valeur est proportionnelle à l’aire sous la courbe. Celui-ci peut être mise ne évidence en utilisant le <strong>geom_aera()</strong>.</p>
+<pre class="r"><code>ggplot(dat_,aes(x=Year,y=Opioide))+
+  geom_area(fill=&#39;red&#39;)+
+  labs(title = &quot;Il y a eu 525 910 décès par overdose d&#39;Opioïde entre 2000 et 2019.&quot;,
+       subtitle = &quot;(par an aux Etats-Unis)&quot;,
+       caption = &quot;Source: OurWorldinData.org&quot;)+
+  scale_y_continuous(labels=label_number_auto())+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.2))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Ici, faire commencer l’axe des ordonnées à 0 apparaît important (comme dans le cadre des diagrammes à bâtons). Cela permet de pleinement visualiser l’importance du phénomène illustré.</p>
+<p>Le même type de graphe peut être mobilisé pour représenter la part de chaque type de substance (Opioïdes, Cocaïne, Amphétamines, Autres) dans le total des décès et son évolution au travers le temps. Il suffit de superposer les différentes surfaces correspondant aux décès générés par les différentes substances en veillant à ce que cette superposition ne cache aucune valeur si possible. Pour cela, nous commencerons par la substance la plus létale et finirons par la moins.</p>
+<pre class="r"><code>ggplot(dat_,aes(x=Year))+
+  geom_area(aes(y=Opioide,fill=&#39;Opioïdes&#39;))+
+  geom_area(aes(y=Cocaine,fill=&#39;Cocaïnes&#39;))+  
+  geom_area(aes(y=Autre,fill=&#39;Autres&#39;))+  
+  geom_area(aes(y=Amphetamine,fill=&#39;Amphétamines&#39;))+
+  labs(title = &quot;715 201 personnes sont mortes d&#39;overdose aux Etats-Unis
+       entre 2000 et 2019&quot;,
+       caption = &quot;Source: OurWorldinData.org&quot;)+
+  scale_y_continuous(labels=label_number_auto())+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  scale_fill_manual(breaks = c(&quot;Opioïdes&quot;,&quot;Cocaïnes&quot;,&quot;Amphétamines&quot;,&quot;Autres&quot;),
+                    values = c( &quot;red&quot;,&quot;blue&quot;,&quot;yellow&quot;,&quot;Magenta&quot;))+ 
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.5))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+    legend.key.size = unit(5,&quot;pt&quot;)
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Le graphe est l’équivalent de celui que l’on aurait pour réaliser en utilisant les seules courbes. Néanmoins, cela met moins en avant le total des décès par overdose.</p>
+<pre class="r"><code>ggplot(dat_,aes(x=Year))+
+  geom_line(aes(y=Opioide,color=&#39;Opioïdes&#39;),linewidth=1,show.legend = TRUE)+
+  geom_line(aes(y=Cocaine,color=&#39;Cocaïnes&#39;),linewidth=1)+  
+  geom_line(aes(y=Autre,color=&#39;Autres&#39;),linewidth=1)+  
+  geom_line(aes(y=Amphetamine,color=&#39;Amphétamines&#39;),linewidth=1)+
+  labs(title = &quot;715 201 personnes sont mortes d&#39;overdose aux Etats-Unis
+       entre 2000 et 2019&quot;,
+       caption = &quot;Source: OurWorldinData.org&quot;)+
+  scale_color_manual(&quot;&quot;,breaks = c(&quot;Opioïdes&quot;,&quot;Cocaïnes&quot;,&quot;Amphétamines&quot;,&quot;Autres&quot;),
+                    values = c( &quot;red&quot;,&quot;blue&quot;,&quot;yellow&quot;,&quot;Magenta&quot;)) +
+  scale_y_continuous(labels=label_number_auto())+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.5),ylim=c(0,50000))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Cette représentation trouve ces limites lorsque les courbes délimitant le sommet des aires illustrant les valeurs.</p>
+<p>Pour l’illustrer, prenons un nouveau jeu de données qui cette fois est centré sur l’importance des différents types d’opioïdes dans les overdoses entraînant la mort et celle de la cocaïne (toujours aux Etats-Unis sur la même période). Ce jeu est à nouveau tiré de <a href="https://ourworldindata.org/">OurWoldinData</a>. Vous les trouverez <a href="https://ourworldindata.org/illicit-drug-use?insight=opioid-deaths-in-the-us-have-risen-steeply-in-recent-years#key-insights-on-illicit-drug-use">ici</a>. Chargeons-les dans le dossier de travail et importons les dans R.</p>
+<pre class="r"><code>dat2 &lt;- read_csv(&quot;drug-overdose-death-rates.csv&quot;)</code></pre>
+<pre><code>## Rows: 22 Columns: 8
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (2): Entity, Code
+## dbl (6): Year, Any opioid death rates (CDC WONDER), Cocaine overdose death r...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Procédons à un peu de mise en forme de la data frame.</p>
+<pre class="r"><code>dat2&lt;-dat2 %&gt;% select(-Entity,-Code) %&gt;% 
+  rename(Opioide=&quot;Any opioid death rates (CDC WONDER)&quot;,
+         Cocaine=&quot;Cocaine overdose death rates (CDC WONDER)&quot;,
+         Heroine=&quot;Heroin overdose death rates (CDC WONDER)&quot;,
+         Synth_Opioide=&quot;Synthetic opioids death rates (CDC WONDER)&quot;,
+         Opioide_presc=&quot;Prescription Opioids death rates (US CDC WONDER)&quot;) %&gt;% 
+  filter(Year&gt;1999)</code></pre>
+<p>Notez qu’ici l’unité est différente des graphes précédents. On a des nombre de morts par centaines de milliers d’individus.Limitons-nous à une comparaison entre les ravages de la cocaïne et celle de l’héroïne. Commençons par illustrer les séries au travers de courbes.</p>
+<pre class="r"><code>ggplot(data=dat2,aes(x=Year))+
+  geom_line(aes(y=Cocaine,colour=&quot;Cocaïne&quot;))+
+  geom_line(aes(y=Heroine,colour=&quot;Heroïne&quot;))+
+  labs(title = &quot;Décés par overdose aux Etats-Unis&quot;,
+       subtitle = &quot;(nombre de morts pour 100 mille individus)&quot;,
+       caption = &quot;Source: OurWorldinData.org&quot;)+
+  scale_x_continuous(breaks = 2000:2020,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:19),&quot;2020&quot;))+
+  scale_colour_manual(breaks = c(&quot;Cocaïne&quot;, &quot;Heroïne&quot;),
+                      values = c(&quot;blue&quot;, &quot;red&quot;)) +
+  coord_cartesian(expand=FALSE,xlim=c(2000,2020.2),ylim=c(0,6))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    plot.caption = element_text(face=&#39;italic&#39;,hjust=1),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>On note un tendance globale à la hausse sur les deux séries. Néanmoins, on a trois périodes distinctes qui se dessinent : entre 2000 et 2010 la cocaïne tue plus que l’héroïne, puis à partir de 2010 on a le schéma inverse, et pour finir, à partir de 2018 on revient à l’équilibre précédent. Si on passe l’ensemble en aires, on perd une partie de l’information.</p>
+<pre class="r"><code>ggplot(data=dat2,aes(x=Year))+
+  geom_area(aes(y=Cocaine,fill=&quot;Cocaine&quot;))+
+  geom_area(aes(y=Heroine,fill=&quot;Heroine&quot;))+
+  labs(title = &quot;Décès par overdose aux Etats-Unis&quot;,
+       subtitle = &quot;(nombre de morts pour 100 mille individus)&quot;)+
+  scale_x_continuous(breaks = 2000:2020,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:19),&quot;2020&quot;))+
+  scale_fill_manual(breaks = c(&quot;Cocaine&quot;, &quot;Heroine&quot;),
+                    values = c(&quot;blue&quot;, &quot;red&quot;)) +
+  coord_cartesian(expand=FALSE,xlim=c(2000,2020.2))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+    legend.key.size = unit(5,&quot;pt&quot;)
+  )  </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Le niveau des décès associés à la cocaïne est caché par celui associé à l’héroïne entre 2011 et 2018. On peut y remédier en introduisant de la transparence dans les couleurs en utilisant l’option alpha.</p>
+<pre class="r"><code>ggplot(data=dat2,aes(x=Year))+
+  geom_area(aes(y=Cocaine,fill=&quot;Cocaine&quot;),alpha=0.5)+
+  geom_area(aes(y=Heroine,fill=&quot;Heroine&quot;),alpha=0.5)+
+  labs(title = &quot;Morts par overdose aux Etats-Unis&quot;,
+       subtitle = &quot;(nombre de morts pour 100 mille individus)&quot;)+
+  scale_x_continuous(breaks = 2000:2020,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:19),&quot;2020&quot;))+
+  scale_fill_manual(breaks = c(&quot;Cocaine&quot;, &quot;Heroine&quot;),
+                    values = c(&quot;blue&quot;, &quot;red&quot;)) +
+  coord_cartesian(expand=FALSE,xlim=c(2000,2020.3))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+    legend.key.size = unit(5,&quot;pt&quot;)
+  )  </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>On retrouve l’information et la superposition des couleurs permet la mise en avant de cette période particulière.</p>
+<p>Une autre application des graphes en aires consiste à empiler les données à la manière d’un diagramme à bâtons empilés. On peut le pratiquer comme nous l’avons fait avec les valeurs classiques ou de manière à remplir le repaire pour marquer les 100%.</p>
+<p>Pour illustrer cela, reprenons notre premier jeu de données. Passons les valeurs en pourcentages du nombre de décès par overdose par an.</p>
+<pre class="r"><code>dat_s&lt;-dat_ %&gt;% 
+  mutate(tot=Opioide+Cocaine+Autre+Amphetamine,
+         perc_Op=Opioide/tot,
+         perc_Coc=Cocaine/tot,
+         perc_Aut=Autre/tot,
+         perc_Amph=Amphetamine/tot)</code></pre>
+<p>Commençons par empiler les valeurs indépendamment à la manière de ce que l’on a fait avec les valeurs brutes.</p>
+<pre class="r"><code>ggplot(data=dat_s,aes(x = Year))+
+  geom_area(aes(y=perc_Op,fill=&quot;Opioïdes&quot;))+
+  geom_area(aes(y=perc_Coc,fill=&quot;Cocaïnes&quot;))+
+  geom_area(aes(y=perc_Aut,fill=&quot;Autres&quot;))+
+  geom_area(aes(y=perc_Amph,fill=&quot;Amphétamines&quot;))+
+  labs(title = &quot;Décès par overdose aux Etats-Unis&quot;)+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  scale_y_continuous(labels=label_percent())+
+  scale_fill_manual(breaks = c(&quot;Opioïdes&quot;,&quot;Cocaïnes&quot;,&quot;Amphétamines&quot;,&quot;Autres&quot;),
+                    values = c( &quot;red&quot;,&quot;blue&quot;,&quot;yellow&quot;,&quot;Magenta&quot;)) +
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.3))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+    legend.key.size = unit(5,&quot;pt&quot;)
+  ) </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Le graphe obtenu permet bien de lire les proportions mais on peut faire mieux pour établir les comparaison en les empilant pour obtenir un total annuel égal à 100%. Pour cela, transformons notre base en utilisant la fonction <strong>pivot_longer()</strong>. L’idée est d’obtenir une variable indiquant la catégorie de substance considérée et une autre contenu les pourcentages associés et ceux pour chaque observation annuelle.</p>
+<pre class="r"><code>dat_s_&lt;-dat_s %&gt;% pivot_longer(cols=c(perc_Op,perc_Coc,perc_Aut,perc_Amph),
+                               names_to = &#39;group&#39;,
+                               values_to = &#39;pers&#39;) </code></pre>
+<p>Une fois les données mises en forme, il suffit d’indiquer en esthétique (<strong>eas()</strong>) la variable définissant les groupes en couleur de remplissage (fill) et celle indiquant les pourcentage en ordonnées (y).</p>
+<pre class="r"><code>ggplot(dat_s_, aes(x=Year, y=pers, fill=group)) + 
+  geom_area(alpha=0.6 , linewidth=0.2, colour=&quot;black&quot;)+
+  labs(title = &quot;Décès par overdose aux Etats-Unis&quot;)+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  scale_y_continuous(labels=label_percent())+
+  scale_fill_manual(values = c( &quot;yellow&quot;,&quot;Magenta&quot;,&quot;blue&quot;,&quot;red&quot;),
+    labels=c(&#39;Amphétamines&#39;,&#39;Autres&#39;,&#39;Cocaïne&#39;,&#39;Opioïde&#39;))+
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.3))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+    legend.key.size = unit(5,&quot;pt&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Le choix des couleurs pour les aires représenté peut un poser problème d’accessibilité pour les personnes daltoniennes. Pour y remédier, on peut utiliser un palette du packages viridis. Ici, la fonction utilisée est <strong>scale_fill_viridis_d()</strong> qui est la version discrète de la palette pour le remplissage.</p>
+<pre class="r"><code>ggplot(dat_s_, aes(x=Year, y=pers, fill=group)) + 
+  geom_area(alpha=0.6 , linewidth=0.2, colour=&quot;black&quot;)+
+  labs(title = &quot;Décès par overdose aux Etats-Unis&quot;)+
+  scale_x_continuous(breaks = 2000:2019,labels=c(&quot;2000&quot;,paste0(&quot;&#39;&quot;,1:18),&quot;2019&quot;))+
+  scale_y_continuous(labels=label_percent())+
+  scale_fill_viridis_d(labels=c(&#39;Amphétamines&#39;,&#39;Autres&#39;,&#39;Cocaïne&#39;,&#39;Opioïde&#39;))+
+  coord_cartesian(expand=FALSE,xlim=c(2000,2019.3))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(face=&#39;italic&#39;,hjust=0.5),
+    axis.title = element_blank(),
+    axis.ticks.x.bottom = element_line(),
+    axis.line.x = element_line(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    legend.position = &#39;top&#39;,
+    legend.title = element_blank(),
+    legend.key.size = unit(5,&quot;pt&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
