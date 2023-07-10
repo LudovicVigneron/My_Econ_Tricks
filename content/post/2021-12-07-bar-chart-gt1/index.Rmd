@@ -6,11 +6,15 @@ categories:
   - datavisualisation
   - GT
   - R
+  - gt
+  - r
 tags:
   - Dataviz
   - GGPLOT2
-  - GT
   - gt
+  - GT
+  - r
+  - R
 output: html_document
 ---
 
