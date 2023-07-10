@@ -1,0 +1,233 @@
+---
+title: Les diagrammes de Gantt GT18
+author: Ludovic Vigneron
+date: '2023-07-10'
+categories:
+  - datavisualisation
+  - dataviz
+  - ggplot2
+  - gt
+  - GT
+tags:
+  - dataviz
+  - GGPLOT2
+  - GT
+---
+
+**Après une pose d'un peu plus d'un mois due aux cycles des congrès et à la fin de l'année universitaire, revenons à notre série GT. Continuons la sous-série des graphes présentant dans séries temporelles avec le diagramme de Gantt. Celui-ci est principalement utilisé dans le cadre d'outils de gestion de projets avec les réseaux PERT. Il est néanmoins possible d'être créatif et d'étendre son application à d'autres contextes. A la base, il s'agit simplement, dans un repaire avec un axe reprenant une mesure de temps et un axe autre présentant différents individus (ou tâches...), de séries de segments marquant et positionnant dans le temps un état défini (la participation à un projet...). L'ensemble peut être enrichi en ajoutant à la mise en forme des segments au travers de la couleur, de l'épaisseur ou autres.**
+
+
+Pour illustrer la technique de création d'un diagramme de Gantt, nous resterons classique en travaillant à partir d'un projet fictif impliquant 21 individus intervenant pour y concourir chacun une seule fois pour des durées différentes. Mais avant de venir à établir la data frame regroupant les données associées, commençons par charger le package *tidyverse*. Celui-ci, pour une fois, sera le seul que nous mobiliserons. 
+
+```{r}
+library(tidyverse)
+```
+
+Ceci étant fait, créons base de données à partir des informations suivantes: 
+
+```{r message=FALSE, warning=FALSE, error=FALSE}
+dat<-data.frame(
+  ind=c("Jon","Mickeal","Amy","Matt","Travis","Ally","Feilding",
+        "Stella","Andrew","George","Peter","Maarten","Andy","Stephanie",
+        "Archie","Isabel","Albert","Dona","Catherine","Laune","Joe"),
+  grp=c("A","A","A","A","A","A","A",
+        "B","B","B","B","B","B","B",
+        "C","C","C","C","C","C","C"),
+  deb=c(9,2,3,2,7,32,2,
+        32,41,22,10,14,16,9,
+        22,41,49,41,15,39,37),
+  fin=c(36,9,15,14,35,34,9,
+        35,47,32,19,44,34,29,
+        54,58,58,54,42,68,52),
+  rem=c(27,7,12,12,28,2,7,3,
+        6,10,9,30,18,20,32,
+        17,9,13,27,29,15))
+```
+
+On a cinq variables: **ind**, qui reprend le nom des intervenants; **grp**, qui indique l'appartenance de ceci à différents groupe; **deb**, qui marque le début de la période d'intervention ; **fin**, qui marque la fin de celle-ci ; **rem**, qui reprend la rémunération touchée.
+
+Visualisons le résultat de cette saisie.
+
+```{r}
+head(dat)
+```
+
+Attaquons-nous maintenant au graphe. Il sera bâti ici à partir d'un seul geom: le **geom_segment()**. Celui-ci, comme le nom l'indique, permet de tracer des segments en indiquant les positions de deux points (x;y) et (xend;yend). 
+
+```{r}
+ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind),linewidth=2)
+```
+
+La commande est simple et le résultat assez parlant. Procédons, cependant, à un peu de mise en forme afin de rentre les choses plus esthétiques. Ajoutons un titre et un sous-titre. Changeons le thème pour quelque chose de plus discret. Retravaillons les axes.
+
+```{r}
+ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind),linewidth=2)+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='jour')+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+L'ensemble est déjà plus harmonieux. Néanmoins, pour améliorer encore un peu les choses, passons d'une échelle de temps en jours à une échelle de temps en semaines.
+
+```{r}
+ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind),linewidth=2)+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='semaine')+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+Nous avons notre graphe mis en forme. Voyons comment ajouter les informations complémentaires. Commençons par les groupes. Attribuons leur une couleur sans inclure de légende ici inutile.
+
+```{r}
+ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind,color=grp),
+               linewidth=2)+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='semaine')+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position='none'
+  )
+```
+
+Les choses seraient plus claires si on regroupait les individus en fonction de leur groupe d'appartenance et que l'on commençait par le groupe intervenant en premier. Pour cela, créons une nouvelle variable pour les identifiant des individus.
+
+```{r}
+dat_o<-dat %>% 
+  arrange(grp) %>% 
+  mutate(nin=-row_number())%>% 
+  arrange(nin) %>% 
+  mutate(nind=factor(ind,levels=ind,labels=ind))
+
+ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp),
+               linewidth=2)+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='semaine')+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position='none'
+  )
+```
+
+Voilà. Finalisons le graphe en ajoutant une information l'importance des rémunérations des différents individus que l'on matérialisera par l'épaisseur des segments. Plus le trait sera épais, plus la rémunération est importante.
+
+```{r}
+ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp,linewidth=rem))+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='semaine')+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position='none'
+  )
+```
+
+A ce stade, on peut ajouter des éléments de légende pour expliciter les informations complémentaires dispensées. Plaçons la légende sur le dessus.
+
+```{r}
+ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp,linewidth=rem))+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='semaine')+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position='top'
+  )
+```
+
+Mettons la légende en forme (titre des éléments et taille des items). 
+
+```{r}
+ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp,linewidth=rem))+
+  labs(title = 'Projet x',
+       subtitle = 'Diagramme de Gantt',
+       x='semaine')+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  guides(color = guide_legend(title = "Groupe",override.aes = list(linewidth = 5)),
+         linewidth=guide_legend(title= "Rémunération"))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    axis.title.x = element_text(hjust=1,face='italic'),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position='top'
+  )
+```
+
+L'exemple pris est très classique. On peut imaginer des éléments d'information complémentaires comme la possibilité pour un individu d'intervenir plusieurs fois (dans ce cas il présentera plusieurs segments) ou un orientation différente (verticale plutôt qu'horizontale)...Toute ces modulations pourront-être à l'occasion faire l'objet de futurs post. 
+
+
+

@@ -1,0 +1,210 @@
+---
+title: Les diagrammes de Gantt GT18
+author: Ludovic Vigneron
+date: '2023-07-10'
+categories:
+  - datavisualisation
+  - dataviz
+  - ggplot2
+  - gt
+  - GT
+tags:
+  - dataviz
+  - GGPLOT2
+  - GT
+---
+
+
+
+<p><strong>Après une pose d’un peu plus d’un mois due aux cycles des congrès et à la fin de l’année universitaire, revenons à notre série GT. Continuons la sous-série des graphes présentant dans séries temporelles avec le diagramme de Gantt. Celui-ci est principalement utilisé dans le cadre d’outils de gestion de projets avec les réseaux PERT. Il est néanmoins possible d’être créatif et d’étendre son application à d’autres contextes. A la base, il s’agit simplement, dans un repaire avec un axe reprenant une mesure de temps et un axe autre présentant différents individus (ou tâches…), de séries de segments marquant et positionnant dans le temps un état défini (la participation à un projet…). L’ensemble peut être enrichi en ajoutant à la mise en forme des segments au travers de la couleur, de l’épaisseur ou autres.</strong></p>
+<p>Pour illustrer la technique de création d’un diagramme de Gantt, nous resterons classique en travaillant à partir d’un projet fictif impliquant 21 individus intervenant pour y concourir chacun une seule fois pour des durées différentes. Mais avant de venir à établir la data frame regroupant les données associées, commençons par charger le package <em>tidyverse</em>. Celui-ci, pour une fois, sera le seul que nous mobiliserons.</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+## ✔ dplyr     1.1.2     ✔ readr     2.1.4
+## ✔ forcats   1.0.0     ✔ stringr   1.5.0
+## ✔ ggplot2   3.4.2     ✔ tibble    3.2.1
+## ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
+## ✔ purrr     1.0.1     
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+<p>Ceci étant fait, créons base de données à partir des informations suivantes:</p>
+<pre class="r"><code>dat&lt;-data.frame(
+  ind=c(&quot;Jon&quot;,&quot;Mickeal&quot;,&quot;Amy&quot;,&quot;Matt&quot;,&quot;Travis&quot;,&quot;Ally&quot;,&quot;Feilding&quot;,
+        &quot;Stella&quot;,&quot;Andrew&quot;,&quot;George&quot;,&quot;Peter&quot;,&quot;Maarten&quot;,&quot;Andy&quot;,&quot;Stephanie&quot;,
+        &quot;Archie&quot;,&quot;Isabel&quot;,&quot;Albert&quot;,&quot;Dona&quot;,&quot;Catherine&quot;,&quot;Laune&quot;,&quot;Joe&quot;),
+  grp=c(&quot;A&quot;,&quot;A&quot;,&quot;A&quot;,&quot;A&quot;,&quot;A&quot;,&quot;A&quot;,&quot;A&quot;,
+        &quot;B&quot;,&quot;B&quot;,&quot;B&quot;,&quot;B&quot;,&quot;B&quot;,&quot;B&quot;,&quot;B&quot;,
+        &quot;C&quot;,&quot;C&quot;,&quot;C&quot;,&quot;C&quot;,&quot;C&quot;,&quot;C&quot;,&quot;C&quot;),
+  deb=c(9,2,3,2,7,32,2,
+        32,41,22,10,14,16,9,
+        22,41,49,41,15,39,37),
+  fin=c(36,9,15,14,35,34,9,
+        35,47,32,19,44,34,29,
+        54,58,58,54,42,68,52),
+  rem=c(27,7,12,12,28,2,7,3,
+        6,10,9,30,18,20,32,
+        17,9,13,27,29,15))</code></pre>
+<p>On a cinq variables: <strong>ind</strong>, qui reprend le nom des intervenants; <strong>grp</strong>, qui indique l’appartenance de ceci à différents groupe; <strong>deb</strong>, qui marque le début de la période d’intervention ; <strong>fin</strong>, qui marque la fin de celle-ci ; <strong>rem</strong>, qui reprend la rémunération touchée.</p>
+<p>Visualisons le résultat de cette saisie.</p>
+<pre class="r"><code>head(dat)</code></pre>
+<pre><code>##       ind grp deb fin rem
+## 1     Jon   A   9  36  27
+## 2 Mickeal   A   2   9   7
+## 3     Amy   A   3  15  12
+## 4    Matt   A   2  14  12
+## 5  Travis   A   7  35  28
+## 6    Ally   A  32  34   2</code></pre>
+<p>Attaquons-nous maintenant au graphe. Il sera bâti ici à partir d’un seul geom: le <strong>geom_segment()</strong>. Celui-ci, comme le nom l’indique, permet de tracer des segments en indiquant les positions de deux points (x;y) et (xend;yend).</p>
+<pre class="r"><code>ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind),linewidth=2)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>La commande est simple et le résultat assez parlant. Procédons, cependant, à un peu de mise en forme afin de rentre les choses plus esthétiques. Ajoutons un titre et un sous-titre. Changeons le thème pour quelque chose de plus discret. Retravaillons les axes.</p>
+<pre class="r"><code>ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind),linewidth=2)+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;jour&#39;)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>L’ensemble est déjà plus harmonieux. Néanmoins, pour améliorer encore un peu les choses, passons d’une échelle de temps en jours à une échelle de temps en semaines.</p>
+<pre class="r"><code>ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind),linewidth=2)+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;semaine&#39;)+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Nous avons notre graphe mis en forme. Voyons comment ajouter les informations complémentaires. Commençons par les groupes. Attribuons leur une couleur sans inclure de légende ici inutile.</p>
+<pre class="r"><code>ggplot(data=dat)+
+  geom_segment(aes(x=deb,y=ind,xend=fin,yend=ind,color=grp),
+               linewidth=2)+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;semaine&#39;)+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position=&#39;none&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Les choses seraient plus claires si on regroupait les individus en fonction de leur groupe d’appartenance et que l’on commençait par le groupe intervenant en premier. Pour cela, créons une nouvelle variable pour les identifiant des individus.</p>
+<pre class="r"><code>dat_o&lt;-dat %&gt;% 
+  arrange(grp) %&gt;% 
+  mutate(nin=-row_number())%&gt;% 
+  arrange(nin) %&gt;% 
+  mutate(nind=factor(ind,levels=ind,labels=ind))
+
+ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp),
+               linewidth=2)+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;semaine&#39;)+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position=&#39;none&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Voilà. Finalisons le graphe en ajoutant une information l’importance des rémunérations des différents individus que l’on matérialisera par l’épaisseur des segments. Plus le trait sera épais, plus la rémunération est importante.</p>
+<pre class="r"><code>ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp,linewidth=rem))+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;semaine&#39;)+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position=&#39;none&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>A ce stade, on peut ajouter des éléments de légende pour expliciter les informations complémentaires dispensées. Plaçons la légende sur le dessus.</p>
+<pre class="r"><code>ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp,linewidth=rem))+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;semaine&#39;)+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position=&#39;top&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Mettons la légende en forme (titre des éléments et taille des items).</p>
+<pre class="r"><code>ggplot(data=dat_o)+
+  geom_segment(aes(x=deb,y=nind,xend=fin,yend=nind,color=grp,linewidth=rem))+
+  labs(title = &#39;Projet x&#39;,
+       subtitle = &#39;Diagramme de Gantt&#39;,
+       x=&#39;semaine&#39;)+
+  scale_x_continuous(breaks=seq(0,70,7),labels=0:10)+
+  guides(color = guide_legend(title = &quot;Groupe&quot;,override.aes = list(linewidth = 5)),
+         linewidth=guide_legend(title= &quot;Rémunération&quot;))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    axis.title.x = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.y = element_blank(),
+    axis.ticks.y= element_line(linewidth = 0.025),
+    axis.line = element_line(linewidth = 0.025),
+    panel.grid.minor=element_blank(),
+    panel.grid.major.y = element_blank(),
+    legend.position=&#39;top&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>L’exemple pris est très classique. On peut imaginer des éléments d’information complémentaires comme la possibilité pour un individu d’intervenir plusieurs fois (dans ce cas il présentera plusieurs segments) ou un orientation différente (verticale plutôt qu’horizontale)…Toute ces modulations pourront-être à l’occasion faire l’objet de futurs post.</p>
