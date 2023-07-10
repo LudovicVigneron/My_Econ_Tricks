@@ -12,6 +12,7 @@ tags:
   - dataviz
   - GGPLOT2
   - GT
+  - R
 ---
 
 **Après une pose d'un peu plus d'un mois due aux cycles des congrès et à la fin de l'année universitaire, revenons à notre série GT. Continuons la sous-série des graphes présentant dans séries temporelles avec le diagramme de Gantt. Celui-ci est principalement utilisé dans le cadre d'outils de gestion de projets avec les réseaux PERT. Il est néanmoins possible d'être créatif et d'étendre son application à d'autres contextes. A la base, il s'agit simplement, dans un repaire avec un axe reprenant une mesure de temps et un axe autre présentant différents individus (ou tâches...), de séries de segments marquant et positionnant dans le temps un état défini (la participation à un projet...). L'ensemble peut être enrichi en ajoutant à la mise en forme des segments au travers de la couleur, de l'épaisseur ou autres.**
