@@ -4,12 +4,13 @@ author: Ludovic Vigneron
 date: '2021-12-07'
 categories:
   - datavisualisation
-  - R
   - GT
+  - R
 tags:
   - Dataviz
   - GGPLOT2
   - GT
+  - gt
 output: html_document
 ---
 
