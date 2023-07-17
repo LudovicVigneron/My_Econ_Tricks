@@ -1,0 +1,229 @@
+---
+title: "Les Stream graph GT 19"
+author: "Ludovic Vigneron"
+date: "2023-07-10"
+output: html_document
+---
+
+Enchaînons avec une catégorie de graphes, à mon avis, plus spectaculaire: les stream graph (en français graphes de flux). Il s'agit d'une forme d'aera charts superposés et articulés autour d'un axe central. Il présente un aspect organique qui engage le lecteur à en déchiffrer les informations. Celles-ci sont simplement plusieurs séries temporelles exprimées dans la même unités. L'objectif ici est plus d'illustrer l'évolution relative des quantités représentées dans le temps que leur valeur exacte qui apparaît difficile à lire.
+
+Pour les besoins de l'illustration, nous utilisons des données sur l'utilisation des énergies primaires dans le monde entre 1965 et 2022. Nous les avons obtenu via le site [our worl in data](https://ourworldindata.org/sources-global-energy). Elles peuvent également être charger [ici](primary-energy-source-bar.csv). Nous les avons chargé dans notre dossier de travail. Mais avant d'ouvrir le fichier dans R et d'attaquer la mise en forme chargeons les packages nécessaires aux opérations qui vont suivre : le *tidyverse* (comme d'habitude) et *ggstream*, qui permet d'utiliser le **geom_stream()** et ses dérivés. 
+
+```{r}
+library(ggstream)
+library(tidyverse)
+```
+
+Les packages étant en place. Chargeons les données. Limitons la base aux données établies uniquement pour le monde (World). Renommons les variables pour avoir quelque chose de plus opérationnelle et agrégeons l'ensemble des énergies renouvelables dans une catégorie unique. 
+
+```{r}
+dat <- read_csv("primary-energy-source-bar.csv") %>% 
+  filter(Entity=="World") %>% 
+  select(-Entity,-Code) %>% 
+  rename(Annee="Year",
+         Charbon="Coal consumption - TWh",
+         Petrole="Oil consumption - TWh",
+         Gaz="Gas consumption - TWh",
+         Nucleaire="Nuclear consumption - TWh",
+         Hydrolique="Hydro consumption - TWh",
+         Heolienne="Wind consumption - TWh",
+         Solaire="Solar consumption - TWh",
+         Autre_renouv="Other renewables (including geothermal and biomass) - TWh") %>% 
+  mutate(Renouvelable=Hydrolique+Heolienne+Solaire+Autre_renouv) %>% 
+  select(-Hydrolique,-Heolienne,-Solaire,-Autre_renouv)
+```
+
+Reste alors à ordonner les données de manière à pouvoir être traité par le **geom_stream()**. On passe d'un format "wide" à un format "long" en mobilisant la fonction **pivot_longer()**.
+
+```{r}
+dat_long<-pivot_longer(dat,cols=names(dat)[2:6],names_to = "Energie",
+                       values_to = "TWh")
+```
+
+Visualisons rapidement les données (juste pour l'année 1965).
+
+```{r}
+head(dat_long,5)
+```
+
+Attaquons-nous au graphe. Pour commencer, utilisons le **geom_stream()** sans mis en forme.
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream() 
+```
+
+L'ensemble est assez parlant. Mais on peut améliorer les choses et cela d'autant que les unités de l'axes des ordonnées sont peu utiles. Commençons par adopter un thème plus simple, supprimer les informations superflus et ajuster l'axe du temps.
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream() +
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    axis.title= element_blank(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank()
+  )
+```
+
+intégrons les noms des énergies dans le graphe à l'aide du **geom_stream_label()** et profitons en pour supprimer la légende. Ajoutons également un titre, un sous-titre et un caption.
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream() +
+  geom_stream_label(aes(label = Energie))+
+  labs(title="Evolutions de la consommation d'énergies primaires",
+       subtitle = "dans le monde entre 1965 et 2022",
+       caption= "Source: OurWorldinData.com")+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    plot.caption = element_text(hjust=1,face='italic'),
+    axis.title= element_blank(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = 'none'
+  )
+```
+
+Ajustons la position du texte (Renouvelable dépasse du repaire). Séparons également les zone par un léger trait noir et mettons en forme l'axe du temps.
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25) +
+  geom_stream_label(aes(label = Energie),extra_span = 0.001,n_grid = 150)+
+  labs(title="Evolutions de la consommation d'énergies primaires",
+       subtitle = "dans le monde entre 1965 et 2022",
+       caption= "Source: OurWorldinData.com")+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    plot.caption = element_text(hjust=1,face='italic'),
+    axis.title= element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = 'none'
+  )
+```
+
+Sur la même base, on peut établir des graphes de type aires empilées en définissant le type idoine dans le **geom_stream()**. Commençons par le type "ridge".
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25) +
+  geom_stream_label(aes(label = Energie),extra_span = 0.001,n_grid = 150)+
+  labs(title="Evolutions de la consommation d'énergies primaires",
+       subtitle = "dans le monde entre 1965 et 2022",
+       caption= "Source: OurWorldinData.com")+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    plot.caption = element_text(hjust=1,face='italic'),
+    axis.title= element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = 'none'
+  )
+```
+
+Revoyons les étiquette en les supprimant au profit d'une légende et ajoutons un axe des ordonnées mis en forme.
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25,type = "ridge") +
+  labs(title="Evolutions de la consommation d'énergies primaires",
+       subtitle = "dans le monde entre 1965 et 2022",
+       caption= "Source: OurWorldinData.com",
+       y="Twh")+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    plot.caption = element_text(hjust=1,face='italic'),
+    axis.title.x = element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    axis.title.y = element_text(hjust=1,angle=0),
+    panel.grid = element_blank(),
+    legend.position = 'top'
+  )
+```
+
+L'ensemble peut être normé à 1 (100%) en utilisant le type "proportional".
+
+```{r}
+ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25,type = "proportional") +
+  labs(title="Evolutions de la consommation d'énergies primaires",
+       subtitle = "dans le monde entre 1965 et 2022",
+       caption= "Source: OurWorldinData.com")+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    plot.subtitle = element_text(hjust=0.5,face='italic'),
+    plot.caption = element_text(hjust=1,face='italic'),
+    axis.title= element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    panel.grid = element_blank(),
+    legend.position = 'top'
+  )
+```
+
+Les possibilités sont multiples. Il ne teint qu'à vous de pousser la personnalisation du graphe. Celui-ci peut même être envisagé comme interactif. Pour cela, il est nécessaire d'ajouter un nouveau package, *steamgraph*, que vous pouvez installer à partir de la commande **install_github()** du package *remotes*. Il permet de créer un html widge à partir de nos données.
+
+```{r, eval=FALSE}
+install.packages("remotes")
+remotes::install_github("hrbrmstr/streamgraph")
+```
+
+Une fois installé reste à l'appéler dans l'environnement de travail.
+
+```{r}
+library(streamgraph)
+```
+
+Pour le reste, la syntaxe utilisée diffère légèrement de celle de *ggplot2*. Elle est néanmoins adapté à l'utilisation de %>%. Commençons par une version très simple de notre graphe. Entrons juste nos données et fixons la taille du rendu.
+
+```{r}
+streamgraph(dat_long, key="Energie", value="TWh", date="Annee",
+                   height="300px", width="1000px")
+```
+
+On peut sélectionner avec la souris la série désirée et obtenir pour l'année correspondant à l'endroit où le pointeur est posé la valeur de consommation de l'énergie primaire associé. L'ensemble reste peu signifiant faute d'indication. Améliorons les choses. Commençons par modifier l'axe des abscisses pour revenir à des intervalle de 5 ans et supprimer l'axe des ordonnées, avec les commandes **sg_axis_x()** et **sg_axis_y()**. Puis, ajoutons une légende, avec la commande **sg_legend()**, ainsi qu'un titre, avec la commande **sg_title()**, permettant de mieux comprendre les choses.
+
+```{r}
+streamgraph(dat_long, key="Energie", value="TWh", date="Annee",
+                   height="300px", width="1000px") %>% 
+  sg_axis_x(5, "year", "%Y") %>% 
+  sg_axis_y(0) %>%
+  sg_legend(TRUE, "Energie: ") %>% 
+  sg_title(title = "Energies primaires consommées dans le monde en Twh") 
+```
+
+Voilà pour les streamgraph... Ce n'est néanmoins qu'un aperçu limité. Si vous parcourez les internet vous verrez que les applications de ce type de représentation se multiplient et se concurrencent en terme de créativité visuelle. Quand à nous, retrouvons-nous pour un autre type de graphe permettant d'illustrer les évolutions d'une ou plusieurs mesures dans le temps.
+
+
+
+
+
+

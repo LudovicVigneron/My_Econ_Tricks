@@ -1,0 +1,241 @@
+---
+title: Les stream graph GT19
+author: Ludovic Vigneron
+date: '2023-07-17'
+slug: []
+categories:
+  - datavisualisation
+  - dataviz
+  - gt
+  - ggplot2
+  - GT
+  - r
+  - R
+tags:
+  - dataviz
+  - Dataviz
+  - ggplot2
+  - GGPLOT2
+  - gt
+  - GT
+  - r
+  - R
+---
+
+<script src="{{< blogdown/postref >}}index_files/htmlwidgets/htmlwidgets.js"></script>
+<script src="{{< blogdown/postref >}}index_files/d3/d3.min.js"></script>
+<link href="{{< blogdown/postref >}}index_files/colorbrewer/colorbrewer.css" rel="stylesheet" />
+<script src="{{< blogdown/postref >}}index_files/colorbrewer/colorbrewer.js"></script>
+<link href="{{< blogdown/postref >}}index_files/streamgraph/streamgraph.css" rel="stylesheet" />
+<script src="{{< blogdown/postref >}}index_files/streamgraph-binding/streamgraph.js"></script>
+
+
+<p><strong>Enchaînons avec une catégorie de graphes, à mon avis, plus spectaculaire: les stream graph (en français graphes de flux). Il s’agit d’une forme d’aera charts superposés et articulés autour d’un axe central. Il présente un aspect organique qui engage le lecteur à en déchiffrer les informations. Celles-ci sont simplement plusieurs séries temporelles exprimées dans la même unités. L’objectif ici est plus d’illustrer l’évolution relative des quantités représentées dans le temps que leur valeur exacte qui apparaît difficile à lire.</strong></p>
+<p>Pour les besoins de l’illustration, nous utilisons des données sur l’utilisation des énergies primaires dans le monde entre 1965 et 2022. Nous les avons obtenu via le site <a href="https://ourworldindata.org/sources-global-energy">our worl in data</a>. Elles peuvent également être charger <a href="primary-energy-source-bar.csv">ici</a>. Nous les avons chargé dans notre dossier de travail. Mais avant d’ouvrir le fichier dans R et d’attaquer la mise en forme chargeons les packages nécessaires aux opérations qui vont suivre : le <em>tidyverse</em> (comme d’habitude) et <em>ggstream</em>, qui permet d’utiliser le <strong>geom_stream()</strong> et ses dérivés.</p>
+<pre class="r"><code>library(ggstream)</code></pre>
+<pre><code>## Warning: le package &#39;ggstream&#39; a été compilé avec la version R 4.3.1</code></pre>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+## ✔ dplyr     1.1.2     ✔ readr     2.1.4
+## ✔ forcats   1.0.0     ✔ stringr   1.5.0
+## ✔ ggplot2   3.4.2     ✔ tibble    3.2.1
+## ✔ lubridate 1.9.2     ✔ tidyr     1.3.0
+## ✔ purrr     1.0.1     
+## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+## ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+<p>Les packages étant en place. Chargeons les données. Limitons la base aux données établies uniquement pour le monde (World). Renommons les variables pour avoir quelque chose de plus opérationnelle et agrégeons l’ensemble des énergies renouvelables dans une catégorie unique.</p>
+<pre class="r"><code>dat &lt;- read_csv(&quot;primary-energy-source-bar.csv&quot;) %&gt;% 
+  filter(Entity==&quot;World&quot;) %&gt;% 
+  select(-Entity,-Code) %&gt;% 
+  rename(Annee=&quot;Year&quot;,
+         Charbon=&quot;Coal consumption - TWh&quot;,
+         Petrole=&quot;Oil consumption - TWh&quot;,
+         Gaz=&quot;Gas consumption - TWh&quot;,
+         Nucleaire=&quot;Nuclear consumption - TWh&quot;,
+         Hydrolique=&quot;Hydro consumption - TWh&quot;,
+         Heolienne=&quot;Wind consumption - TWh&quot;,
+         Solaire=&quot;Solar consumption - TWh&quot;,
+         Autre_renouv=&quot;Other renewables (including geothermal and biomass) - TWh&quot;) %&gt;% 
+  mutate(Renouvelable=Hydrolique+Heolienne+Solaire+Autre_renouv) %&gt;% 
+  select(-Hydrolique,-Heolienne,-Solaire,-Autre_renouv)</code></pre>
+<pre><code>## Rows: 5713 Columns: 11
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr (2): Entity, Code
+## dbl (9): Year, Coal consumption - TWh, Oil consumption - TWh, Gas consumptio...
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<p>Reste alors à ordonner les données de manière à pouvoir être traité par le <strong>geom_stream()</strong>. On passe d’un format “wide” à un format “long” en mobilisant la fonction <strong>pivot_longer()</strong>.</p>
+<pre class="r"><code>dat_long&lt;-pivot_longer(dat,cols=names(dat)[2:6],names_to = &quot;Energie&quot;,
+                       values_to = &quot;TWh&quot;)</code></pre>
+<p>Visualisons rapidement les données (juste pour l’année 1965).</p>
+<pre class="r"><code>head(dat_long,5)</code></pre>
+<pre><code>## # A tibble: 5 × 3
+##   Annee Energie          TWh
+##   &lt;dbl&gt; &lt;chr&gt;          &lt;dbl&gt;
+## 1  1965 Charbon      16140. 
+## 2  1965 Petrole      17997. 
+## 3  1965 Gaz           6304. 
+## 4  1965 Nucleaire       72.5
+## 5  1965 Renouvelable  2786.</code></pre>
+<p>Attaquons-nous au graphe. Pour commencer, utilisons le <strong>geom_stream()</strong> sans mis en forme.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream() </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>L’ensemble est assez parlant. Mais on peut améliorer les choses et cela d’autant que les unités de l’axes des ordonnées sont peu utiles. Commençons par adopter un thème plus simple, supprimer les informations superflus et ajuster l’axe du temps.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream() +
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    axis.title= element_blank(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>intégrons les noms des énergies dans le graphe à l’aide du <strong>geom_stream_label()</strong> et profitons en pour supprimer la légende. Ajoutons également un titre, un sous-titre et un caption.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream() +
+  geom_stream_label(aes(label = Energie))+
+  labs(title=&quot;Evolutions de la consommation d&#39;énergies primaires&quot;,
+       subtitle = &quot;dans le monde entre 1965 et 2022&quot;,
+       caption= &quot;Source: OurWorldinData.com&quot;)+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title= element_blank(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = &#39;none&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Ajustons la position du texte (Renouvelable dépasse du repaire). Séparons également les zone par un léger trait noir et mettons en forme l’axe du temps.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25) +
+  geom_stream_label(aes(label = Energie),extra_span = 0.001,n_grid = 150)+
+  labs(title=&quot;Evolutions de la consommation d&#39;énergies primaires&quot;,
+       subtitle = &quot;dans le monde entre 1965 et 2022&quot;,
+       caption= &quot;Source: OurWorldinData.com&quot;)+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title= element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = &#39;none&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Sur la même base, on peut établir des graphes de type aires empilées en définissant le type idoine dans le <strong>geom_stream()</strong>. Commençons par le type “ridge”.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25) +
+  geom_stream_label(aes(label = Energie),extra_span = 0.001,n_grid = 150)+
+  labs(title=&quot;Evolutions de la consommation d&#39;énergies primaires&quot;,
+       subtitle = &quot;dans le monde entre 1965 et 2022&quot;,
+       caption= &quot;Source: OurWorldinData.com&quot;)+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title= element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    axis.text.y = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = &#39;none&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Revoyons les étiquette en les supprimant au profit d’une légende et ajoutons un axe des ordonnées mis en forme.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25,type = &quot;ridge&quot;) +
+  labs(title=&quot;Evolutions de la consommation d&#39;énergies primaires&quot;,
+       subtitle = &quot;dans le monde entre 1965 et 2022&quot;,
+       caption= &quot;Source: OurWorldinData.com&quot;,
+       y=&quot;Twh&quot;)+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title.x = element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    axis.title.y = element_text(hjust=1,angle=0),
+    panel.grid = element_blank(),
+    legend.position = &#39;top&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>L’ensemble peut être normé à 1 (100%) en utilisant le type “proportional”.</p>
+<pre class="r"><code>ggplot(dat_long, aes(x = Annee, y = TWh, fill = Energie)) +
+  geom_stream(color = 1, lwd = 0.25,type = &quot;proportional&quot;) +
+  labs(title=&quot;Evolutions de la consommation d&#39;énergies primaires&quot;,
+       subtitle = &quot;dans le monde entre 1965 et 2022&quot;,
+       caption= &quot;Source: OurWorldinData.com&quot;)+
+  scale_x_continuous(breaks=seq(1965,2020,5))+
+  coord_cartesian(xlim=c(1964,2023))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title= element_blank(),
+    axis.line.x = element_line(),
+    axis.ticks.x = element_line(),
+    panel.grid = element_blank(),
+    legend.position = &#39;top&#39;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>Les possibilités sont multiples. Il ne teint qu’à vous de pousser la personnalisation du graphe. Celui-ci peut même être envisagé comme interactif. Pour cela, il est nécessaire d’ajouter un nouveau package, <em>steamgraph</em>, que vous pouvez installer à partir de la commande <strong>install_github()</strong> du package <em>remotes</em>. Il permet de créer un html widge à partir de nos données.</p>
+<pre class="r"><code>install.packages(&quot;remotes&quot;)
+remotes::install_github(&quot;hrbrmstr/streamgraph&quot;)</code></pre>
+<p>Une fois installé reste à l’appeler dans l’environnement de travail.</p>
+<pre class="r"><code>library(streamgraph)</code></pre>
+<p>Pour le reste, la syntaxe utilisée diffère légèrement de celle de <em>ggplot2</em>. Elle est néanmoins adapté à l’utilisation de %&gt;%. Commençons par une version très simple de notre graphe. Entrons juste nos données et fixons la taille du rendu.</p>
+<pre class="r"><code>streamgraph(dat_long, key=&quot;Energie&quot;, value=&quot;TWh&quot;, date=&quot;Annee&quot;,
+                   height=&quot;300px&quot;, width=&quot;1000px&quot;)</code></pre>
+<pre><code>## Warning in widget_html(name, package, id = x$id, style = css(width =
+## validateCssUnit(sizeInfo$width), : streamgraph_html returned an object of class
+## `list` instead of a `shiny.tag`.</code></pre>
+<pre><code>## Warning: `bindFillRole()` only works on htmltools::tag() objects (e.g., div(),
+## p(), etc.), not objects of type &#39;list&#39;.</code></pre>
+<div id="htmlwidget-1" class="streamgraph html-widget " style="width:1000px;height:300px;"></div>
+<div id="htmlwidget-f0a87f811b3d69cc0d6f-legend" style="width:1000px" class="streamgraph html-widget -legend"><center><label style='padding-right:5px' for='htmlwidget-f0a87f811b3d69cc0d6f-select'></label><select id='htmlwidget-f0a87f811b3d69cc0d6f-select' style='visibility:hidden;'></select></center></div>
+<script type="application/json" data-for="htmlwidget-1">{"x":{"data":{"key":["Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable"],"value":[16140.178,6303.8267,72.469345,17996.53,2785.835585,16324.094,6868.8228,97.70497,19352.656,2970.873606,16060.81,7374.067,116.35517,20744.31,3036.32258,16301.146,8044.3594,147.87189,22499.12,3201.33711,16798.734,8833.446,175.31134,24363.566,3389.539216,17058.607,9614.819,223.80801,26520.377,3553.76445,16965.777,10293.2,311.28723,28021.105,3716.281066,17158.637,10861.724,431.79926,30139.71,3892.03602,17667.85,11377.838,578.5737,32560.594,3953.24131,17682.05,11659.864,756.48175,32120.803,4339.00966,18024.537,11659.741,1049.4497,31746.924,4392.4797,18688.486,12354.144,1227.7115,33782.324,4387.91046,19241.3,12759.843,1528.1375,34960.312,4538.125624,19457.904,13293.952,1775.7009,36550.02,4908.746690971,20363.537,14118.032,1846.8246,37114.258,5157.180261943,20857.61,14236.961,2020.0956,35525.133,5274.288418333,21149.68,14395.873,2385.6428,34268.04,5395.567048333,21385.451,14469.734,2588.3174,33208.07,5516.553204163,22046.346,14703.833,2933.459,32956.613,5764.418925421,23001.078,15902.68,3559.8567,33680.13,5977.091653558,23987.826,16262.222,4224.8374,33667.098,6095.98458555,24258.035,16421.11,4525.0864,34712.902,6196.05344113,25212.426,17281.895,4922.331,35404.36,6295.168080013,25967.129,18088.848,5366.448,36551.46,6496.675257443,26215.674,18888.676,5518.996,37164.043,6503.93618234,25906.625,19481.125,5676.7207,37676.57,6756.7889025,25658.182,19972.84,5948.311,37663.043,6921.4974574,25558.422,20063.484,5993.4634,38147.168,6950.545999,25688.932,20265.482,6199.8696,37961.344,7360.4227844,25788.928,20389.613,6316.248,38782.055,7424.7729703,25966.357,21104.494,6590.213,39460.77,7824.8399095,26584.988,22159.256,6828.8057,40334.64,7938.4779965,26540.139,22030.393,6781.843,41453.445,8111.6364312,26372.479,22433.998,6898.552,41670.18,8202.3982876,26485.373,23071.902,7161.0522,42383.22,8301.6848746,27434.627,23994.258,7322.6826,42978.04,8494.0086864,27864.945,24316.832,7480.557,43377.22,8286.4172284,28962.951,25030.172,7551.0767,43676.043,8463.092874,31506.16,25729.617,7350.6562,44652.22,8472.033418,33685.52,26721.139,7635.7695,46387.812,9101.168513,36183.348,27438.281,7607.3535,46887.754,9437.92609,38068.867,28161.41,7653.7217,47388.004,9837.07405,40231.242,29315.736,7450.836,47942.97,10108.140576,40780.08,30026.16,7381.6016,47537.797,10772.008963,40144.2,29405.35,7232.23,46489.17,10947.419926,41937.48,31593.695,7373.091,47971.41,11750.11806,43895.938,32349.238,7021.4863,48312.62,12264.24864,44022.523,33203.004,6500.3687,49113.688,13053.66165,44670.625,33741.91,6512.8066,49590.31,13876.00843,44858.12,33977.36,6606.008,49934.684,14543.36946,43669.83,34788.023,6655.106,50964.02,15064.12514,42715.14,35592.57,6714.155,51992.56,15916.41974,43129.867,36521.11,6734.279,52866.46,16884.3726,43795.4,38355.83,6855.408,53405.137,17941.0811,43534.613,39058.266,7071.7817,53512.844,18861.2377,42233.39,38603.406,6776.866,48609.645,20060.7403,44564.812,40670.66,7037.069,51349.656,21181.0945,44854.035,39413.043,6702.3394,52969.59,22649.4609],"date":["1965-01-01","1965-01-01","1965-01-01","1965-01-01","1965-01-01","1966-01-01","1966-01-01","1966-01-01","1966-01-01","1966-01-01","1967-01-01","1967-01-01","1967-01-01","1967-01-01","1967-01-01","1968-01-01","1968-01-01","1968-01-01","1968-01-01","1968-01-01","1969-01-01","1969-01-01","1969-01-01","1969-01-01","1969-01-01","1970-01-01","1970-01-01","1970-01-01","1970-01-01","1970-01-01","1971-01-01","1971-01-01","1971-01-01","1971-01-01","1971-01-01","1972-01-01","1972-01-01","1972-01-01","1972-01-01","1972-01-01","1973-01-01","1973-01-01","1973-01-01","1973-01-01","1973-01-01","1974-01-01","1974-01-01","1974-01-01","1974-01-01","1974-01-01","1975-01-01","1975-01-01","1975-01-01","1975-01-01","1975-01-01","1976-01-01","1976-01-01","1976-01-01","1976-01-01","1976-01-01","1977-01-01","1977-01-01","1977-01-01","1977-01-01","1977-01-01","1978-01-01","1978-01-01","1978-01-01","1978-01-01","1978-01-01","1979-01-01","1979-01-01","1979-01-01","1979-01-01","1979-01-01","1980-01-01","1980-01-01","1980-01-01","1980-01-01","1980-01-01","1981-01-01","1981-01-01","1981-01-01","1981-01-01","1981-01-01","1982-01-01","1982-01-01","1982-01-01","1982-01-01","1982-01-01","1983-01-01","1983-01-01","1983-01-01","1983-01-01","1983-01-01","1984-01-01","1984-01-01","1984-01-01","1984-01-01","1984-01-01","1985-01-01","1985-01-01","1985-01-01","1985-01-01","1985-01-01","1986-01-01","1986-01-01","1986-01-01","1986-01-01","1986-01-01","1987-01-01","1987-01-01","1987-01-01","1987-01-01","1987-01-01","1988-01-01","1988-01-01","1988-01-01","1988-01-01","1988-01-01","1989-01-01","1989-01-01","1989-01-01","1989-01-01","1989-01-01","1990-01-01","1990-01-01","1990-01-01","1990-01-01","1990-01-01","1991-01-01","1991-01-01","1991-01-01","1991-01-01","1991-01-01","1992-01-01","1992-01-01","1992-01-01","1992-01-01","1992-01-01","1993-01-01","1993-01-01","1993-01-01","1993-01-01","1993-01-01","1994-01-01","1994-01-01","1994-01-01","1994-01-01","1994-01-01","1995-01-01","1995-01-01","1995-01-01","1995-01-01","1995-01-01","1996-01-01","1996-01-01","1996-01-01","1996-01-01","1996-01-01","1997-01-01","1997-01-01","1997-01-01","1997-01-01","1997-01-01","1998-01-01","1998-01-01","1998-01-01","1998-01-01","1998-01-01","1999-01-01","1999-01-01","1999-01-01","1999-01-01","1999-01-01","2000-01-01","2000-01-01","2000-01-01","2000-01-01","2000-01-01","2001-01-01","2001-01-01","2001-01-01","2001-01-01","2001-01-01","2002-01-01","2002-01-01","2002-01-01","2002-01-01","2002-01-01","2003-01-01","2003-01-01","2003-01-01","2003-01-01","2003-01-01","2004-01-01","2004-01-01","2004-01-01","2004-01-01","2004-01-01","2005-01-01","2005-01-01","2005-01-01","2005-01-01","2005-01-01","2006-01-01","2006-01-01","2006-01-01","2006-01-01","2006-01-01","2007-01-01","2007-01-01","2007-01-01","2007-01-01","2007-01-01","2008-01-01","2008-01-01","2008-01-01","2008-01-01","2008-01-01","2009-01-01","2009-01-01","2009-01-01","2009-01-01","2009-01-01","2010-01-01","2010-01-01","2010-01-01","2010-01-01","2010-01-01","2011-01-01","2011-01-01","2011-01-01","2011-01-01","2011-01-01","2012-01-01","2012-01-01","2012-01-01","2012-01-01","2012-01-01","2013-01-01","2013-01-01","2013-01-01","2013-01-01","2013-01-01","2014-01-01","2014-01-01","2014-01-01","2014-01-01","2014-01-01","2015-01-01","2015-01-01","2015-01-01","2015-01-01","2015-01-01","2016-01-01","2016-01-01","2016-01-01","2016-01-01","2016-01-01","2017-01-01","2017-01-01","2017-01-01","2017-01-01","2017-01-01","2018-01-01","2018-01-01","2018-01-01","2018-01-01","2018-01-01","2019-01-01","2019-01-01","2019-01-01","2019-01-01","2019-01-01","2020-01-01","2020-01-01","2020-01-01","2020-01-01","2020-01-01","2021-01-01","2021-01-01","2021-01-01","2021-01-01","2021-01-01","2022-01-01","2022-01-01","2022-01-01","2022-01-01","2022-01-01"]},"markers":null,"annotations":null,"offset":"silhouette","interactive":true,"interpolate":"cardinal","palette":"Spectral","text":"black","tooltip":"black","x_tick_interval":10,"x_tick_units":"year","x_tick_format":"%Y","y_tick_count":5,"y_tick_format":",g","top":20,"right":40,"bottom":30,"left":50,"legend":false,"legend_label":"","fill":"brewer","label_col":"black","x_scale":"date","sort":true,"order":"none"},"evals":[],"jsHooks":[]}</script>
+<p>On peut sélectionner avec la souris la série désirée et obtenir pour l’année correspondant à l’endroit où le pointeur est posé la valeur de consommation de l’énergie primaire associé. L’ensemble reste peu signifiant faute d’indication. Améliorons les choses. Commençons par modifier l’axe des abscisses pour revenir à des intervalle de 5 ans et supprimer l’axe des ordonnées, avec les commandes <strong>sg_axis_x()</strong> et <strong>sg_axis_y()</strong>. Puis, ajoutons une légende, avec la commande <strong>sg_legend()</strong>, ainsi qu’un titre, avec la commande <strong>sg_title()</strong>, permettant de mieux comprendre les choses.</p>
+<pre class="r"><code>streamgraph(dat_long, key=&quot;Energie&quot;, value=&quot;TWh&quot;, date=&quot;Annee&quot;,
+                   height=&quot;300px&quot;, width=&quot;1000px&quot;) %&gt;% 
+  sg_axis_x(5, &quot;year&quot;, &quot;%Y&quot;) %&gt;% 
+  sg_axis_y(0) %&gt;%
+  sg_legend(TRUE, &quot;Energie: &quot;) %&gt;% 
+  sg_title(title = &quot;Energies primaires consommées dans le monde en Twh&quot;) </code></pre>
+<pre><code>## Warning in widget_html(name, package, id = x$id, style = css(width =
+## validateCssUnit(sizeInfo$width), : streamgraph_html returned an object of class
+## `list` instead of a `shiny.tag`.</code></pre>
+<pre><code>## Warning: `bindFillRole()` only works on htmltools::tag() objects (e.g., div(),
+## p(), etc.), not objects of type &#39;list&#39;.</code></pre>
+<div style="margin:auto;text-align:center">
+<strong>Energies primaires consommées dans le monde en Twh</strong>
+<br/>
+<div id="htmlwidget-2" class="streamgraph html-widget " style="width:1000px;height:300px;"></div>
+<div id="htmlwidget-8102bd0303944e8cdcf6-legend" style="width:1000px" class="streamgraph html-widget -legend"><center><label style='padding-right:5px' for='htmlwidget-8102bd0303944e8cdcf6-select'></label><select id='htmlwidget-8102bd0303944e8cdcf6-select' style='visibility:hidden;'></select></center></div>
+<script type="application/json" data-for="htmlwidget-2">{"x":{"data":{"key":["Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable","Charbon","Gaz","Nucleaire","Petrole","Renouvelable"],"value":[16140.178,6303.8267,72.469345,17996.53,2785.835585,16324.094,6868.8228,97.70497,19352.656,2970.873606,16060.81,7374.067,116.35517,20744.31,3036.32258,16301.146,8044.3594,147.87189,22499.12,3201.33711,16798.734,8833.446,175.31134,24363.566,3389.539216,17058.607,9614.819,223.80801,26520.377,3553.76445,16965.777,10293.2,311.28723,28021.105,3716.281066,17158.637,10861.724,431.79926,30139.71,3892.03602,17667.85,11377.838,578.5737,32560.594,3953.24131,17682.05,11659.864,756.48175,32120.803,4339.00966,18024.537,11659.741,1049.4497,31746.924,4392.4797,18688.486,12354.144,1227.7115,33782.324,4387.91046,19241.3,12759.843,1528.1375,34960.312,4538.125624,19457.904,13293.952,1775.7009,36550.02,4908.746690971,20363.537,14118.032,1846.8246,37114.258,5157.180261943,20857.61,14236.961,2020.0956,35525.133,5274.288418333,21149.68,14395.873,2385.6428,34268.04,5395.567048333,21385.451,14469.734,2588.3174,33208.07,5516.553204163,22046.346,14703.833,2933.459,32956.613,5764.418925421,23001.078,15902.68,3559.8567,33680.13,5977.091653558,23987.826,16262.222,4224.8374,33667.098,6095.98458555,24258.035,16421.11,4525.0864,34712.902,6196.05344113,25212.426,17281.895,4922.331,35404.36,6295.168080013,25967.129,18088.848,5366.448,36551.46,6496.675257443,26215.674,18888.676,5518.996,37164.043,6503.93618234,25906.625,19481.125,5676.7207,37676.57,6756.7889025,25658.182,19972.84,5948.311,37663.043,6921.4974574,25558.422,20063.484,5993.4634,38147.168,6950.545999,25688.932,20265.482,6199.8696,37961.344,7360.4227844,25788.928,20389.613,6316.248,38782.055,7424.7729703,25966.357,21104.494,6590.213,39460.77,7824.8399095,26584.988,22159.256,6828.8057,40334.64,7938.4779965,26540.139,22030.393,6781.843,41453.445,8111.6364312,26372.479,22433.998,6898.552,41670.18,8202.3982876,26485.373,23071.902,7161.0522,42383.22,8301.6848746,27434.627,23994.258,7322.6826,42978.04,8494.0086864,27864.945,24316.832,7480.557,43377.22,8286.4172284,28962.951,25030.172,7551.0767,43676.043,8463.092874,31506.16,25729.617,7350.6562,44652.22,8472.033418,33685.52,26721.139,7635.7695,46387.812,9101.168513,36183.348,27438.281,7607.3535,46887.754,9437.92609,38068.867,28161.41,7653.7217,47388.004,9837.07405,40231.242,29315.736,7450.836,47942.97,10108.140576,40780.08,30026.16,7381.6016,47537.797,10772.008963,40144.2,29405.35,7232.23,46489.17,10947.419926,41937.48,31593.695,7373.091,47971.41,11750.11806,43895.938,32349.238,7021.4863,48312.62,12264.24864,44022.523,33203.004,6500.3687,49113.688,13053.66165,44670.625,33741.91,6512.8066,49590.31,13876.00843,44858.12,33977.36,6606.008,49934.684,14543.36946,43669.83,34788.023,6655.106,50964.02,15064.12514,42715.14,35592.57,6714.155,51992.56,15916.41974,43129.867,36521.11,6734.279,52866.46,16884.3726,43795.4,38355.83,6855.408,53405.137,17941.0811,43534.613,39058.266,7071.7817,53512.844,18861.2377,42233.39,38603.406,6776.866,48609.645,20060.7403,44564.812,40670.66,7037.069,51349.656,21181.0945,44854.035,39413.043,6702.3394,52969.59,22649.4609],"date":["1965-01-01","1965-01-01","1965-01-01","1965-01-01","1965-01-01","1966-01-01","1966-01-01","1966-01-01","1966-01-01","1966-01-01","1967-01-01","1967-01-01","1967-01-01","1967-01-01","1967-01-01","1968-01-01","1968-01-01","1968-01-01","1968-01-01","1968-01-01","1969-01-01","1969-01-01","1969-01-01","1969-01-01","1969-01-01","1970-01-01","1970-01-01","1970-01-01","1970-01-01","1970-01-01","1971-01-01","1971-01-01","1971-01-01","1971-01-01","1971-01-01","1972-01-01","1972-01-01","1972-01-01","1972-01-01","1972-01-01","1973-01-01","1973-01-01","1973-01-01","1973-01-01","1973-01-01","1974-01-01","1974-01-01","1974-01-01","1974-01-01","1974-01-01","1975-01-01","1975-01-01","1975-01-01","1975-01-01","1975-01-01","1976-01-01","1976-01-01","1976-01-01","1976-01-01","1976-01-01","1977-01-01","1977-01-01","1977-01-01","1977-01-01","1977-01-01","1978-01-01","1978-01-01","1978-01-01","1978-01-01","1978-01-01","1979-01-01","1979-01-01","1979-01-01","1979-01-01","1979-01-01","1980-01-01","1980-01-01","1980-01-01","1980-01-01","1980-01-01","1981-01-01","1981-01-01","1981-01-01","1981-01-01","1981-01-01","1982-01-01","1982-01-01","1982-01-01","1982-01-01","1982-01-01","1983-01-01","1983-01-01","1983-01-01","1983-01-01","1983-01-01","1984-01-01","1984-01-01","1984-01-01","1984-01-01","1984-01-01","1985-01-01","1985-01-01","1985-01-01","1985-01-01","1985-01-01","1986-01-01","1986-01-01","1986-01-01","1986-01-01","1986-01-01","1987-01-01","1987-01-01","1987-01-01","1987-01-01","1987-01-01","1988-01-01","1988-01-01","1988-01-01","1988-01-01","1988-01-01","1989-01-01","1989-01-01","1989-01-01","1989-01-01","1989-01-01","1990-01-01","1990-01-01","1990-01-01","1990-01-01","1990-01-01","1991-01-01","1991-01-01","1991-01-01","1991-01-01","1991-01-01","1992-01-01","1992-01-01","1992-01-01","1992-01-01","1992-01-01","1993-01-01","1993-01-01","1993-01-01","1993-01-01","1993-01-01","1994-01-01","1994-01-01","1994-01-01","1994-01-01","1994-01-01","1995-01-01","1995-01-01","1995-01-01","1995-01-01","1995-01-01","1996-01-01","1996-01-01","1996-01-01","1996-01-01","1996-01-01","1997-01-01","1997-01-01","1997-01-01","1997-01-01","1997-01-01","1998-01-01","1998-01-01","1998-01-01","1998-01-01","1998-01-01","1999-01-01","1999-01-01","1999-01-01","1999-01-01","1999-01-01","2000-01-01","2000-01-01","2000-01-01","2000-01-01","2000-01-01","2001-01-01","2001-01-01","2001-01-01","2001-01-01","2001-01-01","2002-01-01","2002-01-01","2002-01-01","2002-01-01","2002-01-01","2003-01-01","2003-01-01","2003-01-01","2003-01-01","2003-01-01","2004-01-01","2004-01-01","2004-01-01","2004-01-01","2004-01-01","2005-01-01","2005-01-01","2005-01-01","2005-01-01","2005-01-01","2006-01-01","2006-01-01","2006-01-01","2006-01-01","2006-01-01","2007-01-01","2007-01-01","2007-01-01","2007-01-01","2007-01-01","2008-01-01","2008-01-01","2008-01-01","2008-01-01","2008-01-01","2009-01-01","2009-01-01","2009-01-01","2009-01-01","2009-01-01","2010-01-01","2010-01-01","2010-01-01","2010-01-01","2010-01-01","2011-01-01","2011-01-01","2011-01-01","2011-01-01","2011-01-01","2012-01-01","2012-01-01","2012-01-01","2012-01-01","2012-01-01","2013-01-01","2013-01-01","2013-01-01","2013-01-01","2013-01-01","2014-01-01","2014-01-01","2014-01-01","2014-01-01","2014-01-01","2015-01-01","2015-01-01","2015-01-01","2015-01-01","2015-01-01","2016-01-01","2016-01-01","2016-01-01","2016-01-01","2016-01-01","2017-01-01","2017-01-01","2017-01-01","2017-01-01","2017-01-01","2018-01-01","2018-01-01","2018-01-01","2018-01-01","2018-01-01","2019-01-01","2019-01-01","2019-01-01","2019-01-01","2019-01-01","2020-01-01","2020-01-01","2020-01-01","2020-01-01","2020-01-01","2021-01-01","2021-01-01","2021-01-01","2021-01-01","2021-01-01","2022-01-01","2022-01-01","2022-01-01","2022-01-01","2022-01-01"]},"markers":null,"annotations":null,"offset":"silhouette","interactive":true,"interpolate":"cardinal","palette":"Spectral","text":"black","tooltip":"black","x_tick_interval":5,"x_tick_units":"year","x_tick_format":"%Y","y_tick_count":0,"y_tick_format":",g","top":20,"right":40,"bottom":30,"left":50,"legend":true,"legend_label":"Energie: ","fill":"brewer","label_col":"black","x_scale":"date","sort":true,"order":"none"},"evals":[],"jsHooks":[]}</script>
+</div>
+<p>Voilà pour les streamgraph… Ce n’est néanmoins qu’un aperçu limité. Si vous parcourez les internet vous verrez que les applications de ce type de représentation se multiplient et se concurrencent en terme de créativité visuelle. Quand à nous, retrouvons-nous pour un autre type de graphe permettant d’illustrer les évolutions d’une ou plusieurs mesures dans le temps.</p>
