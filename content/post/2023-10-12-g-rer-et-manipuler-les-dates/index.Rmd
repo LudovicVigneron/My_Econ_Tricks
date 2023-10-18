@@ -1,0 +1,206 @@
+---
+title: Gérer et manipuler les dates (1)
+author: Ludovic Vigneron
+date: '2023-10-12'
+categories:
+  - Cours
+  - Finance
+  - R
+  - Var_temps
+tags:
+  - Cours
+  - Finance
+  - R
+  - Var_temps
+---
+
+**Le premier semestre s’avance et les cours s’enchaînent, le temps passe et ne laisse que peu d'opportunité de bloguer. Mais enseigner n'a pas que des désavantages... Outre que cela permet de parler et d'avoir des échanges sur des sujets que je trouves intéressant parfois passionnant, cela permet à l'occasion de mettre le doigt sur quelque chose qui mérite approfondissement et réflexion. Certaines questions, peuvent clairement vous faire voir en problème, ou une pratique, sous un nouvel angle. Ou simplement, vous indiquez qu'il serait temps de faire le point sur un sujet. Cette semaine se fut le cas du traitement des variables de date dans R. Je profites donc de ces quelques lignes pour fixer les choses.**
+
+Commençons par rappelez que R base comprend trois types de variables dédiez aux dates: le format date et les formats POSIX lt et ct. Le premier présente un niveau de précision limitée au jour. Les deux autres permettent d'aller jusqu'à la seconde et comprend l'indication de la time zone dans laquelle l'information est définis. Dans la forme lt, l'objet stockant l'ensemble est une liste tandis que dans la forme ct il s'agit d'un vecteur numérique. Ce second format sera donc souvent à préférer pour les traitement. 
+
+Quel que soit le type d'objet considéré, il s'agit d'un élément numérique marquant le temps écoulé, mesuré dans la plus petite unité du format, depuis la date de référence qui est par défaut le 1er janvier 1970 UTC. Le commande origin du package lubridate nous permet d'en obtenir confirmation.
+
+```{r}
+lubridate::origin
+```
+
+Venons-en à la création et l'importation des objets de date. Le point de départ ici est le plus souvent une chaîne de caractères, un texte, reprenant l'expression de la date, ou de la date étendue, dans une langage compréhensible par des humains.
+
+Prenons une date au hasard, le 20 janvier 2020. Stockons la dans un objet que l'on nomme simplement date_c1. Pour des raisons pratique, notons la selon le format abrégé anglo-saxon avec des tirés comme séparateurs: année-mois-jour. Puis, vérifions avec **str()** la structure de l'objet.
+
+```{r}
+date_c1<-"2020-01-20"
+str(date_c1)
+```
+
+On est bien sur une variable de type character. Transformons-la en variable de date en utilisant la commande **as.Date()**.
+
+```{r}
+date_1<-as.Date(date_c1)
+str(date_1)
+```
+
+On a un vecteur de type date ne comprenant qu'un élément. Cette élément est en fait le nombre de jours écoulés entre le 20 janvier 2020 et le 1er janvier 1970. Ce nombre de jours peut être retrouvé à partir de la fonction **as.numeric()**. 
+
+```{r}
+as.numeric(date_1)
+```
+
+On a 18281 jours qui se sont écoulés entre les deux dates. Ce même résultat peut être obtenu simplement en opérant la soustraction entre notre date et la référence mise au même format.
+
+```{r}
+date_1-as.Date("1970-01-01")
+```
+On a la même chose à partir du format posix mais exprimée en secondes que l'on peut convertir en jours en divisant par 60 pour avoir des minutes, puis par 60 pour avoir des heures et enfin par 24 pour avoir des jours.
+
+```{r}
+as.numeric(as.POSIXct(date_1))
+as.numeric(as.POSIXct(date_1))/60/60/24
+```
+
+Ces 18281 jours représentent 50 ans. On peut le vérifier simplement en divisant le nombre de jours par 365 jours un quart.
+
+```{r}
+18281/365.25
+```
+
+L'opération présente des dixièmes d'années difficiles à interpréter. On peut les éviter en utilisant le division entière.
+
+```{r}
+18281%/%365.25
+```
+
+L'opération peut être réalisée directement à partir des dates en utilisant la fonction **year()** du package *lubridate*. 
+
+```{r}
+library(lubridate)
+year(date_1)-year(as.Date("1970-01-01"))
+```
+
+Ce package propose de nombreuses fonction permettant de faciliter les manipulations des données de dates. Il est, par ailleurs, inclus dans le *tydiverse*.
+
+Voyons un autre point important, il est possible de définir le format d'affichage de la date dans les objets associés (data.frame, tableaux, graphe...). En utilisant, la commande **format()**, on peut indiquer les éléments à afficher sous la forme d'une chaines de caractères. Pour ce faire, on utilise une série de codes que l'on retrouve dans le tableau ci-contre.
+
+| code | information    |
+|:------:|:----------------|
+| **%a** | nom  du jour de la semaine (abrégé) |
+| **%A** | nom  du jour de la semaine (complet) |
+| **%b** | nom du mois (abrégé) |
+| **%B** | nom du mois (complet) | 
+| **%C** | nombre désignant le siècle |
+| **%d** | nombre désignant le jour dans le mois |
+| **%H** | heures exprimées en décimale (00-23) |
+| **%h** | heures exprimées en cadrant (01-12) |
+| **%M** | nombre de minutes |
+| **%m** | mois exprimé en nombre |
+| **%p** | indication PM (post meridan) ou AM (ante meridan) |
+| **%S** | nombre de secondes |
+| **%u** | jours de la semaine en nombre 1=lundi |
+| **%w** | jours de la semaine en nombre 0=dimanche |
+| **%y** | année exprimée par deux chiffres |
+| **%Y** | année exprimée par quatre chiffres |
+| **%Z** | zone temporelle |
+
+
+Pour illustrer le principe, affichons notre date_1 à la manière d'un écolier autrement-dit avec le jours de la semaine, le jours dans le mois, le mois et l'année.
+
+```{r}
+format(date_1,"%A %d %B %Y")
+```
+
+Au-delà des affichages, cette codification est importante dans la mesure où elle sert de base à la transformation de chaînes de caractères en l'un des formats de date.
+
+Prenons quelques illustrations. Créons une variable date pour le mercredi 30 novembre 2023.
+
+```{r}
+date_c2<-"mercredi 30 novembre 2023"
+```
+
+L'indication du format est introduit comme second argument dans la fonction créant la variable.
+
+```{r}
+date_2<-as.Date(date_c2,"%A %d %B %Y")
+str(date_2)
+```
+
+Considérons une information au format encore plus éloigné des standards.
+
+```{r}
+date_c3<-"28 (lundi) - novembre 2023"
+```
+
+Il est ici nécessaire d'intégrer non seulement les identifiants d'informations mais aussi les éléments purement textuels.
+
+```{r}
+date_3<-as.Date(date_c3,"%d (%A) - %B %Y ")
+str(date_3)
+```
+
+Le même type de procédure peut être mise en oeuvre pour des indications plus précises. Prenons le 20 février 2015 à 10 heures 52 minutes et 23 secondes.
+
+```{r}
+date_pos_1<-"2015-02-20 10:52:23"
+```
+
+L'information ici doit être convertie au format POSIX (ct si on veut réaliser des calcules avec). Il est alors nécessaire en plus du format de préciser la time zone. Si on ne le fait pas, la zone GMT sera appliquée par défaut et une série d'avertissement sera générée. Pour être cohérent avec les éléments précédent, précisons "UTC". 
+
+```{r}
+date_p1<-as.POSIXct(date_pos_1,"%Y-%m-%d %H:%M:%S",tz="UTC")
+date_p1
+```
+
+Une alternative concernant la time zone pourrait être de ne rien indiquer entre les guillemets. Cela conduit le système à retenir la time zone dans laquelle vous vous situés.
+
+```{r}
+as.POSIXct(date_pos_1,"%Y-%m-%d %H:%M:%S",tz="")
+```
+
+Pour moi, il s'agit de la zone CET, Central Europe Time. Cela correspond au temps UTC plus deux heures.
+
+Le package *lubridate* propose une série de fonctions permettant de traiter facilement ce même type d'informations. Leur principe est simple. Leur nom est construit à partir de initiale des éléments d'information à incorporer.  
+
+Illustrons leur utilisation à partir de la chaîne de caractères date_pos_1. La fonction adéquate est ici **ymd_hms()**.
+
+```{r}
+str(ymd_hms(date_pos_1))
+```
+
+Lorsque vous importez les données d'un fichier .csv, la fonction **read_csv()** du *tidyverse* gère assez bien le formatage des éléments de date lorsqu'elles sont présentées de manière normée. Soyez néanmoins prudents et vérifiez toujours que l'opération  a été réalisée comme vous l'attendiez. La fonction de base **read.csv()** pour ça par importe les éléments comme du texte. Si vous l'utilisez, il sera nécessaire de transformer ce texte en variable de type date (ou POSIX).
+
+Finissons ce post par une illustration simple de l'usage des variables de date. Il s'agit d'ordonnées des valeurs en fonction la date.
+
+Commençons par inclure nos dates dans un vecteur.
+
+```{r}
+date_j<-c(date_1,date_2,date_3,as.Date(date_p1))
+date_j
+```
+
+On peut utiliser la fonction sort pour les mettre dans l'ordre chronologique.
+
+```{r}
+sort(date_j)
+```
+
+Associons à chaque date la valeur d'une variable dans une data frame.
+
+```{r message=FALSE, warning=FALSE}
+dat<-data.frame(date=date_j,
+                var=c("A","L","P","E"))
+dat
+```
+
+Présentons la dat en ordre chronologique. Pour cela, utilisons la fonction **arrange()** de *dplyr* qui est inclue dans le *tidyverse*.
+
+```{r}
+library(dplyr)
+dat %>% arrange(date)
+```
+
+Les variables de date permettent de nombreuses opérations et sont impliquées dans de nombreuses fonctionnalités. Nous y reviendrons dans de prochains postes.
+
+
+
+
+
+

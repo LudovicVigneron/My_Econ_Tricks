@@ -1,0 +1,203 @@
+---
+title: Gérer et manipuler les dates (1)
+author: Ludovic Vigneron
+date: '2023-10-12'
+categories:
+  - Cours
+  - Finance
+  - R
+  - Var_temps
+tags:
+  - Cours
+  - Finance
+  - R
+  - Var_temps
+---
+
+
+
+<p><strong>Le premier semestre s’avance et les cours s’enchaînent, le temps passe et ne laisse que peu d’opportunité de bloguer. Mais enseigner n’a pas que des désavantages… Outre que cela permet de parler et d’avoir des échanges sur des sujets que je trouves intéressant parfois passionnant, cela permet à l’occasion de mettre le doigt sur quelque chose qui mérite approfondissement et réflexion. Certaines questions, peuvent clairement vous faire voir en problème, ou une pratique, sous un nouvel angle. Ou simplement, vous indiquez qu’il serait temps de faire le point sur un sujet. Cette semaine se fut le cas du traitement des variables de date dans R. Je profites donc de ces quelques lignes pour fixer les choses.</strong></p>
+<p>Commençons par rappelez que R base comprend trois types de variables dédiez aux dates: le format date et les formats POSIX lt et ct. Le premier présente un niveau de précision limitée au jour. Les deux autres permettent d’aller jusqu’à la seconde et comprend l’indication de la time zone dans laquelle l’information est définis. Dans la forme lt, l’objet stockant l’ensemble est une liste tandis que dans la forme ct il s’agit d’un vecteur numérique. Ce second format sera donc souvent à préférer pour les traitement.</p>
+<p>Quel que soit le type d’objet considéré, il s’agit d’un élément numérique marquant le temps écoulé, mesuré dans la plus petite unité du format, depuis la date de référence qui est par défaut le 1er janvier 1970 UTC. Le commande origin du package lubridate nous permet d’en obtenir confirmation.</p>
+<pre class="r"><code>lubridate::origin</code></pre>
+<pre><code>## [1] &quot;1970-01-01 UTC&quot;</code></pre>
+<p>Venons-en à la création et l’importation des objets de date. Le point de départ ici est le plus souvent une chaîne de caractères, un texte, reprenant l’expression de la date, ou de la date étendue, dans une langage compréhensible par des humains.</p>
+<p>Prenons une date au hasard, le 20 janvier 2020. Stockons la dans un objet que l’on nomme simplement date_c1. Pour des raisons pratique, notons la selon le format abrégé anglo-saxon avec des tirés comme séparateurs: année-mois-jour. Puis, vérifions avec <strong>str()</strong> la structure de l’objet.</p>
+<pre class="r"><code>date_c1&lt;-&quot;2020-01-20&quot;
+str(date_c1)</code></pre>
+<pre><code>##  chr &quot;2020-01-20&quot;</code></pre>
+<p>On est bien sur une variable de type character. Transformons-la en variable de date en utilisant la commande <strong>as.Date()</strong>.</p>
+<pre class="r"><code>date_1&lt;-as.Date(date_c1)
+str(date_1)</code></pre>
+<pre><code>##  Date[1:1], format: &quot;2020-01-20&quot;</code></pre>
+<p>On a un vecteur de type date ne comprenant qu’un élément. Cette élément est en fait le nombre de jours écoulés entre le 20 janvier 2020 et le 1er janvier 1970. Ce nombre de jours peut être retrouvé à partir de la fonction <strong>as.numeric()</strong>.</p>
+<pre class="r"><code>as.numeric(date_1)</code></pre>
+<pre><code>## [1] 18281</code></pre>
+<p>On a 18281 jours qui se sont écoulés entre les deux dates. Ce même résultat peut être obtenu simplement en opérant la soustraction entre notre date et la référence mise au même format.</p>
+<pre class="r"><code>date_1-as.Date(&quot;1970-01-01&quot;)</code></pre>
+<pre><code>## Time difference of 18281 days</code></pre>
+<p>On a la même chose à partir du format posix mais exprimée en secondes que l’on peut convertir en jours en divisant par 60 pour avoir des minutes, puis par 60 pour avoir des heures et enfin par 24 pour avoir des jours.</p>
+<pre class="r"><code>as.numeric(as.POSIXct(date_1))</code></pre>
+<pre><code>## [1] 1579478400</code></pre>
+<pre class="r"><code>as.numeric(as.POSIXct(date_1))/60/60/24</code></pre>
+<pre><code>## [1] 18281</code></pre>
+<p>Ces 18281 jours représentent 50 ans. On peut le vérifier simplement en divisant le nombre de jours par 365 jours un quart.</p>
+<pre class="r"><code>18281/365.25</code></pre>
+<pre><code>## [1] 50.05065</code></pre>
+<p>L’opération présente des dixièmes d’années difficiles à interpréter. On peut les éviter en utilisant le division entière.</p>
+<pre class="r"><code>18281%/%365.25</code></pre>
+<pre><code>## [1] 50</code></pre>
+<p>L’opération peut être réalisée directement à partir des dates en utilisant la fonction <strong>year()</strong> du package <em>lubridate</em>.</p>
+<pre class="r"><code>library(lubridate)</code></pre>
+<pre><code>## 
+## Attachement du package : &#39;lubridate&#39;</code></pre>
+<pre><code>## Les objets suivants sont masqués depuis &#39;package:base&#39;:
+## 
+##     date, intersect, setdiff, union</code></pre>
+<pre class="r"><code>year(date_1)-year(as.Date(&quot;1970-01-01&quot;))</code></pre>
+<pre><code>## [1] 50</code></pre>
+<p>Ce package propose de nombreuses fonction permettant de faciliter les manipulations des données de dates. Il est, par ailleurs, inclus dans le <em>tydiverse</em>.</p>
+<p>Voyons un autre point important, il est possible de définir le format d’affichage de la date dans les objets associés (data.frame, tableaux, graphe…). En utilisant, la commande <strong>format()</strong>, on peut indiquer les éléments à afficher sous la forme d’une chaines de caractères. Pour ce faire, on utilise une série de codes que l’on retrouve dans le tableau ci-contre.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="center">code</th>
+<th align="left">information</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><strong>%a</strong></td>
+<td align="left">nom du jour de la semaine (abrégé)</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%A</strong></td>
+<td align="left">nom du jour de la semaine (complet)</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%b</strong></td>
+<td align="left">nom du mois (abrégé)</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%B</strong></td>
+<td align="left">nom du mois (complet)</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%C</strong></td>
+<td align="left">nombre désignant le siècle</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%d</strong></td>
+<td align="left">nombre désignant le jour dans le mois</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%H</strong></td>
+<td align="left">heures exprimées en décimale (00-23)</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%h</strong></td>
+<td align="left">heures exprimées en cadrant (01-12)</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%M</strong></td>
+<td align="left">nombre de minutes</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%m</strong></td>
+<td align="left">mois exprimé en nombre</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%p</strong></td>
+<td align="left">indication PM (post meridan) ou AM (ante meridan)</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%S</strong></td>
+<td align="left">nombre de secondes</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%u</strong></td>
+<td align="left">jours de la semaine en nombre 1=lundi</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%w</strong></td>
+<td align="left">jours de la semaine en nombre 0=dimanche</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%y</strong></td>
+<td align="left">année exprimée par deux chiffres</td>
+</tr>
+<tr class="even">
+<td align="center"><strong>%Y</strong></td>
+<td align="left">année exprimée par quatre chiffres</td>
+</tr>
+<tr class="odd">
+<td align="center"><strong>%Z</strong></td>
+<td align="left">zone temporelle</td>
+</tr>
+</tbody>
+</table>
+<p>Pour illustrer le principe, affichons notre date_1 à la manière d’un écolier autrement-dit avec le jours de la semaine, le jours dans le mois, le mois et l’année.</p>
+<pre class="r"><code>format(date_1,&quot;%A %d %B %Y&quot;)</code></pre>
+<pre><code>## [1] &quot;lundi 20 janvier 2020&quot;</code></pre>
+<p>Au-delà des affichages, cette codification est importante dans la mesure où elle sert de base à la transformation de chaînes de caractères en l’un des formats de date.</p>
+<p>Prenons quelques illustrations. Créons une variable date pour le mercredi 30 novembre 2023.</p>
+<pre class="r"><code>date_c2&lt;-&quot;mercredi 30 novembre 2023&quot;</code></pre>
+<p>L’indication du format est introduit comme second argument dans la fonction créant la variable.</p>
+<pre class="r"><code>date_2&lt;-as.Date(date_c2,&quot;%A %d %B %Y&quot;)
+str(date_2)</code></pre>
+<pre><code>##  Date[1:1], format: &quot;2023-11-30&quot;</code></pre>
+<p>Considérons une information au format encore plus éloigné des standards.</p>
+<pre class="r"><code>date_c3&lt;-&quot;28 (lundi) - novembre 2023&quot;</code></pre>
+<p>Il est ici nécessaire d’intégrer non seulement les identifiants d’informations mais aussi les éléments purement textuels.</p>
+<pre class="r"><code>date_3&lt;-as.Date(date_c3,&quot;%d (%A) - %B %Y &quot;)
+str(date_3)</code></pre>
+<pre><code>##  Date[1:1], format: &quot;2023-11-28&quot;</code></pre>
+<p>Le même type de procédure peut être mise en oeuvre pour des indications plus précises. Prenons le 20 février 2015 à 10 heures 52 minutes et 23 secondes.</p>
+<pre class="r"><code>date_pos_1&lt;-&quot;2015-02-20 10:52:23&quot;</code></pre>
+<p>L’information ici doit être convertie au format POSIX (ct si on veut réaliser des calcules avec). Il est alors nécessaire en plus du format de préciser la time zone. Si on ne le fait pas, la zone GMT sera appliquée par défaut et une série d’avertissement sera générée. Pour être cohérent avec les éléments précédent, précisons “UTC”.</p>
+<pre class="r"><code>date_p1&lt;-as.POSIXct(date_pos_1,&quot;%Y-%m-%d %H:%M:%S&quot;,tz=&quot;UTC&quot;)
+date_p1</code></pre>
+<pre><code>## [1] &quot;2015-02-20 10:52:23 UTC&quot;</code></pre>
+<p>Une alternative concernant la time zone pourrait être de ne rien indiquer entre les guillemets. Cela conduit le système à retenir la time zone dans laquelle vous vous situés.</p>
+<pre class="r"><code>as.POSIXct(date_pos_1,&quot;%Y-%m-%d %H:%M:%S&quot;,tz=&quot;&quot;)</code></pre>
+<pre><code>## [1] &quot;2015-02-20 10:52:23 CET&quot;</code></pre>
+<p>Pour moi, il s’agit de la zone CET, Central Europe Time. Cela correspond au temps UTC plus deux heures.</p>
+<p>Le package <em>lubridate</em> propose une série de fonctions permettant de traiter facilement ce même type d’informations. Leur principe est simple. Leur nom est construit à partir de initiale des éléments d’information à incorporer.</p>
+<p>Illustrons leur utilisation à partir de la chaîne de caractères date_pos_1. La fonction adéquate est ici <strong>ymd_hms()</strong>.</p>
+<pre class="r"><code>str(ymd_hms(date_pos_1))</code></pre>
+<pre><code>##  POSIXct[1:1], format: &quot;2015-02-20 10:52:23&quot;</code></pre>
+<p>Lorsque vous importez les données d’un fichier .csv, la fonction <strong>read_csv()</strong> du <em>tidyverse</em> gère assez bien le formatage des éléments de date lorsqu’elles sont présentées de manière normée. Soyez néanmoins prudents et vérifiez toujours que l’opération a été réalisée comme vous l’attendiez. La fonction de base <strong>read.csv()</strong> pour ça par importe les éléments comme du texte. Si vous l’utilisez, il sera nécessaire de transformer ce texte en variable de type date (ou POSIX).</p>
+<p>Finissons ce post par une illustration simple de l’usage des variables de date. Il s’agit d’ordonnées des valeurs en fonction la date.</p>
+<p>Commençons par inclure nos dates dans un vecteur.</p>
+<pre class="r"><code>date_j&lt;-c(date_1,date_2,date_3,as.Date(date_p1))
+date_j</code></pre>
+<pre><code>## [1] &quot;2020-01-20&quot; &quot;2023-11-30&quot; &quot;2023-11-28&quot; &quot;2015-02-20&quot;</code></pre>
+<p>On peut utiliser la fonction sort pour les mettre dans l’ordre chronologique.</p>
+<pre class="r"><code>sort(date_j)</code></pre>
+<pre><code>## [1] &quot;2015-02-20&quot; &quot;2020-01-20&quot; &quot;2023-11-28&quot; &quot;2023-11-30&quot;</code></pre>
+<p>Associons à chaque date la valeur d’une variable dans une data frame.</p>
+<pre class="r"><code>dat&lt;-data.frame(date=date_j,
+                var=c(&quot;A&quot;,&quot;L&quot;,&quot;P&quot;,&quot;E&quot;))
+dat</code></pre>
+<pre><code>##         date var
+## 1 2020-01-20   A
+## 2 2023-11-30   L
+## 3 2023-11-28   P
+## 4 2015-02-20   E</code></pre>
+<p>Présentons la dat en ordre chronologique. Pour cela, utilisons la fonction <strong>arrange()</strong> de <em>dplyr</em> qui est inclue dans le <em>tidyverse</em>.</p>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attachement du package : &#39;dplyr&#39;</code></pre>
+<pre><code>## Les objets suivants sont masqués depuis &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## Les objets suivants sont masqués depuis &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>dat %&gt;% arrange(date)</code></pre>
+<pre><code>##         date var
+## 1 2015-02-20   E
+## 2 2020-01-20   A
+## 3 2023-11-28   P
+## 4 2023-11-30   L</code></pre>
+<p>Les variables de date permettent de nombreuses opérations et sont impliquées dans de nombreuses fonctionnalités. Nous y reviendrons dans de prochains postes.</p>
