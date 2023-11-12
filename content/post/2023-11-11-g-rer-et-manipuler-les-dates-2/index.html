@@ -1,0 +1,268 @@
+---
+title: Gérer et manipuler les dates (2)
+author: Ludovic Vigneron
+date: '2023-11-11'
+slug: []
+categories:
+  - Cours
+  - Finance
+  - R
+  - Var_temps
+  - ggplot2
+tags:
+  - Cours
+  - Finance
+  - GGPLOT2
+  - R
+  - Var_temps
+---
+
+
+
+<p><strong>Continuons notre point sur la manipulation des données de dates. Traitons ici de la mise en forme de l’axe décrivant le temps dans les graphes de séries temporelles. Comme toujours (ou presque), nous travaillerons à partir de <em>ggplot2</em>.</strong></p>
+<p>Commençons par charger les packages, ceux permettant d’établir le graphe (<em>tidyverse</em> et <em>scales</em>) et autre pour les obtenir les données. Ici, nous utiliserons des données de cotations d’actions. Nous les chargerons à partir de l’API de yahoo finance à partir des tickers correspondant. N’utiliserons pas ici l’habituel <em>quantmod</em> mais <em>tidyquant</em> qui permet d’obtenir les données directement sous la forme d’une tibble.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(tidyquant)</code></pre>
+<p>Cela étant fait, chargeons nos données. Travaillons à partir de l’action Apple dont le ticker est AAPL. Considérons la période courant du 1er janvier 2000 au 10 novembre 2023. La fonction mobilisée est <strong>tq_get()</strong>. Intégrons le résultat dans un objet que l’on nomme pr et visualisons les premières observations.</p>
+<pre class="r"><code>pr&lt;-tq_get(&quot;AAPL&quot;,get = &quot;stock.prices&quot;,from = &quot;2000-01-01&quot;,to = &quot;2022-11-10&quot;)
+head(pr)</code></pre>
+<pre><code>## # A tibble: 6 × 8
+##   symbol date        open  high   low close    volume adjusted
+##   &lt;chr&gt;  &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;
+## 1 AAPL   2000-01-03 0.936 1.00  0.908 0.999 535796800    0.847
+## 2 AAPL   2000-01-04 0.967 0.988 0.903 0.915 512377600    0.776
+## 3 AAPL   2000-01-05 0.926 0.987 0.920 0.929 778321600    0.787
+## 4 AAPL   2000-01-06 0.948 0.955 0.848 0.848 767972800    0.719
+## 5 AAPL   2000-01-07 0.862 0.902 0.853 0.888 460734400    0.753
+## 6 AAPL   2000-01-10 0.911 0.913 0.846 0.873 505064000    0.740</code></pre>
+<p>Établissons notre graphe de base avec les mises en formes habituelles.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Cette version est intéressante. Mais on peut l’améliorer en retravaillant l’axe des dates.Commençons par l’étendre légèrement le champs des valeurs affichées pour plus clairement la dates de début de la série. Pour cela, utilisons l’option xlim de la fonction fixant le système de coordonnées. Le point de départ et le point d’arriver sont fixés en utilisant as.Date(). Cela assure la compatibilité avec les valeurs portés sur l’axe (la variable date). Les dates retenues sont le 20 décembre 1999 et le 20 novembre 2023.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;1999-12-20&quot;),as.Date(&quot;2023-11-20&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>La transformation permet de faire apparaître la marque de l’année 2000 sur la graphe. On a ici une progression par bloc de 5 ans. On peut personnaliser le pas de l’axe de même que les affichages associés en utilisant la fonction <strong>scale_x_date()</strong>. Commençons par configurer un pas annuel. Pour cela, il suffit d’indiquer dans l’option date_breaks “1 year”.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;1 year&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;1999-12-20&quot;),as.Date(&quot;2023-11-20&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Le résultat est peu lisible. Passons l’écriture de l’axe en vertical.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;1 year&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;1999-12-20&quot;),as.Date(&quot;2023-11-20&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    axis.text.x = element_text(angle=90,vjust=0.5),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>C’est mieux. Mais toute les dates marquées sont des 1er janvier. Réduisons l’écriture à juste la mention de l’année en utilisant l’option date_labels. Indiquons %Y pour l’année entière.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;1 year&quot;,date_labels=&quot;%Y&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;1999-12-20&quot;),as.Date(&quot;2023-11-20&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    axis.text.x = element_text(angle=90,vjust=0.5),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>C’est beaucoup mieux. scale_x_date() permet de très facilement faire varier le pas de présentation de l’axe du temps. Par exemple, si on veut un affichage tous les trois ans, il suffit d’indiquer “3 years” dans l’option date_breaks.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;3 years&quot;,date_labels=&quot;%Y&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;1999-12-20&quot;),as.Date(&quot;2023-11-20&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>L’option ne considère que des intervalles de temps entiers mais en propose de différentes tailles. Il suffit d’indiquer leur nom en anglais: second, minute, hour, day, week, month, year. L’utilisation des trois premiers est réservée aux données au format POSIXct. L’affichage est contrôlé via date_labels en faisant appel aux notation habituelles.</p>
+<p>Posons pour voir l’axe à un affichage sur la base d’un pas de 6 mois avec indication du mois et de l’année.</p>
+<pre class="r"><code>ggplot(data=pr,aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot;1er janvier 2000 - 10 novembre 2023&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;6 months&quot;,date_labels=&quot;%b %Y&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;1999-12-20&quot;),as.Date(&quot;2023-11-20&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    axis.text.x = element_text(angle=90,vjust=0.5),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Présentons un graphe qui zoom sur les années 2020-2021 avec un axe temporel au pas bi-hebdomadaire avec affichage jour (%d) mois abrégé (%b) et année deux digits (%y).</p>
+<pre class="r"><code>ggplot(data=filter(pr,
+                   date&gt;as.Date(&quot;2020-01-01&quot;)&amp;date&lt;as.Date(&quot;2022-01-01&quot;)),
+       aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot; sur 2020-2021 en journalier&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;2 week&quot;,date_labels=&quot;%d %b %y&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;2019-12-20&quot;),as.Date(&quot;2022-01-10&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    axis.text.x = element_text(angle=90,vjust=0.5),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>C’est un peu chargé passons à des pas de trois mois avec affichage mois année (4 digits).</p>
+<pre class="r"><code>ggplot(data=filter(pr,
+                   date&gt;as.Date(&quot;2020-01-01&quot;)&amp;date&lt;as.Date(&quot;2022-01-01&quot;)),
+       aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot; sur 2020-2021 en journalier&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;3 month&quot;,date_labels=&quot;%b %Y&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;2019-12-20&quot;),as.Date(&quot;2022-01-10&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    axis.text.x = element_text(angle=90,vjust=0.5),
+    panel.grid.minor = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>On peut également configurer sur la même modèle des pas mineur qui marque des sous périodes à partir de l’option <strong>date_minor_breaks()</strong>. Pour illustrer son utilisation prenons le même graphe mais avec un pas principal annuel et un pas secondaire mensuel.</p>
+<pre class="r"><code>ggplot(data=filter(pr,
+                   date&gt;as.Date(&quot;2020-01-01&quot;)&amp;date&lt;as.Date(&quot;2022-01-01&quot;)),
+       aes(x=date,y=adjusted))+
+  geom_line()+
+  labs(title = &quot;Cours ajustés d&#39;Apple&quot;,
+       subtitle = &quot; sur 2020-2021 en journalier&quot;,
+       caption = &quot;Source: Yahoo.finance&quot;)+
+  scale_x_date(date_breaks=&quot;1 year&quot;,date_labels=&quot;%d %b %Y&quot;,
+               date_minor_breaks = &quot;1 month&quot;)+
+  scale_y_continuous(labels=label_dollar())+
+  coord_cartesian(ylim=c(-10,200),
+                  xlim=c(as.Date(&quot;2019-12-20&quot;),as.Date(&quot;2022-01-10&quot;)),
+                  expand = FALSE)+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust = 1, face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    axis.line = element_line(),
+    axis.ticks = element_line(),
+    axis.text.x = element_text(angle=90,vjust=0.5)
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><strong>scale_x_date()</strong> est très flexible est permet avec un minimum d’efforts de rendre un graphe en série temporelle plus parlant.</p>
