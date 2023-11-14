@@ -27,10 +27,10 @@ tags:
 
 Corrigés: 
 
-* [Intérêts simples](correction/td1_rep_v1.pdf)
+* [Intérêts simples](correction/td1_rep_v1_c.pdf)
 
-* [Intérêts composés](correction/td2_rep_v1.pdf)
+* [Intérêts composés](correction/td2_rep_v1_c.pdf)
 
-* [Annuités](correction/td3_rep_v1.pdf)
+* [Annuités](correction/td3_rep_v1_c.pdf)
 
 * [Amortissements](correction/td4_rep_v1.pdf)
