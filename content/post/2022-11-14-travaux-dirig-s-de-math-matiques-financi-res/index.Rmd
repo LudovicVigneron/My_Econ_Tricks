@@ -25,7 +25,7 @@ tags:
 
 * [Amortissements](enonce/td4_en_v1.pdf)
 
-Corrigés: 
+Corrigés : 
 
 * [Intérêts simples](correction/td1_rep_v1_c.pdf)
 
