@@ -1,0 +1,33 @@
+---
+title: TQG 2023 Stata
+author: Ludovic Vigneron
+date: '2023-11-17'
+slug: []
+categories:
+  - Cours
+  - Finance
+tags:
+  - Cours
+  - Finance
+---
+
+**Cette année les TD de techniques quantitatives de gestion ont été réalisé à partir de Stata. Je sais... Les étudiants trouveront la réplication des exercices des séances sous R dans la rubrique cours du site.**
+
+Je met ici en lien les .do files réalisé durant les td:
+
+* [caschool](stat_dec_cas_2.do)
+
+* [portf_size](stat_dec_port.do)
+
+* à compléter...
+
+Je met également en lien les données utilisées:
+
+* [caschool.dta](cashool.dta)
+
+* [portf_size.dta](portf_size.dta)
+
+* [monday_data.csv](monday_data.csv)
+
+* [trois_titres_un_indice.dta](trois_titres_un_indice.dta)
+
