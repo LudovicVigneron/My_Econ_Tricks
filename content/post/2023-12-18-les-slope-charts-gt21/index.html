@@ -1,0 +1,302 @@
+---
+title: Les slope charts GT21
+author: Ludovic Vigneron
+date: '2023-12-18'
+slug: []
+categories:
+  - datavisualisation
+  - dataviz
+  - gt
+  - GT
+  - ggplot2
+  - R
+  - r
+tags:
+  - dataviz
+  - Dataviz
+  - ggplot2
+  - GGPLOT2
+  - gt
+  - GT
+  - r
+  - R
+---
+
+
+
+<p><strong>Dans ce dernier post consacré aux graphes destinés à illustrer l’évolution d’une ou plusieurs variables dans le temps, nous allons nous intéresser aux diagrammes de pentes ou slope charts. Il s’agit de la combinaison de lignes horizontales dont le degré d’inclinaison représente l’évolution d’une variable quantitative entre deux dates pour différents individus ou groupes, et de points marquant les valeurs de départ et d’arrivé de manière à mettre en avant des proximités (clustering) et des éloignements (outliers). Ce type de représentation est particulièrement indiqué lorsqu’il s’agit de mettre en avant des tendances. On est ici à la fois sur une forme simplifiée de graphique linéaire (lines chart), de bump chart (avec une seule période) et de graphe à coordonnées parallèles (où le temps est traité comme une variable catégorielle).</strong></p>
+<p>Sans aller plus avant sur ces proximité, voyons comment construire notre premier slope chart. Pour cela, en préalable, chargeons les packages nécessaires pour la suite. Ici, nous en utiliserons que quatre: le classique <em>tidyverse</em>, qui pourrait se suffire à lui même; et <em>CGPfunction</em>, qui propose une fonction dédiée à a réalisation de diagramme de pentes en configuration <em>ggplot2</em>, mais aussi, pour la mise en forme, les packages <em>scales</em> (pour les axes ) et <em>viridis</em> (pour la palette de couleurs).</p>
+<pre class="r"><code>library(tidyverse)
+library(CGPfunctions)
+library(viridis)
+library(scales)</code></pre>
+<p>Concernant les données que nous allons illustrer, nous nous intéresserons sur la part des énergies renouvelables dans les mix d’énergies primaires des Etats d’Europe de l’ouest (hors Royaume unis). Nous comparerons l’évolution de cette part entre 2015, l’année des accords de Paris, et 2022. Elles sont issues du site ourworldindata.org. Vous les trouverez <a href="renewable-share-energy.csv">ici</a>.
+Chargeons-les dans notre dossier de travail. Puis, importons-les dans R. Ceci fait, limitons les informations aux seuls pays qui nous intéressent (Allemagne, Belgique, France, Italie, Luxembourg, Pays-Bas, Danemark, Irlande, Grèce, Espagne, Portugal, Autriche, Finlande, Suède) et aux variables que nous mobiliserons sur les années retenues. Profitons-en pour renommer la variables d’intérêt le pourcentage d’énergie renouvelables pour une version plus courte plus facile à gérer pour la suite.</p>
+<pre class="r"><code>dat&lt;-read_csv(&quot;renewable-share-energy.csv&quot;) %&gt;% 
+  filter(Entity %in% c(&#39;Germany&#39;,&#39;Belgium&#39;,&#39;France&#39;,&#39;Italy&#39;,
+                       &#39;Luxembourg&#39;,&#39;Netherlands&#39;,&#39;Denmark&#39;,
+                       &#39;Ireland&#39;,&#39;Greece&#39;,&#39;Spain&#39;,&#39;Portugal&#39;,
+                       &#39;Austria&#39;,&#39;Finland&#39;,&#39;Sweden&#39;)) %&gt;%
+  filter(Year==2015|Year==2022) %&gt;% 
+  select(-Code) %&gt;% 
+  rename(perc_ren=`Renewables (% equivalent primary energy)`)
+head(dat)</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   Entity   Year perc_ren
+##   &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt;
+## 1 Austria  2015    35.0 
+## 2 Austria  2022    36.6 
+## 3 Belgium  2015     6.80
+## 4 Belgium  2022    10.7 
+## 5 Denmark  2015    28.6 
+## 6 Denmark  2022    43.0</code></pre>
+<p>Maintenant que nous avons les données de base nous pouvons les mettre en forme pour réaliser notre premier slope chart. Celui-ci sera d’abord réalisé directement sous ggplot.</p>
+<p>Pour cela, la base doit être légèrement adaptée. Passons les informations indéxées par année en variable donnant l’information pour l’année considérée (Passons d’une base longue à une base large…).</p>
+<pre class="r"><code>dat_lim_1&lt;-dat %&gt;% 
+  pivot_wider(names_from = Year,
+              names_prefix = &quot;an_&quot;,
+              values_from = perc_ren)
+head(dat_lim_1)</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   Entity  an_2015 an_2022
+##   &lt;chr&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Austria   35.0     36.6
+## 2 Belgium    6.80    10.7
+## 3 Denmark   28.6     43.0
+## 4 Finland   28.3     38.5
+## 5 France     9.99    14.6
+## 6 Germany   14.9     21.3</code></pre>
+<p>Ceci fait, établissons notre graphe de base. Pour cela, nous allons utiliser deux geom particuliers: le <strong>geom_segment()</strong>, qui va nous servir à établir le l’évolution le part des énergies renouvelables entre les deux dates retenues 2015-2022 pour chaque pays, et le <strong>geom_point()</strong>, qui va nous servir à marquer pour les points d’arriver et de départ pour chaque pays.</p>
+<p>Concernant les segments les points de départ sont 2015 en abscisse et la part des énergies renouvelables en 2015 (an_2015) en ordonnée, et les points d’arrivé sont 2022 en abscisse et la part des énergies renouvelables en 2022 (an_2022) en ordonnée.</p>
+<p>Concernant les points l’abscisse est l’année de départ (2015) ou d’arrivée (2022) et l’ordonnée la part d’énergies renouvelables respectivement l’année de départ (an_2015) et l’année d’arrivée (an_2022).</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>On obtient bien un slope chart mais qui reste difficile à lire. Procédons à quelques mise en forme pour améliorer les choses.</p>
+<p>Commençons par passer au theme minimal, ajouter un titre, un sous-titre et un cation et procéder à quelques mises en formes des axes.</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))+
+  labs(title = &quot;Part des renouvellables dans les énergies primaires&quot;,
+       subtitle = &quot;Europe de l&#39;ouest&quot;,
+       caption = &quot;Source: ourworldindata.org&quot;)+
+  scale_y_continuous(labels=label_percent())+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Le passage des axes en pourcentage n’est pas optimal. Voyons comment régler le problème. Pour cela, utilisons l’option scale de la fonction <strong>label_percent()</strong>. Passons de la valeur par défaut 100 à la valeur 1.</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))+
+  labs(title = &quot;Part des renouvellables dans les énergies primaires&quot;,
+       subtitle = &quot;Europe de l&#39;ouest&quot;,
+       caption = &quot;Source: ourworldindata.org&quot;)+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Le problème d’échelle est réglé. Voyons maintenant comment nous passer de la légende qui reste difficile à lire. Intégrons dans la figure les noms des pays en utilisant le <strong>geom_text()</strong>.</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))+
+  geom_text(aes(label=Entity,x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  labs(title = &quot;Part des renouvellables dans les énergies primaires&quot;,
+       subtitle = &quot;Europe de l&#39;ouest&quot;,
+       caption = &quot;Source: ourworldindata.org&quot;)+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Ce n’est pas très convainquant. Déplaçons les noms sur la gauche et réduisons la taille des lettres.</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))+
+  geom_text(aes(label=Entity,x=&#39;2015&#39;,y=an_2015,color=Entity),
+            hjust=&quot;outward&quot;,vjust=&quot;outward&quot;,size=3)+
+  labs(title = &quot;Part des renouvellables dans les énergies primaires&quot;,
+       subtitle = &quot;Europe de l&#39;ouest&quot;,
+       caption = &quot;Source: ourworldindata.org&quot;)+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>Ce n’est toujours pas clair. On a beaucoup de noms qui se chevauchent. Essayons de les placer alternativement d’un côte puis de l’autre. Pour cela, nous devons créer deux variables supplémentaires une pour l’année (an_af) et une pour la part des énergies renouvelables cette année là (pos_af). L’articulation des valeurs se fait sur la base d’une indexation des valeurs paires/impaires.</p>
+<pre class="r"><code>dat_lim_1&lt;-dat_lim_1 %&gt;% 
+    arrange(an_2015) %&gt;%
+    mutate(nrow=1:n(),
+           an_af=if_else(nrow %% 2==0,&#39;2015&#39;,&#39;2022&#39;),
+           pos_af=if_else(nrow %% 2==0,an_2015,an_2022))
+head(dat_lim_1)</code></pre>
+<pre><code>## # A tibble: 6 × 6
+##   Entity      an_2015 an_2022  nrow an_af pos_af
+##   &lt;chr&gt;         &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt;
+## 1 Netherlands    4.16    14.4     1 2022   14.4 
+## 2 Luxembourg     5.03    10.9     2 2015    5.03
+## 3 Belgium        6.80    10.7     3 2022   10.7 
+## 4 France         9.99    14.6     4 2015    9.99
+## 5 Ireland       13.1     20.1     5 2022   20.1 
+## 6 Greece        13.5     19.9     6 2015   13.5</code></pre>
+<p>Utilisons ces variables comme coordonnés pour les éléments de textes.</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))+
+  geom_text(aes(label=Entity,x=an_af,y=pos_af,color=Entity),
+            hjust=&quot;outward&quot;,vjust=&quot;outward&quot;,size=3)+
+  labs(title = &quot;Part des renouvellables dans les énergies primaires&quot;,
+       subtitle = &quot;Europe de l&#39;ouest&quot;,
+       caption = &quot;Source: ourworldindata.org&quot;)+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Des noms de pays se chevauchent et ils sont globalement tous trop prêt des points marquant les valeurs. Utilisons les options nudge_x et nudge_y du <strong>geom_text()</strong> pour créer les décalages adéquates. Ces décalages doivent être gérés au cas par cas aussi établissons-nous des variables pour les indiquer.</p>
+<pre class="r"><code>dat_lim_1&lt;-dat_lim_1 %&gt;% 
+    mutate(nudge_y=case_when(Entity==&quot;Austria&quot;~-1,
+                             Entity==&quot;Finland&quot;~+0,
+                             Entity==&quot;Ireland&quot;~+1,
+                             Entity==&quot;Italy&quot;~+2,
+                             Entity==&quot;Netherlands&quot;~+1,
+                             Entity==&quot;Germany&quot;~+2,
+                             Entity==&quot;Belgium&quot;~+1,
+                             Entity==&quot;Denmark&quot;~+0.5,                                                       Entity==&quot;Portugal&quot;~+1,
+                             Entity==&quot;Spain&quot;~+2,
+                             Entity==&quot;Greece&quot;~+1,
+                             Entity==&quot;France&quot;~+1,
+                             Entity==&quot;Luxembourg&quot;~+1,TRUE~0),
+           nudge_x=case_when(Entity==&quot;Finland&quot;~+0.02,
+                           Entity==&quot;Austria&quot;~+0.02,
+                           Entity==&quot;Sweden&quot;~-0.02,
+                           Entity==&quot;Germany&quot;~+0.02,
+                           Entity==&quot;Ireland&quot;~+0.02,
+                           Entity==&quot;Italy&quot;~+0.02,
+                           Entity==&quot;Netherlands&quot;~+0.02,
+                           Entity==&quot;Belgium&quot;~+0.02,
+                           Entity==&quot;Denmark&quot;~-0.02,
+                           Entity==&quot;Portugal&quot;~-0.02,
+                           Entity==&quot;Spain&quot;~-0.02,
+                           Entity==&quot;Greece&quot;~-0.02,
+                           Entity==&quot;France&quot;~-0.02,
+                           Entity==&quot;Luxembourg&quot;~-0.02,
+                         TRUE~0))
+head(dat_lim_1)</code></pre>
+<pre><code>## # A tibble: 6 × 8
+##   Entity      an_2015 an_2022  nrow an_af pos_af nudge_y nudge_x
+##   &lt;chr&gt;         &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;  &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Netherlands    4.16    14.4     1 2022   14.4        1    0.02
+## 2 Luxembourg     5.03    10.9     2 2015    5.03       1   -0.02
+## 3 Belgium        6.80    10.7     3 2022   10.7        1    0.02
+## 4 France         9.99    14.6     4 2015    9.99       1   -0.02
+## 5 Ireland       13.1     20.1     5 2022   20.1        1    0.02
+## 6 Greece        13.5     19.9     6 2015   13.5        1   -0.02</code></pre>
+<p>Utilisons les variables créées pour alimenter les options nudge_x et nudge_y du <strong>geom_text()</strong>. Profitons-en pour travailler les couleurs du graphe pour le rendre plus lisible. Mobilisons viridis qui propose des palettes adaptées aux daltoniens. Nous choisissons la palette turbo et passons le fond en gris pour forcer le contraste.</p>
+<pre class="r"><code>ggplot(data=dat_lim_1)+
+  geom_segment(aes(x=&#39;2015&#39;,xend=&#39;2022&#39;,y=an_2015,yend=an_2022,
+                   color=Entity))+
+  geom_point(aes(x=&#39;2015&#39;,y=an_2015,color=Entity))+
+  geom_point(aes(x=&#39;2022&#39;,y=an_2022,color=Entity))+
+  geom_text(aes(label=Entity,x=an_af,y=pos_af,color=Entity),
+            hjust=&quot;outward&quot;,vjust=&quot;outward&quot;,size=3,
+            nudge_y = dat_lim_1$nudge_y,
+            nudge_x = dat_lim_1$nudge_x)+
+  labs(title = &quot;Part des renouvellables dans les énergies primaires&quot;,
+       subtitle = &quot;Europe de l&#39;ouest&quot;,
+       caption = &quot;Source: ourworldindata.org&quot;)+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  scale_color_viridis(discrete = TRUE,option = &quot;H&quot;) +
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust=0.5,face=&#39;italic&#39;),
+    plot.caption = element_text(hjust=1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    panel.background = element_rect(fill=&#39;#F2F3F4&#39;),
+    legend.position = &#39;none&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Le graphe obtenu m’apparaît satisfaisant. Voyons ce que l’on obtient en utilisant le package GGPfunction et plus précisément la fonction <strong>newggslopegraph()</strong>. Pour cela, revenons à des données au format long (avec une variable plus la mesure et une variable pour l’année de mesure).</p>
+<pre class="r"><code>dat_lim_2&lt;-dat %&gt;% filter(Year==2015|Year==2022) %&gt;% 
+  mutate(Year_=as.character(Year),
+         perc_ren=round(perc_ren,digits=2))
+head(dat_lim_2)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   Entity   Year perc_ren Year_
+##   &lt;chr&gt;   &lt;dbl&gt;    &lt;dbl&gt; &lt;chr&gt;
+## 1 Austria  2015     35   2015 
+## 2 Austria  2022     36.6 2022 
+## 3 Belgium  2015      6.8 2015 
+## 4 Belgium  2022     10.7 2022 
+## 5 Denmark  2015     28.6 2015 
+## 6 Denmark  2022     43.0 2022</code></pre>
+<p>Commençons par une version simple. Indiquons uniquement la source des données et les variables représentées.</p>
+<pre class="r"><code>newggslopegraph(dataframe = dat_lim_2,
+                Times = Year_,
+                Measurement = perc_ren,
+                Grouping = Entity)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Le graphe obtenu est intéressant mais il y a chevauchement de certaines valeurs. Voyons comment y remédier et profitons-en pour ajouter des éléments d’informations complémentaires (titres, sous-tires, caption).</p>
+<p>Réduisons la taille des caractères des données (2) et l’épaisseur des étiquettes (0.5).</p>
+<pre class="r"><code>newggslopegraph(dataframe = dat_lim_2,
+                Times = Year_,
+                Measurement = perc_ren,
+                Grouping = Entity,
+                                Title = &quot;Part des renouvelables dans
+les énergies primaires&quot;,
+                SubTitle=&quot;Europe de l&#39;ouest&quot;,
+                Caption = &quot;Source: ourworldindata.org&quot;,
+                TitleJustify=&#39;C&#39;,
+                SubTitleJustify=&#39;C&#39;,
+                DataTextSize=2,
+                LineThickness=0.5,
+                DataLabelPadding=0)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>On a encore de la superposition. Élargissons la figure passons à un format 7 sur 6. Passons également à un thème particulier. Choisissons celui répliquant le style Wall Street journal (wsj).</p>
+<pre class="r"><code>newggslopegraph(dataframe = dat_lim_2,
+                Times = Year_,
+                Measurement = perc_ren,
+                Grouping = Entity,
+                Title = &quot;Part des renouvelables dans
+les énergies primaires&quot;,
+                SubTitle=&quot;Europe de l&#39;ouest&quot;,
+                Caption = &quot;Source: ourworldindata.org&quot;,
+                TitleJustify=&#39;C&#39;,
+                SubTitleJustify=&#39;C&#39;,
+                DataTextSize=2.5,
+                LineThickness=0.4,
+                ThemeChoice=&#39;wsj&#39;,
+                DataLabelPadding=0.1)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="576" /></p>
