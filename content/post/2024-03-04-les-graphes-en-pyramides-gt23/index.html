@@ -1,0 +1,843 @@
+---
+title: Les graphes en pyramides GT23
+author: Ludovic Vigneron
+date: '2024-03-04'
+slug: []
+categories:
+  - dataviz
+  - gt
+  - ggplot2
+  - r
+  - Finance
+tags:
+  - Dataviz
+  - ggplot2
+  - gt
+  - r
+  - Finance
+---
+
+
+
+<p><strong>Venons-en à notre second post de la sous-série de GT consacrée à l’illustration distribution des variables quantitatives. Il s’agit ici de traiter des histogrammes en pyramide. Ceux-ci permettent de faciliter la comparaison de la distribution d’une variable entre deux groupes d’observations. Ils sont souvent mobilisés en démographie pour mettre en regard les effectifs des différences classes d’âge pour chaque sexe (pour une zone géographique et à une date donnée). Le principe du graphe est simple. On a un histogramme réalisé sur la même variable avec les mêmes intervalles pour les deux groupes qui sont présentés à l’horizontale et orientés en miroir. Cela permet à la fois de mettre en évidence les similarités au travers les symétries et les différences au travers les dissymétries. Son principal défaut repose dans le fait que les comparaisons qu’il permet se limitent à deux groupes. Nous verrons par la suite d’autres graphes ouvrant plus de possibilité.</strong></p>
+<p>Pour illustrer la construction de l’histogramme en pyramide, restons dans les applications financières. Depuis le début des années 80, différentes études se sont attaché à identifier des anomalies affectant les rendements des actions au regard de ce que postule la théorie de l’efficience des marchés. Il s’agit pour elles de mettre en évidence des régularités dans les rendements notamment sur une base calendaire peu compatible avec l’efficience et son pendant d’absence de toute forme saisonnalité dans les cours. Une des premières concerne ce que l’on nomme l’effet weekend mise en évidence notamment par French (1980) sur les marchés US. Il relève que sur la période 1953-1977 des rendements en moyenne moins important les lundi et plus important les vendredi sur l’indice <em>Standard and Poor</em>. D’autres anomalies calendaires, on était mises en évidence comme l’effet fin de mois, l’effet vacances… Elles ont pour la plupart d’entre elles ont disparu.</p>
+<p>Nous reviendrons ici sur l’effet weekend. Mais, comme toujours avant d’aller plus loin, chargeons les packages que nous mobiliserons par la suite, le <em>tidyverse</em>, <em>scales, GT</em>, pour la mise en forme de tableaux, <em>patchwork</em>, pour assembler des graphes, et, pour les données, <em>tidyquant</em>.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(gt)
+library(patchwork)
+library(tidyquant)</code></pre>
+<p>Ceci fait attachons nous à charger les données à partir de la fonction <strong>tq_get()</strong>. Indiquons le <em>ticker</em> de l’indice <em>Standard &amp; Poor 500</em> “^GSPC” et la période retenue qui est ici large allant de 1954 à 2023. Visualisons le résultat via <strong>glimpse()</strong>.</p>
+<pre class="r"><code>dat&lt;-tq_get(&quot;^GSPC&quot;,from=&quot;1954-01-31&quot;, to = &quot;2023-05-04&quot;)
+glimpse(dat)</code></pre>
+<pre><code>## Rows: 17,434
+## Columns: 8
+## $ symbol   &lt;chr&gt; &quot;^GSPC&quot;, &quot;^GSPC&quot;, &quot;^GSPC&quot;, &quot;^GSPC&quot;, &quot;^GSPC&quot;, &quot;^GSPC&quot;, &quot;^GSPC&quot;…
+## $ date     &lt;date&gt; 1954-02-01, 1954-02-02, 1954-02-03, 1954-02-04, 1954-02-05, …
+## $ open     &lt;dbl&gt; 25.99, 25.92, 26.01, 26.20, 26.30, 26.23, 26.17, 26.14, 26.06…
+## $ high     &lt;dbl&gt; 25.99, 25.92, 26.01, 26.20, 26.30, 26.23, 26.17, 26.14, 26.06…
+## $ low      &lt;dbl&gt; 25.99, 25.92, 26.01, 26.20, 26.30, 26.23, 26.17, 26.14, 26.06…
+## $ close    &lt;dbl&gt; 25.99, 25.92, 26.01, 26.20, 26.30, 26.23, 26.17, 26.14, 26.06…
+## $ volume   &lt;dbl&gt; 1740000, 1420000, 1690000, 2040000, 2030000, 2180000, 1880000…
+## $ adjusted &lt;dbl&gt; 25.99, 25.92, 26.01, 26.20, 26.30, 26.23, 26.17, 26.14, 26.06…</code></pre>
+<p>Continuons en réduisant les données aux seules nécessaires (la date et le cours ajusté) et calculons les rendements de l’indice de manière discrète et continue.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% select(date,adjusted) %&gt;%
+  mutate(ret=adjusted/lag(adjusted)-1,
+         ret_c=log(adjusted/lag(adjusted))) %&gt;%
+  drop_na()</code></pre>
+<p>Travaillons maintenant sur les dates. Isolons le jours de la semaine grace à <strong>wday()</strong>. Le premier jour de la semaine ici est le dimanche. Il est marqué de la valeur 1. Les lundi et vendredi sont ainsi marqués des valeurs 2 et 6. Codons une variable les mettons en évidence. Pour ce faire, utilisons <strong>case_when()</strong>.</p>
+<pre class="r"><code>dat&lt;-dat%&gt;% mutate(day_of_the_week=wday(date),
+                   day_lab=wday(date,label=TRUE),
+                   jour=case_when(wday(date)==2~&quot;Monday&quot;,
+                                  wday(date)==6~&quot;Friday&quot;,
+                                  .default = &quot;Other_day&quot;)) %&gt;%
+  select(date,jour,ret,ret_c)</code></pre>
+<p>Établissons quelques statistiques descriptives avant d’aller plus loin. Faisons le tout d’abord pour l’ensemble de la base.</p>
+<pre class="r"><code>dat %&gt;% group_by(jour) %&gt;%
+  summarise(moyenne=round(mean(ret)*100,digits=2),
+            ecart_type=round(sd(ret)*100,digits=2),
+            n=n())</code></pre>
+<pre><code>## # A tibble: 3 × 4
+##   jour      moyenne ecart_type     n
+##   &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt; &lt;int&gt;
+## 1 Friday       0.06       0.93  3482
+## 2 Monday      -0.05       1.16  3332
+## 3 Other_day    0.05       0.98 10619</code></pre>
+<p>Voyons-le également pour la période étudiée par French (1953-1977).</p>
+<pre class="r"><code>dat %&gt;% filter(date&gt;date(&quot;1953/01/01&quot;)&amp;
+                 date&lt;date(&quot;1977/12/31&quot;)) %&gt;%
+  group_by(jour) %&gt;%
+  summarise(moyenne=round(mean(ret)*100,digits=2),
+            ecart_type=round(sd(ret)*100,digits=2),
+            n=n())</code></pre>
+<pre><code>## # A tibble: 3 × 4
+##   jour      moyenne ecart_type     n
+##   &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt; &lt;int&gt;
+## 1 Friday       0.11       0.67  1199
+## 2 Monday      -0.15       0.86  1170
+## 3 Other_day    0.05       0.74  3632</code></pre>
+<p>On constate que les rendements des lundi sont bien en moyennes inférieures à ceux des autres jours et ceux des vendredi supérieures. Néanmoins, les écart-types sont relativement importants, les différences ne sont peut être pas statistiquement significatives. Le même type de différences est constatées sur l’échantillon inspiré de French mais avec des moyennes plus contrastées et des écart-types plus petits. Créons une fonction pour faciliter les choses l’enchaînement des tests de différences de moyenne (avec <strong>t.test()</strong>).</p>
+<pre class="r"><code>test_jour&lt;-function(data,jour_exclu){
+  d&lt;-filter(data,jour!=jour_exclu)
+  t_stat&lt;-t.test(data=d,ret~jour)$statistic
+  p_val&lt;-t.test(data=d,ret~jour)$p.value
+  vect&lt;-round(c(t_stat,p_val),digits=3)
+  names(vect)&lt;-c(&quot;t&quot;,&quot;p_value&quot;)
+  return(vect) 
+  }</code></pre>
+<p>Assemblons un tableau reprenant l’ensemble. Amusons-nous un peu avec GT pour le mettre en forme. Ajoutons un test sur la période post 2000 afin de voir si les anomalies éventuelles persistent.</p>
+<pre class="r"><code>full&lt;-cbind(Lundi=test_jour(data=dat,
+                            jour_exclu = &quot;Friday&quot;),
+            Vendredi=test_jour(data=dat,
+                               jour_exclu = &quot;Monday&quot;)) 
+french&lt;-cbind(Lundi=
+                test_jour(data=filter(dat,
+                                      date&gt;date(&quot;1953/01/01&quot;)&amp;
+                                        date&lt;date(&quot;1977/12/31&quot;)),
+                          jour_exclu = &quot;Friday&quot;),
+              Vendredi=test_jour(data=filter(dat,
+                                             date&gt;date(&quot;1953/01/01&quot;)&amp;
+                                               date&lt;date(&quot;1977/12/31&quot;)),
+                                 jour_exclu = &quot;Monday&quot;))
+deux_milles&lt;-cbind(Lundi=
+                     test_jour(data=filter(dat,
+                                           date&gt;date(&quot;2000/01/01&quot;)),
+                               jour_exclu = &quot;Friday&quot;),
+                   Vendredi=test_jour(data=filter(dat,
+                                                  date&gt;date(&quot;2000/01/01&quot;)),
+                                      jour_exclu = &quot;Monday&quot;))
+data.frame(full,french,deux_milles) %&gt;%
+  gt(rownames_to_stub = TRUE) %&gt;%
+  tab_spanner(
+    label = &quot;Full&quot;,
+    columns = c(Lundi, Vendredi)) %&gt;%
+  tab_spanner(
+    label = &quot;French (1953-1977)&quot;,
+    columns = c(Lundi.1, Vendredi.1)) %&gt;%
+  tab_spanner(
+    label = &quot;Aprés 2000&quot;,
+    columns = c(Lundi.2, Vendredi.2)) %&gt;%
+  cols_label(
+    Lundi.1 = &quot;Lundi&quot;,
+    Vendredi.1 = &quot;Vendredi&quot;,
+    Lundi.2 = &quot;Lundi&quot;,
+    Vendredi.2 = &quot;Vendredi&quot;) %&gt;%
+  data_color(
+    rows = &quot;p_value&quot;,
+    direction = &quot;row&quot;,
+    method = &quot;quantile&quot;,
+    quantiles = 2,
+    palette = c(&quot;blue&quot;, &quot;white&quot;))</code></pre>
+<div id="spxtzgfdju" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#spxtzgfdju table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#spxtzgfdju thead, #spxtzgfdju tbody, #spxtzgfdju tfoot, #spxtzgfdju tr, #spxtzgfdju td, #spxtzgfdju th {
+  border-style: none;
+}
+
+#spxtzgfdju p {
+  margin: 0;
+  padding: 0;
+}
+
+#spxtzgfdju .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#spxtzgfdju .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#spxtzgfdju .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#spxtzgfdju .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#spxtzgfdju .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#spxtzgfdju .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#spxtzgfdju .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#spxtzgfdju .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#spxtzgfdju .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#spxtzgfdju .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#spxtzgfdju .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#spxtzgfdju .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#spxtzgfdju .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#spxtzgfdju .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#spxtzgfdju .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#spxtzgfdju .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#spxtzgfdju .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#spxtzgfdju .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#spxtzgfdju .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#spxtzgfdju .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#spxtzgfdju .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#spxtzgfdju .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#spxtzgfdju .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#spxtzgfdju .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#spxtzgfdju .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#spxtzgfdju .gt_left {
+  text-align: left;
+}
+
+#spxtzgfdju .gt_center {
+  text-align: center;
+}
+
+#spxtzgfdju .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#spxtzgfdju .gt_font_normal {
+  font-weight: normal;
+}
+
+#spxtzgfdju .gt_font_bold {
+  font-weight: bold;
+}
+
+#spxtzgfdju .gt_font_italic {
+  font-style: italic;
+}
+
+#spxtzgfdju .gt_super {
+  font-size: 65%;
+}
+
+#spxtzgfdju .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#spxtzgfdju .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#spxtzgfdju .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#spxtzgfdju .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#spxtzgfdju .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#spxtzgfdju .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#spxtzgfdju .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_col_headings gt_spanner_row">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="2" colspan="1" scope="col" id=""></th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="2" scope="colgroup" id="Full">
+        <span class="gt_column_spanner">Full</span>
+      </th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="2" scope="colgroup" id="French (1953-1977)">
+        <span class="gt_column_spanner">French (1953-1977)</span>
+      </th>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="2" scope="colgroup" id="Aprés 2000">
+        <span class="gt_column_spanner">Aprés 2000</span>
+      </th>
+    </tr>
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Lundi">Lundi</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Vendredi">Vendredi</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Lundi">Lundi</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Vendredi">Vendredi</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Lundi">Lundi</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Vendredi">Vendredi</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><th id="stub_1_1" scope="row" class="gt_row gt_left gt_stub">t</th>
+<td headers="stub_1_1 Lundi" class="gt_row gt_right">-4.711</td>
+<td headers="stub_1_1 Vendredi" class="gt_row gt_right">0.468</td>
+<td headers="stub_1_1 Lundi.1" class="gt_row gt_right">-7.149</td>
+<td headers="stub_1_1 Vendredi.1" class="gt_row gt_right">2.375</td>
+<td headers="stub_1_1 Lundi.2" class="gt_row gt_right">-0.994</td>
+<td headers="stub_1_1 Vendredi.2" class="gt_row gt_right">-1.148</td></tr>
+    <tr><th id="stub_1_2" scope="row" class="gt_row gt_left gt_stub">p_value</th>
+<td headers="stub_1_2 Lundi" class="gt_row gt_right" style="background-color: #0000FF; color: #FFFFFF;">0.000</td>
+<td headers="stub_1_2 Vendredi" class="gt_row gt_right" style="background-color: #FFFFFF; color: #000000;">0.640</td>
+<td headers="stub_1_2 Lundi.1" class="gt_row gt_right" style="background-color: #0000FF; color: #FFFFFF;">0.000</td>
+<td headers="stub_1_2 Vendredi.1" class="gt_row gt_right" style="background-color: #0000FF; color: #FFFFFF;">0.018</td>
+<td headers="stub_1_2 Lundi.2" class="gt_row gt_right" style="background-color: #FFFFFF; color: #000000;">0.320</td>
+<td headers="stub_1_2 Vendredi.2" class="gt_row gt_right" style="background-color: #FFFFFF; color: #000000;">0.251</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>On constate que les différences sont biens significatives pour les deux jours sur la période étudiée par French, mais seulement significative sur l’ensemble de la période pour le lundi et que passé 2000 plus rien n’est significatif. L’anomalie n’existe plus sur le Standard &amp; Poor 500. Il serait donc vain de compter dessus pour faire fortune… Mais revenons-en à nos histogrammes.</p>
+<p>Le premier réflexe que l’on pourrait avoir pour illustrer l’ensemble serait de travailler à partir de facets positionnant les rendements des différents jours les uns après les autres. Limitons nous pour l’instant à l’échantillon total. On aurait alors quelque choses de ce type (avec un peu de mise en forme). Nous utilisons ici 52 intervalles en application de la règle de Rule.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=ret,fill=jour))+
+  geom_histogram(aes(y=after_stat(density)),
+                 bins=52,color=&#39;black&#39;)+
+  labs(title=&quot;Histogrammes des rendements
+ journaliers du S&amp;P500&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  facet_grid(rows=vars(jour))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = &quot;none&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>L’ensemble est assez satisfaisant mais il serait peut-être plus lisible si on exclut de la visualisation les valeurs extrêmes. Winsorisons la série et profitons en pour marquer la moyenne.</p>
+<pre class="r"><code>dat_moy&lt;-dat %&gt;%
+  group_by(jour) %&gt;%
+  summarise(moy_ret=mean(ret))
+ggplot(data= filter(dat,
+                    ret&gt;=quantile(ret,probs=.01)&amp;
+                    ret&lt;quantile(ret,probs=.99)),
+       aes(x=ret,fill=jour))+
+  geom_histogram(aes(y=after_stat(density)),
+                 bins=52,color=&#39;black&#39;)+
+  geom_vline(data=dat_moy,aes(xintercept = moy_ret),color=&#39;red&#39;)+
+  labs(title=&quot;Histogrammes des rendements  journaliers du S&amp;P500&quot;,
+       subtitle = &quot;(moyenne en rouge - graphe sans les premiers et derniers percentiles)&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  facet_grid(rows=vars(jour))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;,size=8),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = &quot;none&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>Le résultat en lui n’est pas mal mais on pourrait encore l’amélioré en ordonnant les graphes de manière à ce que lundi apparaisse en premier puis vendredi et enfin les autres jours. Profitons-en pour les passer en français.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;%
+  mutate(jour_f=factor(jour,levels=c(&quot;Monday&quot;,&quot;Friday&quot;,&quot;Other_day&quot;),
+                       labels=c(&quot;Lundi&quot;,&quot;Vendredi&quot;,&quot;Les autres jours&quot;)))
+dat_moy&lt;-dat %&gt;%
+  group_by(jour_f) %&gt;%
+  summarise(moy_ret=mean(ret))
+ggplot(data= filter(dat,
+                    ret&gt;=quantile(ret,probs=.01)&amp;
+                    ret&lt;quantile(ret,probs=.99)),
+       aes(x=ret,fill=jour_f))+
+  geom_histogram(aes(y=after_stat(density)),bins=52,color=&#39;black&#39;)+
+  geom_vline(data=dat_moy,aes(xintercept = moy_ret),color=&#39;red&#39;)+
+  labs(title=&quot;Histogrammes des rendements  journaliers du S&amp;P500&quot;,
+       subtitle = &quot;(moyenne en rouge - graphe sans les premiers et derniers percentiles)&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  facet_grid(rows=vars(jour_f))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;,size=8),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = &quot;none&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>D’autres types d’histogrammes pourraient être mobilisés avec position dodge ou stack, mais ils donnent des résultats bien plus confus.</p>
+<pre class="r"><code>ggplot(data=filter(dat,
+                   ret&gt;=quantile(ret,probs=.01)&amp;
+                   ret&lt;quantile(ret,probs=.99)),
+       aes(x=ret,fill=jour_f))+
+  geom_histogram(aes(y=after_stat(density)),bins=52,
+                 position=&#39;dodge&#39;,color=&#39;black&#39;,linewidth=0.001)+
+  labs(title=&quot;Histogrammes des rendements  journaliers du S&amp;P500&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;,
+       fill=&quot;Jours de la semaine&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = c(0.8,0.7))</code></pre>
+<pre><code>## Warning: A numeric `legend.position` argument in `theme()` was deprecated in ggplot2
+## 3.5.0.
+## ℹ Please use the `legend.position.inside` argument of `theme()` instead.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>L’histogramme triple avec les trois séries juxtaposés (dodge) est clairement difficile à la lire. Voyons ce qu’il en est avec l’histogramme triple superposé.</p>
+<pre class="r"><code>ggplot(data=filter(dat,
+                   ret&gt;=quantile(ret,probs=.01)&amp;
+                   ret&lt;quantile(ret,probs=.99)),
+       aes(x=ret,fill=jour_f))+
+  geom_histogram(aes(y=after_stat(density)),bins=52,
+                 position=&#39;stack&#39;,color=&#39;black&#39;,linewidth=0.001)+
+  labs(title=&quot;Histogrammes des rendements  journaliers du S&amp;P500&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;,
+       fill=&quot;Jours de la semaine&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(labels=label_percent(scale=1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+    plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+    axis.title = element_blank(),
+    legend.position = c(0.8,0.7))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Ce dernier est encore plus illisible. Venons-en au graphe en pyramide. Ils ne permettent que de comparer des paires. Limitons nous, pour commencer, à l’opposition lundi contre les autres jours de la semaine. Commençons par l’établir en miroir.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=ret,fill=jour_f))+
+  geom_histogram(data=filter(dat,jour_f==&quot;Lundi&quot;&amp;
+                                 ret&gt;=quantile(ret,probs=.01)&amp;
+                                 ret&lt;quantile(ret,probs=.99)),
+                 aes(x=ret,y=after_stat(density)),bins=52,color=&#39;black&#39;)+
+  geom_histogram(data=filter(dat,jour_f==&quot;Les autres jours&quot;&amp;
+                                 ret&gt;=quantile(ret,probs=.01)&amp;
+                                 ret&lt;quantile(ret,probs=.99)),
+                 aes(x=ret,y=-after_stat(density)),bins=52,color=&#39;black&#39;)+
+  geom_vline(xintercept = dat_moy$moy_ret[dat_moy$jour_f==&#39;Lundi&#39;],
+             color=&#39;red&#39;)+
+  geom_vline(xintercept = dat_moy$moy_ret[dat_moy$jour_f==&#39;Les autres jours&#39;],
+             color=&#39;blue&#39;)+
+  labs(title=&quot;Histogrammes des rendements  journaliers du S&amp;P500&quot;,
+       subtitle = &quot;Lundi(saumon-rouge) contre Mardi,Mercredi,Jeudi (vert-bleu)&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(breaks=c(-40,0,40),labels=c(&quot;40%&quot;,&quot;0%&quot;,&quot;40%&quot;))+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+        plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;,size=8),
+        plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Pour obtenir une pyramide, il suffit de renverser le système de coordonnés avec <strong>coord_flip()</strong>.</p>
+<pre class="r"><code>ggplot(data=dat,aes(x=ret,fill=jour_f))+
+  geom_histogram(data=filter(dat,jour_f==&quot;Lundi&quot;&amp;
+                                 ret&gt;=quantile(ret,probs=.01)&amp;
+                                 ret&lt;quantile(ret,probs=.99)),
+                 aes(x=ret,y=after_stat(density)),bins=52,color=&#39;black&#39;)+
+  geom_histogram(data=filter(dat,jour_f==&quot;Les autres jours&quot;&amp;
+                                 ret&gt;=quantile(ret,probs=.01)&amp;
+                                 ret&lt;quantile(ret,probs=.99)),
+                 aes(x=ret,y=-after_stat(density)),bins=52,color=&#39;black&#39;)+
+  geom_vline(xintercept = dat_moy$moy_ret[dat_moy$jour_f==&#39;Lundi&#39;],
+             color=&#39;red&#39;)+
+  geom_vline(xintercept = dat_moy$moy_ret[dat_moy$jour_f==&#39;Les autres jours&#39;],
+             color=&#39;blue&#39;)+
+  labs(title=&quot;Histogrammes des rendements  journaliers du S&amp;P500&quot;,
+       subtitle = &quot;Lundi(saumon-rouge) contre Mardi,Mercredi,Jeudi (vert-bleu)&quot;,
+       caption=&quot;Source: données Yahoo! Finance&quot;)+
+  scale_x_continuous(labels=label_percent(accuracy = 1))+
+  scale_y_continuous(breaks=c(-40,0,40),labels=c(&quot;40%&quot;,&quot;0%&quot;,&quot;40%&quot;))+
+  coord_flip()+
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+        plot.subtitle = element_text(hjust = 0.5,face=&#39;italic&#39;,size=8),
+        plot.caption = element_text(hjust = 1,face=&#39;italic&#39;),
+        axis.title = element_blank(),
+        legend.position = &quot;none&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>Voilà nous avons un histogramme en pyramide assez claire. Réalisons le même graphe pour le vendredi et mettons le en regard de celui-ci. Pour cela, nous utiliserons le package <em>patchwork</em>. Créons d’abord une fonction permettant de générer des graphes rapidement.</p>
+<pre class="r"><code>graph_pyr&lt;-function(d,jr,titr){
+  ggplot(data=d,aes(x=ret,fill=jour_f))+
+    geom_histogram(data=filter(d,jour_f==jr&amp;
+                                 ret&gt;=quantile(ret,probs=.01)&amp;
+                                 ret&lt;quantile(ret,probs=.99)),
+                   aes(x=ret,y=after_stat(density)),bins=52,color=&#39;black&#39;)+
+    geom_histogram(data=filter(d,jour_f==&quot;Les autres jours&quot;&amp;
+                                 ret&gt;=quantile(ret,probs=.01)&amp;
+                                 ret&lt;quantile(ret,probs=.99)),
+                   aes(x=ret,y=-after_stat(density)),bins=52,color=&#39;black&#39;)+
+    labs(title=titr)+
+    scale_x_continuous(labels=label_percent(accuracy = 1))+
+    scale_y_continuous(breaks=c(-40,0,40),
+                       labels=c(&quot;40%&quot;,&quot;0%&quot;,&quot;40%&quot;))+
+    coord_flip()+
+    theme_minimal()+
+    theme(
+      plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;,size=8),
+      axis.title = element_blank(),
+      legend.position = &quot;none&quot;)}</code></pre>
+<p>Ceci fait, on peut réunir la pyramide associée à l’effet Lundi et celle associée à l’effet Vendredi. Ajoutons à ceci quelques mises en forme</p>
+<pre class="r"><code>g1&lt;-graph_pyr(dat,&#39;Lundi&#39;,
+              &#39;Mardi,Mercredi,Jeudi (vert) vs Lundi(saumon)&#39;)
+g2&lt;-graph_pyr(dat,&#39;Vendredi&#39;,
+              &#39;Mardi,Mercredi,Jeudi (vert) vs Vendredi(saumon)&#39;)
+g1+g2 + plot_annotation(
+  title = &#39;Pyramides des rendements  journaliers du S&amp;P500&#39;,
+  subtitle = &#39;Effet weekend (Full sample - Winsorisé 1%-99%)&#39;,
+  caption = &#39;Source: données Yahoo! Finance&#39;,
+  theme = theme(plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+                plot.subtitle = element_text(hjust = 0.5,face=&#39;bold&#39;),
+                plot.caption = element_text(hjust = 1,face=&#39;italic&#39;)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p>La même chose peut être réalisée avec l’échantillon de French (1953-1977).</p>
+<pre class="r"><code>g1&lt;-graph_pyr(filter(dat,date&gt;date(&quot;1953/01/01&quot;)&amp;
+                         date&lt;date(&quot;1977/12/31&quot;)),
+              &#39;Lundi&#39;,&#39;Mardi,Mercredi,Jeudi (vert) vs Lundi(saumon)&#39;)
+g2&lt;-graph_pyr(filter(dat,date&gt;date(&quot;1953/01/01&quot;)&amp;
+                         date&lt;date(&quot;1977/12/31&quot;)),
+              &#39;Vendredi&#39;,&#39;Mardi,Mercredi,Jeudi (vert) vs Vendredi(saumon)&#39;)
+g1+g2 + plot_annotation(
+  title = &#39;Pyramides des rendements  journaliers du S&amp;P500&#39;,
+  subtitle = &#39;Effet weekend - French (1953-1977) - Winsorisé 1%-99%&#39;,
+  caption = &#39;Source: données Yahoo! Finance&#39;,
+  theme = theme(plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+                plot.subtitle = element_text(hjust = 0.5,face=&#39;bold&#39;),
+                plot.caption = element_text(hjust = 1,face=&#39;italic&#39;)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>On est alors confronté à des différences plus marquées. Cela n’est pas le cas pour la période post 2000 comme on peut le voir dans la figure réalisée à partir des données associées.</p>
+<pre class="r"><code>g1&lt;-graph_pyr(filter(dat,date&gt;date(&quot;2000/01/01&quot;)),
+              &#39;Lundi&#39;,&#39;Mardi,Mercredi,Jeudi (vert) vs Lundi(saumon)&#39;)
+g2&lt;-graph_pyr(filter(dat,date&gt;date(&quot;2000/01/01&quot;)),
+              &#39;Vendredi&#39;,&#39;Mardi,Mercredi,Jeudi (vert) vs Vendredi(saumon)&#39;)
+g1+g2 + plot_annotation(
+  title = &#39;Pyramides des rendements  journaliers du S&amp;P500&#39;,
+  subtitle = &#39;Effet weekend - après 2000 - Winsorisé 1%-99&#39;,
+  caption = &#39;Source: données Yahoo! Finance&#39;,
+  theme = theme(plot.title = element_text(hjust = 0.5,face=&#39;bold&#39;),
+                plot.subtitle = element_text(hjust = 0.5,face=&#39;bold&#39;),
+                plot.caption = element_text(hjust = 1,face=&#39;italic&#39;)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>Le pyramide graphe permet de très facilement comparer deux distributions. C’est à la fois sa force et sa limite. Nous verrons par la suite des graphes permettant d’illustrer la comparaison de plus deux distributions.</p>
