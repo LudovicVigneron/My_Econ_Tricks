@@ -402,7 +402,7 @@ Pour illustrer le second point, réalisons le graphe à partir des médianes.
 ```{r fig.height=7, fig.width=8}
 ggplot(dd,aes(y=med_md,x=day_lab))+
   geom_hline(yintercept=median(dat$ret),color='red') +
-  annotate(geom="text",label="moyenne",x="lundi", y=0.0005,
+  annotate(geom="text",label="médiane",x="lundi", y=0.0005,
             color="red",size=3)+
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom="point", shape=19,

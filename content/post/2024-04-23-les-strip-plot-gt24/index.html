@@ -369,7 +369,7 @@ dd</code></pre>
 <p>Pour illustrer le second point, réalisons le graphe à partir des médianes.</p>
 <pre class="r"><code>ggplot(dd,aes(y=med_md,x=day_lab))+
   geom_hline(yintercept=median(dat$ret),color=&#39;red&#39;) +
-  annotate(geom=&quot;text&quot;,label=&quot;moyenne&quot;,x=&quot;lundi&quot;, y=0.0005,
+  annotate(geom=&quot;text&quot;,label=&quot;médiane&quot;,x=&quot;lundi&quot;, y=0.0005,
             color=&quot;red&quot;,size=3)+
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom=&quot;point&quot;, shape=19,
