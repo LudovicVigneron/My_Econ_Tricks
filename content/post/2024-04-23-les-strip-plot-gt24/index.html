@@ -54,7 +54,7 @@ glimpse(dat)</code></pre>
 <p>Maintenant que nos données sont prêtes, passons au graphe. La procédure est simple. Il s’agit d’utiliser le <strong>geom_point()</strong> en indiquant comme esthétique pour l’axe des abscisses day_lab et pour les ordonnées ret.</p>
 <pre class="r"><code>ggplot(data=dat,aes(x=day_lab,y=ret))+
   geom_point()</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="768" /></p>
 <p>Cette représentation présente le défaut de superposer les points. Pour s’en convaincre, dénombrons les observations associées aux différents jours de la semaine.</p>
 <pre class="r"><code>dat %&gt;% group_by(day_lab) %&gt;% 
   count()</code></pre>
@@ -83,7 +83,7 @@ glimpse(dat)</code></pre>
          axis.title = element_blank(),
          axis.line.y.left = element_line(color=&quot;black&quot;),
    )</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="768" /></p>
 <p>La transparence permet de mieux distinguer les différents degrés de regroupement d’observations. Les choses pourraient être plus signifiante si on ajoutait des repères. Plaçons sur le graphe des éléments marquant le rendement moyen sur la période globale et sur chaque jours. Cette moyenne est de :</p>
 <pre class="r"><code>mean(dat$ret)</code></pre>
 <pre><code>## [1] 0.0003414452</code></pre>
@@ -118,7 +118,7 @@ glimpse(dat)</code></pre>
          axis.title = element_blank(),
          axis.line.y.left = element_line(color=&quot;black&quot;),
    )</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="768" /></p>
 <p>On voit clairement que les moyennes différents difficilement d’un jours à l’autre voir même de la moyenne sur l’ensemble de la période. Voyons rapidement ce qu’il en est sur la période étudiée par French (1980), autrement-dit 1953-1977.</p>
 <pre class="r"><code>ggplot(data=filter(dat,date&gt;date(&quot;1953/01/01&quot;)&amp;
                        date&lt;date(&quot;1977/12/31&quot;)),
@@ -141,7 +141,7 @@ glimpse(dat)</code></pre>
          axis.title = element_blank(),
          axis.line.y.left = element_line(color=&quot;black&quot;),
    )</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="768" /></p>
 <p>Le contraste est plus marqué mais l’ensemble reste confus. Voyons ce qu’il en est si on winsorise (si on enlève les observations les plus extrêmes, les 1% de valeurs plus grande et plus petite).</p>
 <pre class="r"><code>ggplot(data=filter(dat,date&gt;date(&quot;1953/01/01&quot;)&amp;
                        date&lt;date(&quot;1977/12/31&quot;)&amp;
@@ -166,7 +166,7 @@ glimpse(dat)</code></pre>
          axis.title = element_blank(),
          axis.line.y.left = element_line(color=&quot;black&quot;),
    )</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="768" /></p>
 <p>Cela améliore légèrement les choses mais au prix d’une perte d’informations.</p>
 <p>Revenons à nos données sur l’ensemble de la période. Essayons de réduire la superposition des points en les étalant plus sur l’axe horizontale sans les faire empiéter sur ceux des jours voisins. Pour cela, à la place d’utiliser le <strong>geom_point()</strong>, utilisons le <strong>geom_jitter()</strong>.</p>
 <pre class="r"><code>ggplot(data=dat,aes(x=day_lab,y=ret,group=day_lab))+
@@ -188,7 +188,7 @@ glimpse(dat)</code></pre>
          axis.title = element_blank(),
          axis.line.y.left = element_line(color=&quot;black&quot;),
    )</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="768" /></p>
 <p>On voit plus nettement ici l’importance du nombre d’observations et des chevauchements de valeurs. L’ensemble reste néanmoins confus. On peut envisager d’ajouter des éléments d’information pour essayer de rendre les choses plus clairs comme par exemple une couleur différentes en fonction des mois où les observations sont réalisées.</p>
 <pre class="r"><code>ggplot(dat,
         aes(y=ret,x=day_lab,color=mois_lab))+
@@ -218,7 +218,7 @@ glimpse(dat)</code></pre>
          legend.key.size = unit(5, &quot;pt&quot;),
          legend.byrow = TRUE
    )</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="768" /></p>
 <p>On voit encore mieux l’importance des superpositions, mais on est incapable de voir s’il y a des tendances différentes d’un mois à l’autre. Voyons ce qu’il en est, si on fait un graphe par mois à partir de la commande <strong>facet_warp()</strong>.</p>
 <pre class="r"><code>ggplot(dat,
         aes(y=ret,x=day_lab,color=mois_lab))+
@@ -314,7 +314,7 @@ dd</code></pre>
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom=&quot;point&quot;, shape=19,
                  size=2, color=&quot;red&quot;)+
-  labs(title=&quot;Rendements journaliers moyens du S&amp;P500&quot;,
+  labs(title=&quot;Moyennes sur chaque mois de l&#39;année des rendements journaliers du S&amp;P500&quot;,
        subtitle = &quot;1954-2003&quot;,
        caption=&quot;Source: données Yahoo! Finance&quot;,
        color=&quot;Mois&quot;)+
@@ -344,7 +344,7 @@ dd</code></pre>
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom=&quot;point&quot;, shape=19,
                  size=2, color=&quot;red&quot;)+
-  labs(title=&quot;Rendements journaliers moyens du S&amp;P500&quot;,
+  labs(title=&quot;Moyennes sur chaque mois de l&#39;année des rendements journaliers du S&amp;P500&quot;,
        subtitle = &quot;1954-2003&quot;,
        caption=&quot;Source: données Yahoo! Finance&quot;,
        color=&quot;Mois&quot;)+
@@ -368,13 +368,13 @@ dd</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-20-1.png" width="768" /></p>
 <p>Pour illustrer le second point, réalisons le graphe à partir des médianes.</p>
 <pre class="r"><code>ggplot(dd,aes(y=med_md,x=day_lab))+
-  geom_hline(yintercept=mean(dat$ret),color=&#39;red&#39;) +
+  geom_hline(yintercept=median(dat$ret),color=&#39;red&#39;) +
   annotate(geom=&quot;text&quot;,label=&quot;moyenne&quot;,x=&quot;lundi&quot;, y=0.0005,
             color=&quot;red&quot;,size=3)+
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom=&quot;point&quot;, shape=19,
                  size=2, color=&quot;red&quot;)+
-  labs(title=&quot;Rendements journaliers moyens du S&amp;P500&quot;,
+  labs(title=&quot;Médiane sur chaque mois de l&#39;année des rendements journaliers du S&amp;P500&quot;,
        subtitle = &quot;1954-2003&quot;,
        caption=&quot;Source: données Yahoo! Finance&quot;,
        color=&quot;Mois&quot;)+
@@ -428,7 +428,7 @@ dd_54_77</code></pre>
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom=&quot;point&quot;, shape=19,
                  size=2, color=&quot;red&quot;)+
-  labs(title=&quot;Rendements journaliers moyens du S&amp;P500&quot;,
+  labs(title=&quot;Moyennes sur chaque mois de l&#39;année des rendements journaliers du S&amp;P500&quot;,
        subtitle =&quot;période 1954-1977&quot;,
        caption=&quot;Source: données Yahoo! Finance&quot;,
        color=&quot;Mois&quot;)+

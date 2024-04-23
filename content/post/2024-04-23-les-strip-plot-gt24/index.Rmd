@@ -61,7 +61,7 @@ dat<-dat%>% mutate(day_of_the_week=wday(date),
 
 Maintenant que nos données sont prêtes, passons au graphe. La procédure est simple. Il s'agit d'utiliser le **geom_point()** en indiquant comme esthétique pour l'axe des abscisses day_lab et pour les ordonnées ret.
 
-```{r}
+```{r fig.height=7, fig.width=8}
 ggplot(data=dat,aes(x=day_lab,y=ret))+
   geom_point()
 ```
@@ -77,7 +77,7 @@ On est loin de voir les plus de trois milles points différents sur chaque jours
 
 Essayons de faire ressortir de manière plus nette les différents points et profitons-en pour procéder à un peu de mise en forme. Commençons par réduire la taille des points et appliquons leur de la transparence (alpha).
 
-```{r}
+```{r fig.height=7, fig.width=8}
 ggplot(data=dat,aes(x=day_lab,y=ret))+
   geom_point(alpha=0.25,size=1)+
   labs(title="Rendement journaliers du S&P 500",
@@ -109,7 +109,7 @@ dat %>% group_by(day_lab) %>%
 
 Indiquons les en rouge sur le graphe.
 
-```{r warning=FALSE}
+```{r warning=FALSE,fig.height=7, fig.width=8}
 ggplot(data=dat,aes(x=day_lab,y=ret,group=day_lab))+
   geom_point(alpha=0.25,size=1)+
   geom_hline(yintercept = mean(dat$ret), color='red')+
@@ -133,7 +133,7 @@ ggplot(data=dat,aes(x=day_lab,y=ret,group=day_lab))+
 
 On voit clairement que les moyennes différents difficilement d'un jours à l'autre voir même de la moyenne sur l'ensemble de la période. Voyons rapidement ce qu'il en est sur la période étudiée par French (1980), autrement-dit 1953-1977.
 
-```{r}
+```{r fig.height=7, fig.width=8}
 ggplot(data=filter(dat,date>date("1953/01/01")&
                        date<date("1977/12/31")),
        aes(x=day_lab,y=ret,group=day_lab))+
@@ -159,7 +159,7 @@ ggplot(data=filter(dat,date>date("1953/01/01")&
 
 Le contraste est plus marqué mais l'ensemble reste confus. Voyons ce qu'il en est si on winsorise (si on enlève les observations les plus extrêmes, les 1% de valeurs plus grande et plus petite).
 
-```{r}
+```{r fig.height=7, fig.width=8}
 ggplot(data=filter(dat,date>date("1953/01/01")&
                        date<date("1977/12/31")&
                        ret>=quantile(ret,probs=.01)&
@@ -189,7 +189,7 @@ Cela améliore légèrement les choses mais au prix d'une perte d'informations.
 
 Revenons à nos données sur l'ensemble de la période. Essayons de réduire la superposition des points en les étalant plus sur l'axe horizontale sans les faire empiéter sur ceux des jours voisins. Pour cela, à la place d'utiliser le **geom_point()**, utilisons le **geom_jitter()**.
 
-```{r}
+```{r fig.height=7, fig.width=8}
 ggplot(data=dat,aes(x=day_lab,y=ret,group=day_lab))+
   geom_jitter(width = 0.35,alpha=0.25,size=1) +
   geom_hline(yintercept = mean(dat$ret), color='red')+
@@ -213,7 +213,7 @@ ggplot(data=dat,aes(x=day_lab,y=ret,group=day_lab))+
 
 On voit plus nettement ici l'importance du nombre d'observations et des chevauchements de valeurs. L'ensemble reste néanmoins confus. On peut envisager d'ajouter des éléments d'information pour essayer de rendre les choses plus clairs comme par exemple une couleur différentes en fonction des mois où les observations sont réalisées.
 
-```{r}
+```{r fig.height=7, fig.width=8}
 ggplot(dat,
         aes(y=ret,x=day_lab,color=mois_lab))+
    geom_jitter(width = 0.35,alpha=0.5,size=1) +
@@ -340,7 +340,7 @@ ggplot(dd,aes(y=moy_md,x=day_lab))+
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom="point", shape=19,
                  size=2, color="red")+
-  labs(title="Rendements journaliers moyens du S&P500",
+  labs(title="Moyennes sur chaque mois de l'année des rendements journaliers du S&P500",
        subtitle = "1954-2003",
        caption="Source: données Yahoo! Finance",
        color="Mois")+
@@ -374,7 +374,7 @@ ggplot(dd,aes(y=moy_md,x=day_lab))+
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom="point", shape=19,
                  size=2, color="red")+
-  labs(title="Rendements journaliers moyens du S&P500",
+  labs(title="Moyennes sur chaque mois de l'année des rendements journaliers du S&P500",
        subtitle = "1954-2003",
        caption="Source: données Yahoo! Finance",
        color="Mois")+
@@ -401,13 +401,13 @@ Pour illustrer le second point, réalisons le graphe à partir des médianes.
 
 ```{r fig.height=7, fig.width=8}
 ggplot(dd,aes(y=med_md,x=day_lab))+
-  geom_hline(yintercept=mean(dat$ret),color='red') +
+  geom_hline(yintercept=median(dat$ret),color='red') +
   annotate(geom="text",label="moyenne",x="lundi", y=0.0005,
             color="red",size=3)+
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom="point", shape=19,
                  size=2, color="red")+
-  labs(title="Rendements journaliers moyens du S&P500",
+  labs(title="Médiane sur chaque mois de l'année des rendements journaliers du S&P500",
        subtitle = "1954-2003",
        caption="Source: données Yahoo! Finance",
        color="Mois")+
@@ -455,7 +455,7 @@ ggplot(dd_54_77,
   geom_jitter(width = 0.25,size=2) +
   stat_summary(fun=mean, geom="point", shape=19,
                  size=2, color="red")+
-  labs(title="Rendements journaliers moyens du S&P500",
+  labs(title="Moyennes sur chaque mois de l'année des rendements journaliers du S&P500",
        subtitle ="période 1954-1977",
        caption="Source: données Yahoo! Finance",
        color="Mois")+
