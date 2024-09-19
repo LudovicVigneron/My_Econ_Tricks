@@ -1,0 +1,571 @@
+---
+title: diff in diff - bases 1
+author: Ludovic Vigneron
+date: '2024-09-17'
+slug: []
+categories:
+  - DID
+  - Inf_causale
+tags:
+  - DiD
+  - Inf_causale
+---
+
+**L'objet de cette note "rapide" est de reprendre et d'approfondir (ou au moins de détailler) l'illustration de la méthode *Difference-in-Difference* présentée par Andrew Heiss dans son cours sur l'évaluation de programme. Vous pouvez le retrouvez à l'adresse suivante: [Andrew_Heiss_Program_Evaluation_Georgia_State_University_2020](https://evalsp20.classes.andrewheiss.com/syllabus/).**
+
+Il s'agit du cas le plus simple: une *difference-in-difference* sur deux groupes (simple *diff-in-diff* ou *2x2 diff-in-diff*). L'exemple porte sur une réforme conduite par l'Etat du Kentucky en 1980. Elle concerne le nombre maximum de semaines d'indemnisations prises en charge en cas d'accident du travail. Elle augmente cette limite. Cette réforme affecte uniquement les travailleurs à haut revenu. Ils constituent donc ici le groupe traité. Les travailleurs considérés comme à bas revenu, ceux pour qui la réforme ne change rien, sont le groupe de contrôle. La question est de savoir si cette réforme conduit les travailleurs qui en bénéficient (ceux à haut revenu) à rester plus longtemps inactifs.
+
+# Chargement et mise en forme des données
+
+Avant d'entrer dans l'analyse des données, chargeons la série des packages qui seront mobilisés par la suite.
+
+```{r charger_les_packages}
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library(scales)
+library(broom)
+library(modelsummary)
+```
+
+Les données utilisées sont disponibles ici. Téléchargeons-les dans notre dossier de travail et chargeons-les dans notre environnement.
+
+```{r charger_les_donnees}
+#| message: false
+
+dat<-read_csv("data/injury.csv")
+```
+
+Jetons un œil à ce que l'on obtient.
+
+```{r jetons_un_oeil}
+
+glimpse(dat)
+```
+
+On a 7,150 observations pour 30 variables. Les noms des variables ne sont pas toujours très clairs et toutes ne nous intéressent pas. Précédons donc à quelques opérations de trie et de mise en forme.
+
+Commençons par ne garder que les informations concernant le Kentucky. La variable **ky** indique si l' observation considérée est ou non faite dans cet Etat. Elle prend la valeur 1 dans ce cas là 0 si non. Une fois le tri réalisé, ne gardons que les variables centrales dans l'analyse : les différentes formes de la variable d'output (**durat** et **ldurat**); la variable **afcnge**, qui positionne les observations par rapport au moment où le traitement est dispensé (elle prend la valeur 0 avant et 1 aprés); la variable **highearn**, qui indique si les individus considérés font (égale 1) ou non (égale 0) partis du groupe des traités. Profitons également de l'occasion pour leur donner une forme plus parlante en vue de l'analyse.
+
+```{r réduire_la_base}
+
+dk<-dat %>% 
+  filter(ky==1) %>% 
+  select(durat,ldurat,afchnge,highearn) %>% 
+  rename(duree=durat,log_duree=ldurat) %>% 
+  mutate(
+    traite=factor(highearn,labels=c("Bas_revenu","Haut_revenu")),
+    post=factor(afchnge,labels=c("Avant_1980","Après_1980")))
+```
+
+Examinons rapidement les premières valeurs de la base.
+
+```{r voyons_la_base_réduite}
+
+head(dk)
+```
+
+# Analyse exploratoire
+
+## Avant/après pour tout le monde
+
+Calculons la durée moyenne d'arrêt de travail avant et après la réforme et voyons si leur différence et statistiquement significative. Nous réaliserons cette opération plusieurs fois. Créons donc une fonction pour nous simplifier la vie.
+
+```{r fction_dif_moy}
+
+dif_mean_t<-function(x,gr,dat){
+   attach(dat, warn.conflicts = FALSE)
+   t<-t.test(x~gr,data=dat)
+   vect_t<-round(c(t$estimate,t$estimate[2]-t$estimate[1],
+                   t$statistic,p.value=t$p.value),
+           digits=3)
+   n1<-names(t$estimate) %>% str_sub(start = 15)
+   names(vect_t)<-c(n1,"diff","t","p.value")
+round(c(vect_t),digits=3)
+}
+```
+
+Maintenant que nous avons la fonction, appliquons-la à nos données.
+
+```{r test_dif_moy}
+
+dif_mean_t(duree,post,dat=dk)
+```
+
+La durée moyenne du temps d'arrêt après la réforme est plus grande pour l'échantillon global. La différence est statistiquement significative au seuil de 5%.
+
+Les mêmes résultats peuvent être obtenus au travers une régression.
+
+```{r naive_reg}
+
+reg_naive1<-lm(duree~post,data = dk)
+tidy(reg_naive1) %>% 
+   mutate_if(is.numeric, round , digits=3)
+```
+
+La constante nous donne ici la moyenne avant 1980 ( 8,330 semaines d'arrêt).
+
+Pour avoir la moyenne après 1980, il suffit d’additionner la constante avec le coefficient de la dummy post (8,330 + 1,237 = 9,567).
+
+```{r moy_ap}
+
+sum(reg_naive1$coefficients) %>% round(digits = 3)
+```
+
+On a une augmentation moyenne de 1,237 semaines (le coefficient de la variable d’interaction).
+
+Observons les différences de manière plus précise au travers d'une analyse graphique.
+
+### Histogramme
+
+Commençons par travailler à partir d'un histogramme. Dans la mesure où nous allons utiliser cette représentation plusieurs fois, établissons une fonction pour nous simplifier la vie.
+
+```{r fction_hist}
+
+hist_var<-function(x,dat,tit="",sub="",lx="",ly="",
+                   biw){
+  ggplot(data=dat,aes(x=x))+
+  geom_histogram(binwidth=biw,color="black",boundary=0,
+                 linewidth=0.1)+
+  labs(title=tit,
+       subtitle = sub,
+       x=lx,
+       y=ly)+
+  theme_bw()+
+  theme(
+    plot.title = element_text(face="bold",hjust=0.5),
+    plot.subtitle = element_text(face="italic",hjust=0.5)
+          )
+}
+```
+
+Appliquons notre fonction sur la variable durée pour l'ensemble de l'échantillon et marquons la moyenne par une ligne verticale.
+
+```{r  hist_glb}
+
+hist_var(dk$duree,dk,biw=4,
+         tit="Distribution du nombre de semaines d'arrêt",
+         sub= "au Kentucky sur toute la période",
+         lx="Nb. de sem.",
+         ly="Nb. d'obs.")+
+  geom_vline(aes(xintercept = mean(duree), group = post),
+           colour = 'red')
+```
+
+On note que la distribution est nettement asymétrique.
+
+Voyons maintenant les différences avant et après la réforme (1980).
+
+```{r hist_av_ap}
+
+hist_var(dk$duree,dk,biw=4,
+         tit="Distribution du nombre de semaines d'arrêt",
+         sub= "au Kentucky sur toute la période",
+         lx="Nb. de sem.",
+         ly="Nb. d'obs.")+
+  facet_grid(.~post)+
+  geom_vline(aes(xintercept = mean(duree), group = post),
+           colour = 'red')
+```
+
+Dans tout les cas, on constate que les distributions sont très asymétriques mais également assez similaires.
+
+Ici, travaillez à partir du log de la variable expliquée (**log_duree**) apparaît être une solution envisageable pour gérer les difficultés associées à l'asymétrie de sa distribution.
+
+Examinons le changement au travers d'un histogramme. Adaptons l'échelle des abscisses pour que les valeurs apparaissent en nombre de semaines et non en log du nombre de semaines.
+
+```{r hist_log_glob}
+
+hist_var(dk$log_duree, dat= dk,biw=0.5,
+         tit="Distribution du log du nombre de semaines d'arrêt",
+         sub= "au Kentucky sur toute la période",
+         lx="Nb. de sem.",
+         ly="Nb. d'obs.")+
+  scale_x_continuous(labels=trans_format("exp",format=round))+
+    geom_vline(aes(xintercept = mean(log_duree)),
+           colour = 'red')
+```
+
+La distribution de **log_duree** est bien plus symétrique (proche d'une loi normale) ce qui n'est pas sans conséquences sur les tests statistiques mis en oeuvre.
+
+```{r t_test_log_d}
+
+dif_mean_t(log_duree,post,dat=dk)
+```
+
+Le test de différence de moyenne est ici toujours statistiquement significatif, mais cette fois au seuil de 1%. On trouve la même chose dans l'analyse de régression.
+
+```{r naive_reg_log}
+
+reg_naive2<-lm(log_duree~post,data = dk)
+tidy(reg_naive2) %>% 
+   mutate_if(is.numeric, round , digits=3)
+```
+
+Établissons les moyennes à partir des résultats de la régression.
+
+```{r moy_av_ap}
+
+data.frame(avant_1980=reg_naive2$coefficients[1],
+           après_1980=sum(reg_naive2$coefficients),
+           diffèrence=reg_naive2$coefficients[2]) %>%
+           round(digits = 3) %>% remove_rownames()
+```
+
+Visualisons les choses via les histogrammes.
+
+```{r hist_av_ap_log}
+
+hist_var(dk$log_duree, dat= dk,biw=0.5,
+         tit="Distribution du log du nombre de semaines d'arrêt",
+         sub= "au Kentucky sur toute la période",
+         lx="Nb. de sem.",
+         ly="Nb. d'obs.")+
+  facet_grid(.~post)+
+  scale_x_continuous(labels=trans_format("exp",format=round))+
+  geom_vline(aes(xintercept = mean(log_duree), group = post),
+           colour = 'red')
+```
+
+### Graphe des moyennes et intervalles
+
+Une autre façon d'illustrer l'existence de distributions de valeurs différentes entre les groupes d'observations avant et après le traitement, consiste à indiquer les valeurs moyennes à l'aide de points et d'agrémenter ces points de un segment représentant l'intervalle de confiance retenu. Prenons ici 95%. On a alors:
+
+```{r graph_int_av_ap}
+
+ggplot(data=dk,aes(x=post,y=log_duree))+
+  stat_summary(geom='pointrange',fun.data="mean_se",
+               fun.args = list(mult=qnorm(0.975)))+
+  labs(title="Moyennes et intervalle de confiance à 95%",
+       y="Nb de semaines")+
+  scale_y_continuous(labels=trans_format("exp",format = round(1)))+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    axis.title.x = element_blank()
+      )
+```
+
+On voit plus nettement les différences avant/après qu'avec les histogrammes. Les intervalles de confiance se chevauchent très peu.
+
+On peut également utiliser un strip chart. A la différence de la présentation des intervalles de confiance, cette représentation intègre l'ensemble des observations. Chaque point représente une observations.
+
+```{r strip_av_ap}
+
+ggplot(data=dk,aes(x=post,y=log_duree,colour=post))+
+  geom_point(alpha=0.2,size=0.5)+
+  stat_summary(aes(group=post),
+               geom='point',fun="median",color='red')+
+  labs(title="Durée des arrêts de travail 
+avant et aprés la réforme",
+       y="Nb de semaines")+
+  scale_y_continuous(labels=trans_format("exp",format = round(1)))+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    axis.title.x = element_blank(),
+    legend.position = "none"
+      )
+```
+
+Cette représentation est peu claire, dans la mesure où il y a beaucoup de points qui se superposent. Pour y remédier, on peut utiliser le **geom_jitter()**, qui permet de positionner les points sur une base aléatoire selon une dimension (ici prenons la largeur).
+
+```{r strip_jitter_av_ap}
+
+ggplot(data=dk,aes(x=post,y=log_duree,colour=post))+
+  geom_jitter(alpha=0.5,size=0.5,width = 0.25)+
+  stat_summary(geom='point',fun="mean",color='red')+
+  labs(title="Durée des arrêts de travail 
+avant et aprés la réforme",
+       y="Nb de semaines")+
+  scale_y_continuous(labels=trans_format("exp",format = round(1)))+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5,face='bold'),
+    axis.title.x = element_blank(),
+    legend.position='none'
+      )
+```
+
+## Avant/après pour les traités
+
+Peu importe, la manière de représenter les choses la différences entre la durée moyenne d'arrêt avant la réforme et après la réforme ne dit rien (ou pas grand chose) sur l'effet de celle-ci. En effet, la reforme n'affecte pas toute la population. Seuls les hauts revenus voient leur régime changer. Effectuons l'analyse sur ce sous-échantillon.
+
+```{r t_test_av_ap_traite}
+
+dif_mean_t(duree,post,dat=filter(dk,traite=="Haut_revenu"))
+```
+
+Pour la variable durée, la différence entre le nombre moyen de semaines d'arrêt avant et après la réforme n'est pas statistiquement significative.
+
+Voyons les choses sur la base du logarithme de la durée.
+
+```{r t_test_av_ap_traite_log}
+
+dif_mean_t(log_duree,post, dat=filter(dk,traite=="Haut_revenu"))
+```
+
+Lorsque l'on passe par le log de la durée, la différence est clairement significative. On peut visualiser les choses à l'aide des intervalles de confiance.
+
+```{r grph_moy_int_log}
+
+ggplot(data=filter(dk,traite=="Haut_revenu"),
+       aes(x=post,y=log_duree))+
+  stat_summary(geom='pointrange',fun.data="mean_se",
+               fun.args = list(mult=1.96))+
+  labs(title="Durée des arrêts de travail 
+avant et aprés la réforme pour les hauts revenus",
+       subtitle = "Moyennes et intervalle de confiance à 95%",
+       y="Nb de semaines")+
+  scale_y_continuous(breaks=log(c(4.95,4.48,4.05,3.67)),
+                     labels=c("4.95","4.48","4.05","3.67"))+
+    theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(hjust=0.5),
+    axis.title.x = element_blank()
+      )
+```
+
+Ce résultat tendrait à accréditer l'hypothèse d'une augmentation de la durée d'arrêt de travail pour les traités (les hauts revenus) suite à la réforme. Cela va dans le sens d'un effet "positif" de la réforme. Néanmoins, cela peu cacher le fait qu'au moins en partie cette augmentation peut être due à une évolution générale non spécifique au traitement. Pour s'en donner une idée, on peut examiner l'évolution du groupe de contrôle (les bas revenus) suite à la réforme.
+
+## Avant/après pour le groupe de contrôle
+
+Travaillons ici directement avec le log de la durée d'arrêt.
+
+```{r t_test_av_ap_cont}
+
+dif_mean_t(log_duree,post,dat=filter(dk,traite=="Bas_revenu"))
+```
+
+On voit que la différence entre les durées d'arrêt avant et après 1980 n'est pas statistiquement significative.
+
+Visualisons les choses avec le graphe des intervalles de confiance.
+
+```{r graph_moy_int_av_ap_cont}
+
+ggplot(data=filter(dk,traite=="Bas_revenu"),
+       aes(x=post,y=log_duree))+
+  stat_summary(geom='pointrange',fun.data="mean_se",
+               fun.args = list(mult=1.96))+
+  labs(title="Durée des arrêts de travail 
+avant et aprés la réforme pour les Bas revenus",
+       subtitle = "Moyennes et intervalle de confiance à 95%",
+       y="Nb de semaines")+
+  scale_y_continuous(breaks=c(1.2,1.15,1.10),
+                     labels=c("3.32","3.15","3.00"))+
+    theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(hjust=0.5),
+    axis.title.x = element_blank()
+      )
+```
+
+On voit bien que les intervalles des confiances se chevauchent. Il n'y a pas d'effet de la réforme sur le groupe de contrôle.
+
+Il semble donc bien que la réforme ait un effet allant dans le sens d'une augmentation de la durée d'arrêt pour les traités (les hauts revenus) et pas sur le groupe de contrôle. Reste alors à mesurer cet effet.
+
+# Analyse *Dif in Dif*
+
+Pour ce faire, il faut combiner les différences sur le groupe des traités et le groupe de contrôle. Commençons par les mettre en vis-à-vis.
+
+```{r moy_av_ap_test}
+
+rbind(bas_revenu=dif_mean_t(log_duree,post,
+              dat=filter(dk,traite=="Bas_revenu")),
+      haut_revenu=dif_mean_t(log_duree,post,
+              dat=filter(dk,traite=="Haut_revenu")))
+```
+
+Pour déterminer l'effet du traitement, il suffit de soustraire à la différence avant et après traitement des traités (hauts revenus), la différence avant et après traitement du groupe de contrôle (bas revenus). Cet estimateur est appelé *Difference in Difference* (ou double différence en français). On a ici:
+
+```{r diff_diff_simple}
+
+c(dif_in_dif=dif_mean_t(log_duree,post,
+  dat=filter(dk,traite=="Haut_revenu"))[3]-dif_mean_t(log_duree,post,
+  dat=filter(dk,traite=="Bas_revenu"))[3])
+```
+
+L'effet du traitement, estimé sur le log de la durée d'arrêt, est de 0,19 (log semaines, soit un peu plus d'une semaine aux arrondis prés).
+
+## Le tableau des différences
+
+Résumons tout cela dans une tableau unique. Commençons par établir les moyennes de **log_duree** pour le groupe des traités et la groupe de contrôle pour les périodes avant et après le traitement.
+
+```{r mat_moy}
+
+moy<-cbind(rbind(Haut_revenu=
+        mean(filter(dk,traite=="Haut_revenu"&post=="Avant_1980")$log_duree),
+      Bas_revenu=
+        mean(filter(dk,traite=="Bas_revenu"&post=="Avant_1980")$log_duree)),
+rbind(Haut_revenu=
+        mean(filter(dk,traite=="Haut_revenu"&post=="Après_1980")$log_duree),
+      Bas_revenu=
+        mean(filter(dk,traite=="Bas_revenu"&post=="Après_1980")$log_duree))) %>% 
+  round(digits = 3)
+colnames(moy)<-c("Avant 1980","Après 1980")
+moy
+```
+
+Ceci fait, on peut déterminer les différences. Commençons par celles que nous avons déjà calculées (avant/après) et ajoutons les différences traité/contrôle.
+
+```{r tab_diff_av_ap_trait_cont}
+
+diff_h<-moy[,2]-moy[,1]
+diff_v<-c(moy[1,]-moy[2,],NA)
+moy_h<-cbind(moy,diff_h)
+moy_hv<-rbind(moy_h,diff_v)
+moy_hv
+```
+
+On peut retrouver notre *diff in diff* soit en prenant les différences verticales [(traitéav-controleav )-(traitéap-controleap)] soit en prenant les différences horizontales [(traitéap-traitéav )-(controleap-controleav)] . On trouve le même effet pour le traitement à 0,191.
+
+```{r diff_v_h}
+
+did<-moy_hv[3,2]-moy_hv[3,1]
+did
+did<-moy_hv[1,3]-moy_hv[2,3]
+did
+```
+
+Ajoutons la double différence à notre table pour la compléter.
+
+```{r tab_diff_did}
+
+moy_hv[3,3]<-did
+moy_hv
+```
+
+## Représentation graphique
+
+L'ensemble peut également être présenté graphiquement au travers des intervalles de confiance. Commençons par réunir nos graphes précédents en utilisant les facets.
+
+```{r did_graph_facets}
+
+ggplot(dk, aes(x = traite, y = log_duree)) +
+  stat_summary(geom = "pointrange", size = 1,
+               color = "red",
+               fun.data = "mean_se",
+               fun.args = list(mult = 1.96)) +
+  labs(title="Durée des arrêts de travail", 
+       subtitle = "Moyennes et intervalle de confiance à 95%",
+       y="Nb de semaines")+
+  scale_y_continuous(breaks=c(1.6,1.4,1.2),
+                     labels=c("4.95","4.05","3.32"))+
+  facet_wrap(~ post)+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(hjust=0.5),
+    axis.title.x = element_blank()
+  )
+```
+
+On peut aussi tout mettre sur une seule figure (sans passer par les facets). Elle inclut des segments pour marquer l'évolution de la variable expliquée dans le temps (avant/après le traitement). Mais pour ce faire, créons au préalable une base avec les moyennes.
+
+```{r base_moy}
+#| message: false
+#| warning: false
+
+bas_g<-dk %>% 
+  group_by(traite,post) %>% 
+  summarise(log_duree_m=mean(log_duree))
+bas_g
+```
+
+Une fois ces valeurs établies, marquons-les par un jeu de points et de lignes. Le contre-factuel, ce qui ce serait passé pour les traités s'il n'avait pas été traité, est figuré en pointillés.
+
+```{r graph_did}
+
+ggplot(bas_g, aes(x = post, 
+                  y = log_duree_m, 
+                  color = traite)) + 
+  geom_point() +
+  geom_line(aes(group = traite)) +
+  labs(title="Durée des arrêts de travail", 
+       y="Nb de semaines",
+       color="")+
+  scale_y_continuous(breaks=c(1.6,1.4,1.2),
+                     labels=c("4.95","4.05","3.32"))+
+  annotate(geom = "segment", x = "Avant_1980",
+           xend = "Après_1980",
+           y = bas_g$log_duree_m[3],
+           yend = bas_g$log_duree_m[4] - did,
+           linetype = "dashed", color = "grey50") +
+  annotate(geom = "segment", x = "Après_1980",
+           xend = "Après_1980",
+           y = bas_g$log_duree_m[4] , 
+           yend = bas_g$log_duree_m[4] - did,
+           linetype = "dotted", color = "blue") +
+  annotate(geom = "label", x = "Après_1980",
+           y = bas_g$log_duree_m[4] - (did / 2), 
+           label = "effet du programme", size = 3)+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    axis.title.x = element_blank(),
+    legend.position = "top"
+  )
+```
+
+# Analyse de régression
+
+Le calcul de la statistique de double différence au travers d'éléments de statistiques descriptives présente le défaut de ne pas fournir (directement) de test statistique sur sa valeur. On ne peut pas dire si l'effet du traitement est statistiquement différent de zéro. Pour y remédier, on préférera utiliser une estimation basée sur une régression. Celle-ci fournit la même valeur, mais, cette fois, elle est accompagnée d'un écart-type (et a fortiori une erreur standard) permettant la construction d'un test (généralement de Student contre la valeur 0 - H0 Le traitement n'a pas d'effet).
+
+Cette régression est construite à partir de l’interaction des termes désignant le groupe des traités (traite) et la période pré et post traitement (post).
+
+```{r reg_small}
+
+model_small <- lm(log_duree ~ traite + post + traite * post,
+                  data = dk)
+tidy(model_small) %>% 
+   mutate_if(is.numeric, round , digits=3)
+```
+
+L'avantage d'utiliser un régression pour réaliser l'analyse *Diff-in-Diff* repose sur le fait de pouvoir intégrer des variables de contrôle. Révisons la base de données pour en intégrer (**sexe**, **age**, **hospitalisation ou non**, **secteur d'activité**, **type de blessure**, **salaire avant la blessure**).
+
+```{r base_var_cont}
+
+kentucky_fixed <- dat %>% 
+  filter(ky==1) %>% 
+  mutate(indust = as.factor(indust),
+         injtype = as.factor(injtype),
+         traite=factor(highearn,labels=c("Bas_revenu","Haut_revenu")),
+         post=factor(afchnge,labels=c("Avant_1980","Après_1980")))
+```
+
+Réalisons la régression en incluant les variables de contrôle.
+
+```{r reg_big}
+
+model_big <- lm(ldurat~traite + post + traite * post + 
+                  male + married + age + hosp + indust + injtype + lprewage,
+                data = kentucky_fixed)
+tidy(model_big) %>% 
+   mutate_if(is.numeric, round , digits=3)
+```
+
+Le coefficient associé à la double différence est ici renvoyé à la fin du tableau (la ligne 18). Isolons la ligne correspondante.
+
+```{r lign_did_reg_big}
+
+tidy(model_big)[18,] %>% 
+   mutate_if(is.numeric, round , digits=3)
+```
+
+La double différence est de 0,169. Le coefficient a légèrement diminué par rapport à l'analyse sans variable de contrôle. Néanmoins, l'effet du traitement reste légèrement au dessus d'une semaine en plus en moyenne.
+
+Il serait intéressant de présenter ces analyses dans un même tableau. Utilisons le package *huxtable*.
+
+```{r tab_reg}
+#| warning: false
+#| message: false
+
+library(huxtable) 
+
+huxreg(model_small, model_big)
+```
+
+Nous aurions pu prolonger l'exemple en abordant les *two-way fixed effect* qui sont une autre manière d'estimer le coefficient associé à la double différence. Néanmoins la base prise pour exemple ne le permet pas. Il n'y a pas d'identifiant individuel permettant d'attribuer des effets fixes individuels. Nous renvoyons donc cela à un prochain post.

@@ -1,0 +1,583 @@
+---
+title: diff in diff - bases 1
+author: Ludovic Vigneron
+date: '2024-09-17'
+slug: []
+categories:
+  - DID
+  - Inf_causale
+tags:
+  - DiD
+  - Inf_causale
+---
+
+
+
+<p><strong>L’objet de cette note “rapide” est de reprendre et d’approfondir (ou au moins de détailler) l’illustration de la méthode <em>Difference-in-Difference</em> présentée par Andrew Heiss dans son cours sur l’évaluation de programme. Vous pouvez le retrouvez à l’adresse suivante: <a href="https://evalsp20.classes.andrewheiss.com/syllabus/">Andrew_Heiss_Program_Evaluation_Georgia_State_University_2020</a>.</strong></p>
+<p>Il s’agit du cas le plus simple: une <em>difference-in-difference</em> sur deux groupes (simple <em>diff-in-diff</em> ou <em>2x2 diff-in-diff</em>). L’exemple porte sur une réforme conduite par l’Etat du Kentucky en 1980. Elle concerne le nombre maximum de semaines d’indemnisations prises en charge en cas d’accident du travail. Elle augmente cette limite. Cette réforme affecte uniquement les travailleurs à haut revenu. Ils constituent donc ici le groupe traité. Les travailleurs considérés comme à bas revenu, ceux pour qui la réforme ne change rien, sont le groupe de contrôle. La question est de savoir si cette réforme conduit les travailleurs qui en bénéficient (ceux à haut revenu) à rester plus longtemps inactifs.</p>
+<div id="chargement-et-mise-en-forme-des-données" class="section level1">
+<h1>Chargement et mise en forme des données</h1>
+<p>Avant d’entrer dans l’analyse des données, chargeons la série des packages qui seront mobilisés par la suite.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(broom)
+library(modelsummary)</code></pre>
+<p>Les données utilisées sont disponibles ici. Téléchargeons-les dans notre dossier de travail et chargeons-les dans notre environnement.</p>
+<pre class="r"><code>dat&lt;-read_csv(&quot;data/injury.csv&quot;)</code></pre>
+<p>Jetons un œil à ce que l’on obtient.</p>
+<pre class="r"><code>glimpse(dat)</code></pre>
+<pre><code>## Rows: 7,150
+## Columns: 30
+## $ durat    &lt;dbl&gt; 1, 1, 84, 4, 1, 1, 7, 2, 175, 60, 29, 30, 100, 4, 2, 1, 1, 2,…
+## $ afchnge  &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ highearn &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ male     &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1…
+## $ married  &lt;dbl&gt; 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1…
+## $ hosp     &lt;dbl&gt; 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0…
+## $ indust   &lt;dbl&gt; 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 1, 1…
+## $ injtype  &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ age      &lt;dbl&gt; 26, 31, 37, 31, 23, 34, 35, 45, 41, 33, 35, 25, 39, 27, 24, 2…
+## $ prewage  &lt;dbl&gt; 404.9500, 643.8250, 398.1250, 527.8000, 528.9375, 614.2500, 5…
+## $ totmed   &lt;dbl&gt; 1187.57324, 361.07855, 8963.65723, 1099.64832, 372.80188, 211…
+## $ injdes   &lt;dbl&gt; 1010, 1404, 1032, 1940, 1940, 1425, 1110, 1207, 1425, 1010, 1…
+## $ benefit  &lt;dbl&gt; 246.8375, 246.8375, 246.8375, 246.8375, 211.5750, 176.3125, 2…
+## $ ky       &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ mi       &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ ldurat   &lt;dbl&gt; 0.0000000, 0.0000000, 4.4308167, 1.3862944, 0.0000000, 0.0000…
+## $ afhigh   &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ lprewage &lt;dbl&gt; 6.003764, 6.467427, 5.986766, 6.268717, 6.270870, 6.420402, 6…
+## $ lage     &lt;dbl&gt; 3.258096, 3.433987, 3.610918, 3.433987, 3.135494, 3.526361, 3…
+## $ ltotmed  &lt;dbl&gt; 7.079667, 5.889095, 9.100934, 7.002746, 5.921047, 5.351953, 4…
+## $ head     &lt;dbl&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ neck     &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ upextr   &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ trunk    &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ lowback  &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ lowextr  &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ occdis   &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ manuf    &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1…
+## $ construc &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ highlpre &lt;dbl&gt; 6.003764, 6.467427, 5.986766, 6.268717, 6.270870, 6.420402, 6…</code></pre>
+<p>On a 7,150 observations pour 30 variables. Les noms des variables ne sont pas toujours très clairs et toutes ne nous intéressent pas. Précédons donc à quelques opérations de trie et de mise en forme.</p>
+<p>Commençons par ne garder que les informations concernant le Kentucky. La variable <strong>ky</strong> indique si l’ observation considérée est ou non faite dans cet Etat. Elle prend la valeur 1 dans ce cas là 0 si non. Une fois le tri réalisé, ne gardons que les variables centrales dans l’analyse : les différentes formes de la variable d’output (<strong>durat</strong> et <strong>ldurat</strong>); la variable <strong>afcnge</strong>, qui positionne les observations par rapport au moment où le traitement est dispensé (elle prend la valeur 0 avant et 1 aprés); la variable <strong>highearn</strong>, qui indique si les individus considérés font (égale 1) ou non (égale 0) partis du groupe des traités. Profitons également de l’occasion pour leur donner une forme plus parlante en vue de l’analyse.</p>
+<pre class="r"><code>dk&lt;-dat %&gt;% 
+  filter(ky==1) %&gt;% 
+  select(durat,ldurat,afchnge,highearn) %&gt;% 
+  rename(duree=durat,log_duree=ldurat) %&gt;% 
+  mutate(
+    traite=factor(highearn,labels=c(&quot;Bas_revenu&quot;,&quot;Haut_revenu&quot;)),
+    post=factor(afchnge,labels=c(&quot;Avant_1980&quot;,&quot;Après_1980&quot;)))</code></pre>
+<p>Examinons rapidement les premières valeurs de la base.</p>
+<pre class="r"><code>head(dk)</code></pre>
+<pre><code>## # A tibble: 6 × 6
+##   duree log_duree afchnge highearn traite      post      
+##   &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;    &lt;dbl&gt; &lt;fct&gt;       &lt;fct&gt;     
+## 1     1      0          1        1 Haut_revenu Après_1980
+## 2     1      0          1        1 Haut_revenu Après_1980
+## 3    84      4.43       1        1 Haut_revenu Après_1980
+## 4     4      1.39       1        1 Haut_revenu Après_1980
+## 5     1      0          1        1 Haut_revenu Après_1980
+## 6     1      0          1        1 Haut_revenu Après_1980</code></pre>
+</div>
+<div id="analyse-exploratoire" class="section level1">
+<h1>Analyse exploratoire</h1>
+<div id="avantaprès-pour-tout-le-monde" class="section level2">
+<h2>Avant/après pour tout le monde</h2>
+<p>Calculons la durée moyenne d’arrêt de travail avant et après la réforme et voyons si leur différence et statistiquement significative. Nous réaliserons cette opération plusieurs fois. Créons donc une fonction pour nous simplifier la vie.</p>
+<pre class="r"><code>dif_mean_t&lt;-function(x,gr,dat){
+   attach(dat, warn.conflicts = FALSE)
+   t&lt;-t.test(x~gr,data=dat)
+   vect_t&lt;-round(c(t$estimate,t$estimate[2]-t$estimate[1],
+                   t$statistic,p.value=t$p.value),
+           digits=3)
+   n1&lt;-names(t$estimate) %&gt;% str_sub(start = 15)
+   names(vect_t)&lt;-c(n1,&quot;diff&quot;,&quot;t&quot;,&quot;p.value&quot;)
+round(c(vect_t),digits=3)
+}</code></pre>
+<p>Maintenant que nous avons la fonction, appliquons-la à nos données.</p>
+<pre class="r"><code>dif_mean_t(duree,post,dat=dk)</code></pre>
+<pre><code>## Avant_1980 Après_1980       diff          t    p.value 
+##      8.330      9.567      1.237     -2.125      0.034</code></pre>
+<p>La durée moyenne du temps d’arrêt après la réforme est plus grande pour l’échantillon global. La différence est statistiquement significative au seuil de 5%.</p>
+<p>Les mêmes résultats peuvent être obtenus au travers une régression.</p>
+<pre class="r"><code>reg_naive1&lt;-lm(duree~post,data = dk)
+tidy(reg_naive1) %&gt;% 
+   mutate_if(is.numeric, round , digits=3)</code></pre>
+<pre><code>## # A tibble: 2 × 5
+##   term           estimate std.error statistic p.value
+##   &lt;chr&gt;             &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 (Intercept)        8.33     0.401     20.8    0    
+## 2 postAprès_1980     1.24     0.581      2.13   0.033</code></pre>
+<p>La constante nous donne ici la moyenne avant 1980 ( 8,330 semaines d’arrêt).</p>
+<p>Pour avoir la moyenne après 1980, il suffit d’additionner la constante avec le coefficient de la dummy post (8,330 + 1,237 = 9,567).</p>
+<pre class="r"><code>sum(reg_naive1$coefficients) %&gt;% round(digits = 3)</code></pre>
+<pre><code>## [1] 9.567</code></pre>
+<p>On a une augmentation moyenne de 1,237 semaines (le coefficient de la variable d’interaction).</p>
+<p>Observons les différences de manière plus précise au travers d’une analyse graphique.</p>
+<div id="histogramme" class="section level3">
+<h3>Histogramme</h3>
+<p>Commençons par travailler à partir d’un histogramme. Dans la mesure où nous allons utiliser cette représentation plusieurs fois, établissons une fonction pour nous simplifier la vie.</p>
+<pre class="r"><code>hist_var&lt;-function(x,dat,tit=&quot;&quot;,sub=&quot;&quot;,lx=&quot;&quot;,ly=&quot;&quot;,
+                   biw){
+  ggplot(data=dat,aes(x=x))+
+  geom_histogram(binwidth=biw,color=&quot;black&quot;,boundary=0,
+                 linewidth=0.1)+
+  labs(title=tit,
+       subtitle = sub,
+       x=lx,
+       y=ly)+
+  theme_bw()+
+  theme(
+    plot.title = element_text(face=&quot;bold&quot;,hjust=0.5),
+    plot.subtitle = element_text(face=&quot;italic&quot;,hjust=0.5)
+          )
+}</code></pre>
+<p>Appliquons notre fonction sur la variable durée pour l’ensemble de l’échantillon et marquons la moyenne par une ligne verticale.</p>
+<pre class="r"><code>hist_var(dk$duree,dk,biw=4,
+         tit=&quot;Distribution du nombre de semaines d&#39;arrêt&quot;,
+         sub= &quot;au Kentucky sur toute la période&quot;,
+         lx=&quot;Nb. de sem.&quot;,
+         ly=&quot;Nb. d&#39;obs.&quot;)+
+  geom_vline(aes(xintercept = mean(duree), group = post),
+           colour = &#39;red&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/hist_glb-1.png" width="672" /></p>
+<p>On note que la distribution est nettement asymétrique.</p>
+<p>Voyons maintenant les différences avant et après la réforme (1980).</p>
+<pre class="r"><code>hist_var(dk$duree,dk,biw=4,
+         tit=&quot;Distribution du nombre de semaines d&#39;arrêt&quot;,
+         sub= &quot;au Kentucky sur toute la période&quot;,
+         lx=&quot;Nb. de sem.&quot;,
+         ly=&quot;Nb. d&#39;obs.&quot;)+
+  facet_grid(.~post)+
+  geom_vline(aes(xintercept = mean(duree), group = post),
+           colour = &#39;red&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/hist_av_ap-1.png" width="672" /></p>
+<p>Dans tout les cas, on constate que les distributions sont très asymétriques mais également assez similaires.</p>
+<p>Ici, travaillez à partir du log de la variable expliquée (<strong>log_duree</strong>) apparaît être une solution envisageable pour gérer les difficultés associées à l’asymétrie de sa distribution.</p>
+<p>Examinons le changement au travers d’un histogramme. Adaptons l’échelle des abscisses pour que les valeurs apparaissent en nombre de semaines et non en log du nombre de semaines.</p>
+<pre class="r"><code>hist_var(dk$log_duree, dat= dk,biw=0.5,
+         tit=&quot;Distribution du log du nombre de semaines d&#39;arrêt&quot;,
+         sub= &quot;au Kentucky sur toute la période&quot;,
+         lx=&quot;Nb. de sem.&quot;,
+         ly=&quot;Nb. d&#39;obs.&quot;)+
+  scale_x_continuous(labels=trans_format(&quot;exp&quot;,format=round))+
+    geom_vline(aes(xintercept = mean(log_duree)),
+           colour = &#39;red&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/hist_log_glob-1.png" width="672" /></p>
+<p>La distribution de <strong>log_duree</strong> est bien plus symétrique (proche d’une loi normale) ce qui n’est pas sans conséquences sur les tests statistiques mis en oeuvre.</p>
+<pre class="r"><code>dif_mean_t(log_duree,post,dat=dk)</code></pre>
+<pre><code>## Avant_1980 Après_1980       diff          t    p.value 
+##      1.233      1.326      0.093     -2.719      0.007</code></pre>
+<p>Le test de différence de moyenne est ici toujours statistiquement significatif, mais cette fois au seuil de 1%. On trouve la même chose dans l’analyse de régression.</p>
+<pre class="r"><code>reg_naive2&lt;-lm(log_duree~post,data = dk)
+tidy(reg_naive2) %&gt;% 
+   mutate_if(is.numeric, round , digits=3)</code></pre>
+<pre><code>## # A tibble: 2 × 5
+##   term           estimate std.error statistic p.value
+##   &lt;chr&gt;             &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 (Intercept)       1.23      0.024     52.2    0    
+## 2 postAprès_1980    0.093     0.034      2.72   0.006</code></pre>
+<p>Établissons les moyennes à partir des résultats de la régression.</p>
+<pre class="r"><code>data.frame(avant_1980=reg_naive2$coefficients[1],
+           après_1980=sum(reg_naive2$coefficients),
+           diffèrence=reg_naive2$coefficients[2]) %&gt;%
+           round(digits = 3) %&gt;% remove_rownames()</code></pre>
+<pre><code>##   avant_1980 après_1980 diffèrence
+## 1      1.233      1.326      0.093</code></pre>
+<p>Visualisons les choses via les histogrammes.</p>
+<pre class="r"><code>hist_var(dk$log_duree, dat= dk,biw=0.5,
+         tit=&quot;Distribution du log du nombre de semaines d&#39;arrêt&quot;,
+         sub= &quot;au Kentucky sur toute la période&quot;,
+         lx=&quot;Nb. de sem.&quot;,
+         ly=&quot;Nb. d&#39;obs.&quot;)+
+  facet_grid(.~post)+
+  scale_x_continuous(labels=trans_format(&quot;exp&quot;,format=round))+
+  geom_vline(aes(xintercept = mean(log_duree), group = post),
+           colour = &#39;red&#39;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/hist_av_ap_log-1.png" width="672" /></p>
+</div>
+<div id="graphe-des-moyennes-et-intervalles" class="section level3">
+<h3>Graphe des moyennes et intervalles</h3>
+<p>Une autre façon d’illustrer l’existence de distributions de valeurs différentes entre les groupes d’observations avant et après le traitement, consiste à indiquer les valeurs moyennes à l’aide de points et d’agrémenter ces points de un segment représentant l’intervalle de confiance retenu. Prenons ici 95%. On a alors:</p>
+<pre class="r"><code>ggplot(data=dk,aes(x=post,y=log_duree))+
+  stat_summary(geom=&#39;pointrange&#39;,fun.data=&quot;mean_se&quot;,
+               fun.args = list(mult=qnorm(0.975)))+
+  labs(title=&quot;Moyennes et intervalle de confiance à 95%&quot;,
+       y=&quot;Nb de semaines&quot;)+
+  scale_y_continuous(labels=trans_format(&quot;exp&quot;,format = round(1)))+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    axis.title.x = element_blank()
+      )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/graph_int_av_ap-1.png" width="672" /></p>
+<p>On voit plus nettement les différences avant/après qu’avec les histogrammes. Les intervalles de confiance se chevauchent très peu.</p>
+<p>On peut également utiliser un strip chart. A la différence de la présentation des intervalles de confiance, cette représentation intègre l’ensemble des observations. Chaque point représente une observations.</p>
+<pre class="r"><code>ggplot(data=dk,aes(x=post,y=log_duree,colour=post))+
+  geom_point(alpha=0.2,size=0.5)+
+  stat_summary(aes(group=post),
+               geom=&#39;point&#39;,fun=&quot;median&quot;,color=&#39;red&#39;)+
+  labs(title=&quot;Durée des arrêts de travail 
+avant et aprés la réforme&quot;,
+       y=&quot;Nb de semaines&quot;)+
+  scale_y_continuous(labels=trans_format(&quot;exp&quot;,format = round(1)))+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    axis.title.x = element_blank(),
+    legend.position = &quot;none&quot;
+      )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/strip_av_ap-1.png" width="672" /></p>
+<p>Cette représentation est peu claire, dans la mesure où il y a beaucoup de points qui se superposent. Pour y remédier, on peut utiliser le <strong>geom_jitter()</strong>, qui permet de positionner les points sur une base aléatoire selon une dimension (ici prenons la largeur).</p>
+<pre class="r"><code>ggplot(data=dk,aes(x=post,y=log_duree,colour=post))+
+  geom_jitter(alpha=0.5,size=0.5,width = 0.25)+
+  stat_summary(geom=&#39;point&#39;,fun=&quot;mean&quot;,color=&#39;red&#39;)+
+  labs(title=&quot;Durée des arrêts de travail 
+avant et aprés la réforme&quot;,
+       y=&quot;Nb de semaines&quot;)+
+  scale_y_continuous(labels=trans_format(&quot;exp&quot;,format = round(1)))+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&#39;bold&#39;),
+    axis.title.x = element_blank(),
+    legend.position=&#39;none&#39;
+      )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/strip_jitter_av_ap-1.png" width="672" /></p>
+</div>
+</div>
+<div id="avantaprès-pour-les-traités" class="section level2">
+<h2>Avant/après pour les traités</h2>
+<p>Peu importe, la manière de représenter les choses la différences entre la durée moyenne d’arrêt avant la réforme et après la réforme ne dit rien (ou pas grand chose) sur l’effet de celle-ci. En effet, la reforme n’affecte pas toute la population. Seuls les hauts revenus voient leur régime changer. Effectuons l’analyse sur ce sous-échantillon.</p>
+<pre class="r"><code>dif_mean_t(duree,post,dat=filter(dk,traite==&quot;Haut_revenu&quot;))</code></pre>
+<pre><code>## Avant_1980 Après_1980       diff          t    p.value 
+##     11.177     12.894      1.717     -1.468      0.142</code></pre>
+<p>Pour la variable durée, la différence entre le nombre moyen de semaines d’arrêt avant et après la réforme n’est pas statistiquement significative.</p>
+<p>Voyons les choses sur la base du logarithme de la durée.</p>
+<pre class="r"><code>dif_mean_t(log_duree,post, dat=filter(dk,traite==&quot;Haut_revenu&quot;))</code></pre>
+<pre><code>## Avant_1980 Après_1980       diff          t    p.value 
+##      1.382      1.580      0.198     -3.734      0.000</code></pre>
+<p>Lorsque l’on passe par le log de la durée, la différence est clairement significative. On peut visualiser les choses à l’aide des intervalles de confiance.</p>
+<pre class="r"><code>ggplot(data=filter(dk,traite==&quot;Haut_revenu&quot;),
+       aes(x=post,y=log_duree))+
+  stat_summary(geom=&#39;pointrange&#39;,fun.data=&quot;mean_se&quot;,
+               fun.args = list(mult=1.96))+
+  labs(title=&quot;Durée des arrêts de travail 
+avant et aprés la réforme pour les hauts revenus&quot;,
+       subtitle = &quot;Moyennes et intervalle de confiance à 95%&quot;,
+       y=&quot;Nb de semaines&quot;)+
+  scale_y_continuous(breaks=log(c(4.95,4.48,4.05,3.67)),
+                     labels=c(&quot;4.95&quot;,&quot;4.48&quot;,&quot;4.05&quot;,&quot;3.67&quot;))+
+    theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(hjust=0.5),
+    axis.title.x = element_blank()
+      )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/grph_moy_int_log-1.png" width="672" /></p>
+<p>Ce résultat tendrait à accréditer l’hypothèse d’une augmentation de la durée d’arrêt de travail pour les traités (les hauts revenus) suite à la réforme. Cela va dans le sens d’un effet “positif” de la réforme. Néanmoins, cela peu cacher le fait qu’au moins en partie cette augmentation peut être due à une évolution générale non spécifique au traitement. Pour s’en donner une idée, on peut examiner l’évolution du groupe de contrôle (les bas revenus) suite à la réforme.</p>
+</div>
+<div id="avantaprès-pour-le-groupe-de-contrôle" class="section level2">
+<h2>Avant/après pour le groupe de contrôle</h2>
+<p>Travaillons ici directement avec le log de la durée d’arrêt.</p>
+<pre class="r"><code>dif_mean_t(log_duree,post,dat=filter(dk,traite==&quot;Bas_revenu&quot;))</code></pre>
+<pre><code>## Avant_1980 Après_1980       diff          t    p.value 
+##      1.126      1.133      0.008     -0.174      0.862</code></pre>
+<p>On voit que la différence entre les durées d’arrêt avant et après 1980 n’est pas statistiquement significative.</p>
+<p>Visualisons les choses avec le graphe des intervalles de confiance.</p>
+<pre class="r"><code>ggplot(data=filter(dk,traite==&quot;Bas_revenu&quot;),
+       aes(x=post,y=log_duree))+
+  stat_summary(geom=&#39;pointrange&#39;,fun.data=&quot;mean_se&quot;,
+               fun.args = list(mult=1.96))+
+  labs(title=&quot;Durée des arrêts de travail 
+avant et aprés la réforme pour les Bas revenus&quot;,
+       subtitle = &quot;Moyennes et intervalle de confiance à 95%&quot;,
+       y=&quot;Nb de semaines&quot;)+
+  scale_y_continuous(breaks=c(1.2,1.15,1.10),
+                     labels=c(&quot;3.32&quot;,&quot;3.15&quot;,&quot;3.00&quot;))+
+    theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(hjust=0.5),
+    axis.title.x = element_blank()
+      )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/graph_moy_int_av_ap_cont-1.png" width="672" /></p>
+<p>On voit bien que les intervalles des confiances se chevauchent. Il n’y a pas d’effet de la réforme sur le groupe de contrôle.</p>
+<p>Il semble donc bien que la réforme ait un effet allant dans le sens d’une augmentation de la durée d’arrêt pour les traités (les hauts revenus) et pas sur le groupe de contrôle. Reste alors à mesurer cet effet.</p>
+</div>
+</div>
+<div id="analyse-dif-in-dif" class="section level1">
+<h1>Analyse <em>Dif in Dif</em></h1>
+<p>Pour ce faire, il faut combiner les différences sur le groupe des traités et le groupe de contrôle. Commençons par les mettre en vis-à-vis.</p>
+<pre class="r"><code>rbind(bas_revenu=dif_mean_t(log_duree,post,
+              dat=filter(dk,traite==&quot;Bas_revenu&quot;)),
+      haut_revenu=dif_mean_t(log_duree,post,
+              dat=filter(dk,traite==&quot;Haut_revenu&quot;)))</code></pre>
+<pre><code>##             Avant_1980 Après_1980  diff      t p.value
+## bas_revenu       1.126      1.133 0.008 -0.174   0.862
+## haut_revenu      1.382      1.580 0.198 -3.734   0.000</code></pre>
+<p>Pour déterminer l’effet du traitement, il suffit de soustraire à la différence avant et après traitement des traités (hauts revenus), la différence avant et après traitement du groupe de contrôle (bas revenus). Cet estimateur est appelé <em>Difference in Difference</em> (ou double différence en français). On a ici:</p>
+<pre class="r"><code>c(dif_in_dif=dif_mean_t(log_duree,post,
+  dat=filter(dk,traite==&quot;Haut_revenu&quot;))[3]-dif_mean_t(log_duree,post,
+  dat=filter(dk,traite==&quot;Bas_revenu&quot;))[3])</code></pre>
+<pre><code>## dif_in_dif.diff 
+##            0.19</code></pre>
+<p>L’effet du traitement, estimé sur le log de la durée d’arrêt, est de 0,19 (log semaines, soit un peu plus d’une semaine aux arrondis prés).</p>
+<div id="le-tableau-des-différences" class="section level2">
+<h2>Le tableau des différences</h2>
+<p>Résumons tout cela dans une tableau unique. Commençons par établir les moyennes de <strong>log_duree</strong> pour le groupe des traités et la groupe de contrôle pour les périodes avant et après le traitement.</p>
+<pre class="r"><code>moy&lt;-cbind(rbind(Haut_revenu=
+        mean(filter(dk,traite==&quot;Haut_revenu&quot;&amp;post==&quot;Avant_1980&quot;)$log_duree),
+      Bas_revenu=
+        mean(filter(dk,traite==&quot;Bas_revenu&quot;&amp;post==&quot;Avant_1980&quot;)$log_duree)),
+rbind(Haut_revenu=
+        mean(filter(dk,traite==&quot;Haut_revenu&quot;&amp;post==&quot;Après_1980&quot;)$log_duree),
+      Bas_revenu=
+        mean(filter(dk,traite==&quot;Bas_revenu&quot;&amp;post==&quot;Après_1980&quot;)$log_duree))) %&gt;% 
+  round(digits = 3)
+colnames(moy)&lt;-c(&quot;Avant 1980&quot;,&quot;Après 1980&quot;)
+moy</code></pre>
+<pre><code>##             Avant 1980 Après 1980
+## Haut_revenu      1.382      1.580
+## Bas_revenu       1.126      1.133</code></pre>
+<p>Ceci fait, on peut déterminer les différences. Commençons par celles que nous avons déjà calculées (avant/après) et ajoutons les différences traité/contrôle.</p>
+<pre class="r"><code>diff_h&lt;-moy[,2]-moy[,1]
+diff_v&lt;-c(moy[1,]-moy[2,],NA)
+moy_h&lt;-cbind(moy,diff_h)
+moy_hv&lt;-rbind(moy_h,diff_v)
+moy_hv</code></pre>
+<pre><code>##             Avant 1980 Après 1980 diff_h
+## Haut_revenu      1.382      1.580  0.198
+## Bas_revenu       1.126      1.133  0.007
+## diff_v           0.256      0.447     NA</code></pre>
+<p>On peut retrouver notre <em>diff in diff</em> soit en prenant les différences verticales [(traitéav-controleav )-(traitéap-controleap)] soit en prenant les différences horizontales [(traitéap-traitéav )-(controleap-controleav)] . On trouve le même effet pour le traitement à 0,191.</p>
+<pre class="r"><code>did&lt;-moy_hv[3,2]-moy_hv[3,1]
+did</code></pre>
+<pre><code>## [1] 0.191</code></pre>
+<pre class="r"><code>did&lt;-moy_hv[1,3]-moy_hv[2,3]
+did</code></pre>
+<pre><code>## [1] 0.191</code></pre>
+<p>Ajoutons la double différence à notre table pour la compléter.</p>
+<pre class="r"><code>moy_hv[3,3]&lt;-did
+moy_hv</code></pre>
+<pre><code>##             Avant 1980 Après 1980 diff_h
+## Haut_revenu      1.382      1.580  0.198
+## Bas_revenu       1.126      1.133  0.007
+## diff_v           0.256      0.447  0.191</code></pre>
+</div>
+<div id="représentation-graphique" class="section level2">
+<h2>Représentation graphique</h2>
+<p>L’ensemble peut également être présenté graphiquement au travers des intervalles de confiance. Commençons par réunir nos graphes précédents en utilisant les facets.</p>
+<pre class="r"><code>ggplot(dk, aes(x = traite, y = log_duree)) +
+  stat_summary(geom = &quot;pointrange&quot;, size = 1,
+               color = &quot;red&quot;,
+               fun.data = &quot;mean_se&quot;,
+               fun.args = list(mult = 1.96)) +
+  labs(title=&quot;Durée des arrêts de travail&quot;, 
+       subtitle = &quot;Moyennes et intervalle de confiance à 95%&quot;,
+       y=&quot;Nb de semaines&quot;)+
+  scale_y_continuous(breaks=c(1.6,1.4,1.2),
+                     labels=c(&quot;4.95&quot;,&quot;4.05&quot;,&quot;3.32&quot;))+
+  facet_wrap(~ post)+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    plot.subtitle = element_text(hjust=0.5),
+    axis.title.x = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/did_graph_facets-1.png" width="672" /></p>
+<p>On peut aussi tout mettre sur une seule figure (sans passer par les facets). Elle inclut des segments pour marquer l’évolution de la variable expliquée dans le temps (avant/après le traitement). Mais pour ce faire, créons au préalable une base avec les moyennes.</p>
+<pre class="r"><code>bas_g&lt;-dk %&gt;% 
+  group_by(traite,post) %&gt;% 
+  summarise(log_duree_m=mean(log_duree))
+bas_g</code></pre>
+<pre><code>## # A tibble: 4 × 3
+## # Groups:   traite [2]
+##   traite      post       log_duree_m
+##   &lt;fct&gt;       &lt;fct&gt;            &lt;dbl&gt;
+## 1 Bas_revenu  Avant_1980        1.13
+## 2 Bas_revenu  Après_1980        1.13
+## 3 Haut_revenu Avant_1980        1.38
+## 4 Haut_revenu Après_1980        1.58</code></pre>
+<p>Une fois ces valeurs établies, marquons-les par un jeu de points et de lignes. Le contre-factuel, ce qui ce serait passé pour les traités s’il n’avait pas été traité, est figuré en pointillés.</p>
+<pre class="r"><code>ggplot(bas_g, aes(x = post, 
+                  y = log_duree_m, 
+                  color = traite)) + 
+  geom_point() +
+  geom_line(aes(group = traite)) +
+  labs(title=&quot;Durée des arrêts de travail&quot;, 
+       y=&quot;Nb de semaines&quot;,
+       color=&quot;&quot;)+
+  scale_y_continuous(breaks=c(1.6,1.4,1.2),
+                     labels=c(&quot;4.95&quot;,&quot;4.05&quot;,&quot;3.32&quot;))+
+  annotate(geom = &quot;segment&quot;, x = &quot;Avant_1980&quot;,
+           xend = &quot;Après_1980&quot;,
+           y = bas_g$log_duree_m[3],
+           yend = bas_g$log_duree_m[4] - did,
+           linetype = &quot;dashed&quot;, color = &quot;grey50&quot;) +
+  annotate(geom = &quot;segment&quot;, x = &quot;Après_1980&quot;,
+           xend = &quot;Après_1980&quot;,
+           y = bas_g$log_duree_m[4] , 
+           yend = bas_g$log_duree_m[4] - did,
+           linetype = &quot;dotted&quot;, color = &quot;blue&quot;) +
+  annotate(geom = &quot;label&quot;, x = &quot;Après_1980&quot;,
+           y = bas_g$log_duree_m[4] - (did / 2), 
+           label = &quot;effet du programme&quot;, size = 3)+
+  theme_bw()+
+  theme(
+    plot.title = element_text(hjust=0.5),
+    axis.title.x = element_blank(),
+    legend.position = &quot;top&quot;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/graph_did-1.png" width="672" /></p>
+</div>
+</div>
+<div id="analyse-de-régression" class="section level1">
+<h1>Analyse de régression</h1>
+<p>Le calcul de la statistique de double différence au travers d’éléments de statistiques descriptives présente le défaut de ne pas fournir (directement) de test statistique sur sa valeur. On ne peut pas dire si l’effet du traitement est statistiquement différent de zéro. Pour y remédier, on préférera utiliser une estimation basée sur une régression. Celle-ci fournit la même valeur, mais, cette fois, elle est accompagnée d’un écart-type (et a fortiori une erreur standard) permettant la construction d’un test (généralement de Student contre la valeur 0 - H0 Le traitement n’a pas d’effet).</p>
+<p>Cette régression est construite à partir de l’interaction des termes désignant le groupe des traités (traite) et la période pré et post traitement (post).</p>
+<pre class="r"><code>model_small &lt;- lm(log_duree ~ traite + post + traite * post,
+                  data = dk)
+tidy(model_small) %&gt;% 
+   mutate_if(is.numeric, round , digits=3)</code></pre>
+<pre><code>## # A tibble: 4 × 5
+##   term                             estimate std.error statistic p.value
+##   &lt;chr&gt;                               &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 (Intercept)                         1.13      0.031    36.6     0    
+## 2 traiteHaut_revenu                   0.256     0.047     5.41    0    
+## 3 postAprès_1980                      0.008     0.045     0.171   0.864
+## 4 traiteHaut_revenu:postAprès_1980    0.191     0.069     2.78    0.005</code></pre>
+<p>L’avantage d’utiliser un régression pour réaliser l’analyse <em>Diff-in-Diff</em> repose sur le fait de pouvoir intégrer des variables de contrôle. Révisons la base de données pour en intégrer (<strong>sexe</strong>, <strong>age</strong>, <strong>hospitalisation ou non</strong>, <strong>secteur d’activité</strong>, <strong>type de blessure</strong>, <strong>salaire avant la blessure</strong>).</p>
+<pre class="r"><code>kentucky_fixed &lt;- dat %&gt;% 
+  filter(ky==1) %&gt;% 
+  mutate(indust = as.factor(indust),
+         injtype = as.factor(injtype),
+         traite=factor(highearn,labels=c(&quot;Bas_revenu&quot;,&quot;Haut_revenu&quot;)),
+         post=factor(afchnge,labels=c(&quot;Avant_1980&quot;,&quot;Après_1980&quot;)))</code></pre>
+<p>Réalisons la régression en incluant les variables de contrôle.</p>
+<pre class="r"><code>model_big &lt;- lm(ldurat~traite + post + traite * post + 
+                  male + married + age + hosp + indust + injtype + lprewage,
+                data = kentucky_fixed)
+tidy(model_big) %&gt;% 
+   mutate_if(is.numeric, round , digits=3)</code></pre>
+<pre><code>## # A tibble: 18 × 5
+##    term                             estimate std.error statistic p.value
+##    &lt;chr&gt;                               &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+##  1 (Intercept)                        -1.53      0.422     -3.62   0    
+##  2 traiteHaut_revenu                  -0.152     0.089     -1.70   0.089
+##  3 postAprès_1980                      0.05      0.041      1.20   0.231
+##  4 male                               -0.084     0.042     -1.99   0.046
+##  5 married                             0.057     0.037      1.52   0.129
+##  6 age                                 0.007     0.001      4.86   0    
+##  7 hosp                                1.13      0.037     30.5    0    
+##  8 indust2                             0.184     0.054      3.40   0.001
+##  9 indust3                             0.163     0.038      4.32   0    
+## 10 injtype2                            0.935     0.144      6.51   0    
+## 11 injtype3                            0.635     0.085      7.44   0    
+## 12 injtype4                            0.555     0.093      5.97   0    
+## 13 injtype5                            0.641     0.085      7.50   0    
+## 14 injtype6                            0.615     0.086      7.13   0    
+## 15 injtype7                            0.991     0.191      5.20   0    
+## 16 injtype8                            0.434     0.119      3.65   0    
+## 17 lprewage                            0.284     0.08       3.55   0    
+## 18 traiteHaut_revenu:postAprès_1980    0.169     0.064      2.64   0.008</code></pre>
+<p>Le coefficient associé à la double différence est ici renvoyé à la fin du tableau (la ligne 18). Isolons la ligne correspondante.</p>
+<pre class="r"><code>tidy(model_big)[18,] %&gt;% 
+   mutate_if(is.numeric, round , digits=3)</code></pre>
+<pre><code>## # A tibble: 1 × 5
+##   term                             estimate std.error statistic p.value
+##   &lt;chr&gt;                               &lt;dbl&gt;     &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;
+## 1 traiteHaut_revenu:postAprès_1980    0.169     0.064      2.64   0.008</code></pre>
+<p>La double différence est de 0,169. Le coefficient a légèrement diminué par rapport à l’analyse sans variable de contrôle. Néanmoins, l’effet du traitement reste légèrement au dessus d’une semaine en plus en moyenne.</p>
+<p>Il serait intéressant de présenter ces analyses dans un même tableau. Utilisons le package <em>huxtable</em>.</p>
+<pre class="r"><code>library(huxtable) 
+
+huxreg(model_small, model_big)</code></pre>
+<table class="huxtable" data-quarto-disable-processing="true" style="border-collapse: collapse; border: 0px; margin-bottom: 2em; margin-top: 2em; ; margin-left: auto; margin-right: auto;  " id="tab:tab_reg">
+<col><col><col><tr>
+<th style="vertical-align: top; text-align: center; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><th style="vertical-align: top; text-align: center; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(1)</th><th style="vertical-align: top; text-align: center; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0.4pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(2)</th></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(Intercept)</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">1.126 ***</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">-1.528 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.031)&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.422)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">traiteHaut_revenu</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.256 ***</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">-0.152&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.047)&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.089)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">postAprès_1980</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.008&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.050&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.045)&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.041)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">traiteHaut_revenu:postAprès_1980</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.191 **&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.169 **&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.069)&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.064)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">male</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">-0.084 *&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.042)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">married</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.057&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.037)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">age</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.007 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.001)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">hosp</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">1.130 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.037)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">indust2</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.184 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.054)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">indust3</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.163 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.038)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype2</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.935 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.144)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype3</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.635 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.085)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype4</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.555 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.093)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype5</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.641 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.085)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype6</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.615 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.086)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype7</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.991 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.191)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">injtype8</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.434 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.119)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">lprewage</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.284 ***</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"></th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.4pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">(0.080)&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">N</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">5626&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0.4pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">5347&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">R2</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.021&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">0.190&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">logLik</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">-9321.997&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">-8323.388&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">AIC</th><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">18653.994&nbsp;&nbsp;&nbsp;&nbsp;</td><td style="vertical-align: top; text-align: right; white-space: normal; border-style: solid solid solid solid; border-width: 0pt 0pt 0.8pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;">16684.775&nbsp;&nbsp;&nbsp;&nbsp;</td></tr>
+<tr>
+<th colspan="3" style="vertical-align: top; text-align: left; white-space: normal; border-style: solid solid solid solid; border-width: 0.8pt 0pt 0pt 0pt;    padding: 6pt 6pt 6pt 6pt; font-weight: normal;"> *** p &lt; 0.001;  ** p &lt; 0.01;  * p &lt; 0.05.</th></tr>
+</table>
+
+<p>Nous aurions pu prolonger l’exemple en abordant les <em>two-way fixed effect</em> qui sont une autre manière d’estimer le coefficient associé à la double différence. Néanmoins la base prise pour exemple ne le permet pas. Il n’y a pas d’identifiant individuel permettant d’attribuer des effets fixes individuels. Nous renvoyons donc cela à un prochain post.</p>
+</div>
