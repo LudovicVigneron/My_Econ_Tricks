@@ -1,0 +1,417 @@
+---
+title: L'effet week-end (Lundi et Dimanche) [1]
+author: Ludovic Vigneron
+date: '2024-09-29'
+slug: []
+categories:
+  - Finance
+  - Finance comportementale
+  - Effets calendaires
+tags:
+  - Finance
+  - Finance comportementale
+  - Effets calendaires
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+**Ce post est le premier d'une série consacrée à la finance
+comportementale. Il s'agira, à titre principal, de présenter des
+applications empiriques dans le domaine. Mais, ce sera aussi l'occasion
+de discuter de certains points de théorie économique et de statistique.
+Nous commencerons par traité des effets calendaires qui sont les
+premiers éléments empiriques qui ont été mis en avant pour questionner
+l'hypothèse d'efficience des marchés financiers. Ces anomalies ont, pour
+la plupart, disparu (du moins sur les marchés les plus actifs) et sont
+sujette à des questionnements méthodologiques forts. La première de ces
+anomalies relevées fut l'effet weekend. Avant d'aller plus loin je dois
+préciser que cette application est principalement une réplication sous R
+du travail présenté par** **Savva Shanaev et Arina Shuraeva** **sous
+excel sur leur chaîne youtube [NDEL](www.youtube.com/@NEDLeducation). Je
+ne saurais que vous recommander de jeter un oeil à leur travail que je
+trouve excellent.**
+
+# Le(s) papier(s) d'origine
+
+L'effet weekend est une des premières anomalies de marché au regard de
+l'hypothèse d'efficience documentée sur une base calendaire par la
+littérature aux débuts des années 80. Pour rappel, selon cette
+hypothèse, il n'est pas possible d'établir une stratégie permettant de
+battre systématiquement le marché dans la mesure où les rendements des
+titres sont pleinement aléatoires. Les ajustements de prix
+n'interviennent que lorsqu'une information nouvelle est diffusée et
+amène les investisseurs à réviser leurs anticipations concernant les
+flux financiers futures procurés par la possession du titre. Ces
+informations nouvelles intervenant de manière aléatoire les rendements
+le seront également. Il ne doit donc pas y avoir de récurrences dans les
+rendements qui pourraient être exploitées via des stratégies
+d'arbitrages.
+
+S'agissant de l'effet weekend, il a été documenté entre autre par
+@cross1973; @french1980; @gibbons1981; et @keim1984... Il consiste en la
+présence de rendement en moyenne différents de ceux des autres jours les
+vendredi et lundi, autrement-dit au début du weekend et à la fin (le
+premier jours de reprise). Les rendements des lundi sont, en moyenne,
+moins importants que ceux des autres jours de la semaine (mardi,
+mercredi, jeudi) et les rendement des vendredi sont, en moyenne, plus
+importants.
+
+Une des explications avancées au phénomène repose sur la psychologie des
+investisseurs. Ceux-ci seraient plus optimistes, et donc auraient plus
+tendance à acheter, à l'approche du weekend, le vendredi, ce qui ferait
+monter les cours. Ils seraient plus pessimiste, et donc auraient plus
+tendance à vendre, juste après le weekend, le lundi, ce qui ferait
+baisser les cours.
+
+# Chargeons les packages et les données
+
+Pour tester l'effet weekend, nous mobilisons deux packages : le
+traditionnel *tidyverse*, qui permet de simplifier la syntaxe de R et de
+manipuler les données plus facilement, *quantmod* qui inclut un wrapper
+api donnant accès aux données de yahoo finance et *gt* qui permet de
+mettre en page des tableaux. Chargeons-les donc dans notre environnement
+de travail.
+
+```{r}
+#| label: charger_les_packages
+#| message: false
+
+library(quantmod)
+library(tidyverse)
+library(gt)
+```
+
+Notez l'ordre de chargement qui permet d'éviter quelques difficultés par
+la suite. Certaines fonctions des deux premiers packages portent le même
+nom. Nous voulons utiliser les versions *tydiverse* et donc nous
+l'appelons en dernier de manière à ce qu'elles recouvrent celles de
+*quantmod*.
+
+Ceci étant fait chargeons les données nécessaires à notre test. Le choix
+s'est porté ici sur l'indice *Stantdard and Poor 500*. Il s'agit d'un
+indice boursier basé sur les cours de 500 grandes entreprises cotées aux
+Etats-unis sur le *NYSE* et sur le *NASDAQ*. Il a été lancé le 4 mars
+1957 mais produit des valeurs rétrospectives jusqu'au 3 janvier 1928.
+Son code mnémonique est \^GSPC.
+
+Chargeons ces données en utilisant la fonction **getSumbols()** de
+*quantmod*. Indiquons en premier argument le code mnémonique, en second
+que nous allons chercher l'information sur *yahoo finance*, en troisième
+l'endroit où seront placées les informations extraites. Les derniers
+arguments indiquent les dates de début et de fin de la période
+d'extraction.
+
+```{r}
+#| label: charger_les_données_API
+
+getSymbols("^GSPC",src = "yahoo", env = environment(), from = "1928-01-03",
+           to = "2023-05-04")
+```
+
+On obtient un objet au format xts, qui est l'un des formats dédiés aux
+séries temporelles de R. Ici, pour ce que l'on veut faire, il n'est pas
+nécessaire. Repassons donc à une data frame classique. Ne retenons que
+les dates (que l'on obtient grâce à la fonction **rownames()**) et les
+valeurs ajustées de l'indice.
+
+```{r}
+#| label: mise_en_forme_des_données
+
+dat<- GSPC %>% 
+  as.data.frame() %>%
+  mutate(date_t=as.Date(rownames(.),"%Y-%m-%d")) %>%
+  select(date_t,GSPC.Adjusted) %>%
+  rename(SP500=GSPC.Adjusted)
+```
+
+Attention, vérifiez bien le codage du format date retenu lors de la
+transformation afin de bien conserver le vrai ordre chronologique. Le
+risque d'erreur est ici important.
+
+Ceci fait, calculons le rendement journalier de l'indice. Nous retenons
+le rendement arithmétique.
+
+$$
+ret=\frac{P_i}{P_{i-1}}-1
+$$
+
+```{r}
+#| label: calcule_des_rendements
+
+dat_<-dat %>% 
+  mutate(ret=(SP500/lag(SP500)-1)) 
+
+head(dat_)
+```
+
+Limitons la base à une période plus restreinte pour réaliser notre test.
+Retenons la période courant du 1er janvier 2015 au 1er janvier 2020.
+
+```{r}
+#| label: limiter_la_base_periode
+
+dat_r<-dat_ %>%
+  filter(date_t>as.Date('2015-01-01',"%Y-%m-%d")& 
+         date_t<as.Date('2020-01-01',"%Y-%m-%d"))
+rm(dat,GSPC)
+```
+
+Sauvegardons les données dans une fichier csv pour pouvoir les
+réutiliser par la suite pour tester d'autres anomalies.
+
+```{r}
+#| label: sauvegarde_des_formes_de_la_base
+
+write.table(dat_r,"S&P500_2015_2020.csv",sep=";", row.names = FALSE)
+write.table(dat_,"S&P500_return.csv",sep=";", row.names = FALSE)
+```
+
+# Traitement des données
+
+Commençons par marquer les jours autour du weekend : les lundi et
+vendredi. Pour cela, utilisons la fonction **wday()** du package
+*lubridate* qui est inclus dans le *tidyverse*. Elle numérote les jours
+de la semaine en commençant par le dimanche (jour 1). Les lundi et
+vendredi sont donc respectivement les jours 2 et 6.
+
+```{r}
+#| label: marquer_lundi_et_vendredi
+
+dat_r<-dat_r %>%
+  mutate(day_of_the_week=wday(date_t),
+         day_lab=wday(date_t,label=TRUE),
+         jour=ifelse(day_of_the_week==2,"Monday",
+                     ifelse(day_of_the_week==6,"Friday","Other")),
+         jour_f=factor(jour,levels=c('Monday','Friday','Other')))
+```
+
+Maintenant que les jours sont marqués, calculons les rendements moyennes
+pour chacun d'eux : lundi, vendredi et les autres jours. Pour cela,
+utilisons le tidyverse en mobilisant **group_by()** et **summarise()**.
+Exprimons les en pourcentage.
+
+```{r}
+#| label: rendements_journaliers_moyens
+
+dat_r %>%
+  group_by(jour_f) %>%
+  summarise(moyenne=round(mean(ret)*100,digits=2))
+```
+
+On a bien des rendements moyennes différents sur les jours considérés.
+Ces rendements moyennes s'articulent en valeur comme ce que prédit
+l'effet weekend. Les rendements du lundi sont, en moyenne, négatifs et
+ceux du vendredi, en moyenne, positifs. Les rendements de ces deux jours
+est par ailleurs différent des rendements des autres jours. Ce pose
+alors la question de la significativité statistique de ces différences.
+
+# Tests statistiques
+
+Il s'agit donc ici de pratiquer des testes de différences de moyennes
+entre les rendements des lundis et ceux des autres jours (mardi,
+mercredi, jeudi) et entre les rendements des vendredis et ceux de ces
+mêmes autres jours. Pour ce faire, il suffit d'utiliser des tests de
+*Student*.
+
+Mais au préalable, pour connaître la forme du teste à appliquer, il est
+nécessaire de savoir si les variances des rendements sont elles-mêmes
+différentes sur les groupes comparés. Pour cela, nous utiliserons un
+test de *Fisher* de comparaison de variances dont la statistique sous H0
+(l'égalité des variances) prend la forme suivante:
+
+$$
+\frac{\max(S_i^2)}{\min(S_j^2)}\to F_{(df_i;df_j)}
+$$
+
+Sous H0, le ratio est égal à 1 au hasard de l'échantillonnage prés. Le
+ratio de la plus grande variance sur la plus petite suit une loi de
+*Fisher* à n-1 et m-2 degrés de liberté (n est la taille de
+l'échantillon permettant de calculer la plus grande variance et m est la
+taille de l'échantillon permettant de calculer la plus petite variance).
+Le choix d'un ratio de type max sur min permet d'utiliser un test
+unilatéral de type "plus grand que".
+
+Mais avant de pratiquer le test, calculons les variances des rendements,
+le nombre d'observations et les degrés de liberté pour les différents
+groupes. L'ensemble est repris dans la table 1.
+
+```{r}
+#| label: tbl-const-Fisher-1
+
+dat_r %>%
+  group_by(jour_f) %>% 
+  summarise(moyenne=round(mean(ret)*100,digits=2),
+            variance=round(var(ret)*100,digits=5),
+            N=n(),
+            df=N-1) %>%
+  gt() %>% 
+  tab_header(title= "Table 1: Eléments du test du différences de variances")
+```
+
+Testons la différence de variance des rendements du lundi et ceux des
+autres jours (mardi, mercredi, jeudi). Calculons le ratio de variance et
+la *p-value* du test. La probabilité de constater une valeur aussi
+extrême si H0 (égalité de variance - le ratio des variances égal à 1)
+était vrai. Le résultat est présenté dans la table 2.
+
+```{r}
+#| label: tbl-test-Fisher-1
+
+Fish<-var(dat_r$ret[dat_r$jour_f=='Monday'])/var(dat_r$ret[dat_r$jour_f=='Other'])
+
+data.frame(Fisher=Fish,
+           p_value=pf(Fish,235,768,lower.tail = FALSE)) %>%
+  gt() %>%
+  fmt_number(decimals=3) %>% 
+  tab_header(title= "Table 2: Test de différences de variances")
+```
+
+Si l'on retient un seuil d'erreurs (de type 1) de 5%, avec une *p-value*
+de 4,08%, on rejette clairement H0 l'égalité des variances (*Monday* *vs
+Other*). Les rendements des lundis sont plus variables que ceux des
+*Other*. Voyons ce qu'il en est concernant les vendredi et les autres
+jours (mardi, mercredi, jeudi). Répliquons la méthode. Le résultat est
+présenté dans la table 3.
+
+```{r}
+#| label: tbl-test-Fisher-2 
+
+Fish<-var(dat_r$ret[dat_r$jour_f=='Friday'])/var(dat_r$ret[dat_r$jour_f=='Other'])
+
+data.frame(Fisher=Fish,p_value=pf(Fish,252,768,lower.tail = FALSE)) %>%
+  gt() %>%
+  fmt_number(decimals=3) %>% 
+  tab_header(title= "Table 3: Test de différences de variances")
+```
+
+On rejette également H0 l'hypothèse d'égalité des variances. Les
+rendement des vendredis sont plus variables que ceux des jour centraux
+de la semaine (mardi, mercredi, jeudi).
+
+L'ensemble peut être réaliser directement à partir de la fonction
+**var.test()**. Voyons cela est créons la table 4 .
+
+```{r}
+#| label: tbl-test-Fisher-3 
+
+dat_r<-dat_r %>%
+  mutate(Monday=jour_f=="Monday", Other=jour_f=="Other",
+         Friday=jour_f=="Friday")
+
+test_v1<-var.test(ret~Other,alternative = "greater",
+                  data=filter(dat_r,jour_f=="Monday"|jour_f=="Other"))
+
+test_v2<-var.test(ret~Other,alternative = "greater",
+                  data=filter(dat_r,jour_f=="Friday"|jour_f=="Other"))
+
+rbind(c(stat=test_v1$statistic,p_value=test_v1$p.value),
+      c(stat=test_v2$statistic,p_value=test_v2$p.value)) %>%
+  data.frame(tests=c("lundi vs autres","vendredi vs autres"),.) %>%
+  gt() %>%
+  fmt_number(decimals=3) %>% 
+  tab_header(title= "Table 4: Tests de différences de variances (ensemble)")
+```
+
+Pour les deux tests, l'hypothèse d'égalité de variance est rejetée. On
+ne peut donc pas utiliser la version classique du test de *Student* pour
+nos comparaisons de rendements moyens. Nous allons utilisé
+l'approximation de *Welsh*. On a ainsi:
+
+$$
+t=\frac{\bar{r_1}-\bar{r_2}}{s_\bar{\Delta}}\to t_{df}
+$$
+
+où
+
+$$
+s_\bar{\Delta}=\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}
+$$
+
+et
+
+$$
+df=\frac{(\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2})^2}{
+\frac{(s_1^2/n_1)^2}{n_1-1}+\frac{(s_2^2/n_2)^2}{n_2-1}
+}
+$$
+
+Calculons ces éléments pour le test sur le lundi (table 5).
+
+```{r}
+#| label: tbl-test-Student-1
+
+dif<-mean(dat_r$ret[dat_r$jour_f=='Monday'])-mean(dat_r$ret[dat_r$jour_f=='Other'])
+v_l<-var(dat_r$ret[dat_r$jour_f=='Monday'])
+v_o<-var(dat_r$ret[dat_r$jour_f=='Other'])
+s_delta<-sqrt(v_l/236+v_o/769) 
+df<-((v_l/236+v_o/769)^2)/((v_l/236)^2/235+(v_o/769)^2/768)
+
+data.frame(t=dif/s_delta,p_value=pt(dif/s_delta,df)*2) %>% 
+  gt() %>%
+  fmt_number(decimals=3) %>% 
+  tab_header(title= "Table 5: Test de différences de moyennes")
+
+```
+
+La *p-value* est ici bien trop grande pour que l'on puisse rejeter H0
+(l'hypothèse d'égalité des moyennes). Il n'y a pas de différences
+statistiquement significatives entre les rendements du lundi est ceux
+des jours du milieu de la semaine et donc pas d'effet lundi observée sur
+la période de test.
+
+Voyons ce qu'il en ait pour les vendredis (table 6).
+
+```{r}
+#| label: tbl-test-Student-2
+
+dif<-mean(dat_r$ret[dat_r$jour_f=='Friday'])-mean(dat_r$ret[dat_r$jour_f=='Other'])
+v_l<-var(dat_r$ret[dat_r$jour_f=='Friday'])
+v_o<-var(dat_r$ret[dat_r$jour_f=='Other']) 
+s_delta<-sqrt(v_l/253+v_o/769)
+df<-((v_l/253+v_o/769)^2)/((v_l/253)^2/252+(v_o/769)^2/768)
+
+data.frame(t=dif/s_delta,p_value=pt(dif/s_delta,df)*2) %>%
+  gt()%>%
+  fmt_number(decimals=3) %>% 
+  tab_header(title= "Table 6: Test de différences de moyennes")
+```
+
+Comme pour le lundi, il n'y a pas de différence statistiquement
+significative entre les rendements du vendredi et ceux des jours du
+milieu de la semaine. Il n'y a donc pas d'effet weekend sur la période
+de teste.
+
+On peut obtenir ces résultats directement en utilisant la fonction
+**t.test()** en laissant ses options par défaut qui sont un test
+bilatéral et considérant l'inégalité des variances sur les échantillons
+comparés (table 7).
+
+```{r}
+#| label: tbl-test-Student-3
+#| tbl-cap: |
+#|    tests du différences de moyennes (ensemble).
+
+test_t1<-t.test(ret~jour_f,data=filter(dat_r,jour_f=="Monday"|jour_f=="Other"))
+
+test_t2<-t.test(ret~jour_f,data=filter(dat_r,jour_f=="Friday"|jour_f=="Other"))
+
+rbind(c(stat=test_t1$statistic,p_value=test_t1$p.value),
+      c(stat=test_t2$statistic,p_value=test_t2$p.value)) %>%
+  data.frame(teste=c("lundi vs autres","vendredi vs autres"),.) %>%
+  gt() %>%
+  fmt_number(decimals=3) %>% 
+  tab_header(title= "Table 7: Tests du différences de moyennes (ensemble)")
+```
+
+**Résumons:** on peut conclure que les rendements autour du weekend ne
+sont pas, sur la période étudiée, statistiquement différents de ceux
+constatés les autres jours de la semaine. Il n'y a pas ici d'effet
+weekend.
+
+L'anomalie a disparu (au moins sur le S&P 500). Une des explications de
+cette disparition est que les agents au courant de son existence ont
+progressivement procédé à des arbitrages amenant à sa disparition.
+
+--------------------------------------------------------------------------

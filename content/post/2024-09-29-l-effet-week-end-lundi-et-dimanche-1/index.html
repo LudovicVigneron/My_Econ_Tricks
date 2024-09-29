@@ -1,0 +1,3635 @@
+---
+title: L'effet week-end (Lundi et Dimanche) [1]
+author: Ludovic Vigneron
+date: '2024-09-29'
+slug: []
+categories:
+  - Finance
+  - Finance comportementale
+  - Effets calendaires
+tags:
+  - Finance
+  - Finance comportementale
+  - Effets calendaires
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+
+
+<p><strong>Ce post est le premier d’une série consacrée à la finance
+comportementale. Il s’agira, à titre principal, de présenter des
+applications empiriques dans le domaine. Mais, ce sera aussi l’occasion
+de discuter de certains points de théorie économique et de statistique.
+Nous commencerons par traité des effets calendaires qui sont les
+premiers éléments empiriques qui ont été mis en avant pour questionner
+l’hypothèse d’efficience des marchés financiers. Ces anomalies ont, pour
+la plupart, disparu (du moins sur les marchés les plus actifs) et sont
+sujette à des questionnements méthodologiques forts. La première de ces
+anomalies relevées fut l’effet weekend. Avant d’aller plus loin je dois
+préciser que cette application est principalement une réplication sous R
+du travail présenté par</strong> <strong>Savva Shanaev et Arina Shuraeva</strong> <strong>sous
+excel sur leur chaîne youtube <a href="www.youtube.com/@NEDLeducation">NDEL</a>. Je
+ne saurais que vous recommander de jeter un oeil à leur travail que je
+trouve excellent.</strong></p>
+<div id="les-papiers-dorigine" class="section level1">
+<h1>Le(s) papier(s) d’origine</h1>
+<p>L’effet weekend est une des premières anomalies de marché au regard de
+l’hypothèse d’efficience documentée sur une base calendaire par la
+littérature aux débuts des années 80. Pour rappel, selon cette
+hypothèse, il n’est pas possible d’établir une stratégie permettant de
+battre systématiquement le marché dans la mesure où les rendements des
+titres sont pleinement aléatoires. Les ajustements de prix
+n’interviennent que lorsqu’une information nouvelle est diffusée et
+amène les investisseurs à réviser leurs anticipations concernant les
+flux financiers futures procurés par la possession du titre. Ces
+informations nouvelles intervenant de manière aléatoire les rendements
+le seront également. Il ne doit donc pas y avoir de récurrences dans les
+rendements qui pourraient être exploitées via des stratégies
+d’arbitrages.</p>
+<p>S’agissant de l’effet weekend, il a été documenté entre autre par
+<span class="citation">Cross (<a href="#ref-cross1973">1973</a>)</span>; <span class="citation">French (<a href="#ref-french1980">1980</a>)</span>; <span class="citation">Gibbons and Hess (<a href="#ref-gibbons1981">1981</a>)</span>; et <span class="citation">KEIM and STAMBAUGH (<a href="#ref-keim1984">1984</a>)</span>… Il consiste en la
+présence de rendement en moyenne différents de ceux des autres jours les
+vendredi et lundi, autrement-dit au début du weekend et à la fin (le
+premier jours de reprise). Les rendements des lundi sont, en moyenne,
+moins importants que ceux des autres jours de la semaine (mardi,
+mercredi, jeudi) et les rendement des vendredi sont, en moyenne, plus
+importants.</p>
+<p>Une des explications avancées au phénomène repose sur la psychologie des
+investisseurs. Ceux-ci seraient plus optimistes, et donc auraient plus
+tendance à acheter, à l’approche du weekend, le vendredi, ce qui ferait
+monter les cours. Ils seraient plus pessimiste, et donc auraient plus
+tendance à vendre, juste après le weekend, le lundi, ce qui ferait
+baisser les cours.</p>
+</div>
+<div id="chargeons-les-packages-et-les-données" class="section level1">
+<h1>Chargeons les packages et les données</h1>
+<p>Pour tester l’effet weekend, nous mobilisons deux packages : le
+traditionnel <em>tidyverse</em>, qui permet de simplifier la syntaxe de R et de
+manipuler les données plus facilement, <em>quantmod</em> qui inclut un wrapper
+api donnant accès aux données de yahoo finance et <em>gt</em> qui permet de
+mettre en page des tableaux. Chargeons-les donc dans notre environnement
+de travail.</p>
+<pre class="r"><code>library(quantmod)
+library(tidyverse)
+library(gt)</code></pre>
+<p>Notez l’ordre de chargement qui permet d’éviter quelques difficultés par
+la suite. Certaines fonctions des deux premiers packages portent le même
+nom. Nous voulons utiliser les versions <em>tydiverse</em> et donc nous
+l’appelons en dernier de manière à ce qu’elles recouvrent celles de
+<em>quantmod</em>.</p>
+<p>Ceci étant fait chargeons les données nécessaires à notre test. Le choix
+s’est porté ici sur l’indice <em>Stantdard and Poor 500</em>. Il s’agit d’un
+indice boursier basé sur les cours de 500 grandes entreprises cotées aux
+Etats-unis sur le <em>NYSE</em> et sur le <em>NASDAQ</em>. Il a été lancé le 4 mars
+1957 mais produit des valeurs rétrospectives jusqu’au 3 janvier 1928.
+Son code mnémonique est ^GSPC.</p>
+<p>Chargeons ces données en utilisant la fonction <strong>getSumbols()</strong> de
+<em>quantmod</em>. Indiquons en premier argument le code mnémonique, en second
+que nous allons chercher l’information sur <em>yahoo finance</em>, en troisième
+l’endroit où seront placées les informations extraites. Les derniers
+arguments indiquent les dates de début et de fin de la période
+d’extraction.</p>
+<pre class="r"><code>getSymbols(&quot;^GSPC&quot;,src = &quot;yahoo&quot;, env = environment(), from = &quot;1928-01-03&quot;,
+           to = &quot;2023-05-04&quot;)</code></pre>
+<pre><code>## [1] &quot;GSPC&quot;</code></pre>
+<p>On obtient un objet au format xts, qui est l’un des formats dédiés aux
+séries temporelles de R. Ici, pour ce que l’on veut faire, il n’est pas
+nécessaire. Repassons donc à une data frame classique. Ne retenons que
+les dates (que l’on obtient grâce à la fonction <strong>rownames()</strong>) et les
+valeurs ajustées de l’indice.</p>
+<pre class="r"><code>dat&lt;- GSPC %&gt;% 
+  as.data.frame() %&gt;%
+  mutate(date_t=as.Date(rownames(.),&quot;%Y-%m-%d&quot;)) %&gt;%
+  select(date_t,GSPC.Adjusted) %&gt;%
+  rename(SP500=GSPC.Adjusted)</code></pre>
+<p>Attention, vérifiez bien le codage du format date retenu lors de la
+transformation afin de bien conserver le vrai ordre chronologique. Le
+risque d’erreur est ici important.</p>
+<p>Ceci fait, calculons le rendement journalier de l’indice. Nous retenons
+le rendement arithmétique.</p>
+<p><span class="math display">\[
+ret=\frac{P_i}{P_{i-1}}-1
+\]</span></p>
+<pre class="r"><code>dat_&lt;-dat %&gt;% 
+  mutate(ret=(SP500/lag(SP500)-1)) 
+
+head(dat_)</code></pre>
+<pre><code>##                date_t SP500          ret
+## 1928-01-03 1928-01-03 17.76           NA
+## 1928-01-04 1928-01-04 17.72 -0.002252304
+## 1928-01-05 1928-01-05 17.55 -0.009593684
+## 1928-01-06 1928-01-06 17.66  0.006267841
+## 1928-01-09 1928-01-09 17.50 -0.009060014
+## 1928-01-10 1928-01-10 17.37 -0.007428523</code></pre>
+<p>Limitons la base à une période plus restreinte pour réaliser notre test.
+Retenons la période courant du 1er janvier 2015 au 1er janvier 2020.</p>
+<pre class="r"><code>dat_r&lt;-dat_ %&gt;%
+  filter(date_t&gt;as.Date(&#39;2015-01-01&#39;,&quot;%Y-%m-%d&quot;)&amp; 
+         date_t&lt;as.Date(&#39;2020-01-01&#39;,&quot;%Y-%m-%d&quot;))
+rm(dat,GSPC)</code></pre>
+<p>Sauvegardons les données dans une fichier csv pour pouvoir les
+réutiliser par la suite pour tester d’autres anomalies.</p>
+<pre class="r"><code>write.table(dat_r,&quot;S&amp;P500_2015_2020.csv&quot;,sep=&quot;;&quot;, row.names = FALSE)
+write.table(dat_,&quot;S&amp;P500_return.csv&quot;,sep=&quot;;&quot;, row.names = FALSE)</code></pre>
+</div>
+<div id="traitement-des-données" class="section level1">
+<h1>Traitement des données</h1>
+<p>Commençons par marquer les jours autour du weekend : les lundi et
+vendredi. Pour cela, utilisons la fonction <strong>wday()</strong> du package
+<em>lubridate</em> qui est inclus dans le <em>tidyverse</em>. Elle numérote les jours
+de la semaine en commençant par le dimanche (jour 1). Les lundi et
+vendredi sont donc respectivement les jours 2 et 6.</p>
+<pre class="r"><code>dat_r&lt;-dat_r %&gt;%
+  mutate(day_of_the_week=wday(date_t),
+         day_lab=wday(date_t,label=TRUE),
+         jour=ifelse(day_of_the_week==2,&quot;Monday&quot;,
+                     ifelse(day_of_the_week==6,&quot;Friday&quot;,&quot;Other&quot;)),
+         jour_f=factor(jour,levels=c(&#39;Monday&#39;,&#39;Friday&#39;,&#39;Other&#39;)))</code></pre>
+<p>Maintenant que les jours sont marqués, calculons les rendements moyennes
+pour chacun d’eux : lundi, vendredi et les autres jours. Pour cela,
+utilisons le tidyverse en mobilisant <strong>group_by()</strong> et <strong>summarise()</strong>.
+Exprimons les en pourcentage.</p>
+<pre class="r"><code>dat_r %&gt;%
+  group_by(jour_f) %&gt;%
+  summarise(moyenne=round(mean(ret)*100,digits=2))</code></pre>
+<pre><code>## # A tibble: 3 × 2
+##   jour_f moyenne
+##   &lt;fct&gt;    &lt;dbl&gt;
+## 1 Monday   -0.01
+## 2 Friday    0.03
+## 3 Other     0.06</code></pre>
+<p>On a bien des rendements moyennes différents sur les jours considérés.
+Ces rendements moyennes s’articulent en valeur comme ce que prédit
+l’effet weekend. Les rendements du lundi sont, en moyenne, négatifs et
+ceux du vendredi, en moyenne, positifs. Les rendements de ces deux jours
+est par ailleurs différent des rendements des autres jours. Ce pose
+alors la question de la significativité statistique de ces différences.</p>
+</div>
+<div id="tests-statistiques" class="section level1">
+<h1>Tests statistiques</h1>
+<p>Il s’agit donc ici de pratiquer des testes de différences de moyennes
+entre les rendements des lundis et ceux des autres jours (mardi,
+mercredi, jeudi) et entre les rendements des vendredis et ceux de ces
+mêmes autres jours. Pour ce faire, il suffit d’utiliser des tests de
+<em>Student</em>.</p>
+<p>Mais au préalable, pour connaître la forme du teste à appliquer, il est
+nécessaire de savoir si les variances des rendements sont elles-mêmes
+différentes sur les groupes comparés. Pour cela, nous utiliserons un
+test de <em>Fisher</em> de comparaison de variances dont la statistique sous H0
+(l’égalité des variances) prend la forme suivante:</p>
+<p><span class="math display">\[
+\frac{\max(S_i^2)}{\min(S_j^2)}\to F_{(df_i;df_j)}
+\]</span></p>
+<p>Sous H0, le ratio est égal à 1 au hasard de l’échantillonnage prés. Le
+ratio de la plus grande variance sur la plus petite suit une loi de
+<em>Fisher</em> à n-1 et m-2 degrés de liberté (n est la taille de
+l’échantillon permettant de calculer la plus grande variance et m est la
+taille de l’échantillon permettant de calculer la plus petite variance).
+Le choix d’un ratio de type max sur min permet d’utiliser un test
+unilatéral de type “plus grand que”.</p>
+<p>Mais avant de pratiquer le test, calculons les variances des rendements,
+le nombre d’observations et les degrés de liberté pour les différents
+groupes. L’ensemble est repris dans la table 1.</p>
+<pre class="r"><code>dat_r %&gt;%
+  group_by(jour_f) %&gt;% 
+  summarise(moyenne=round(mean(ret)*100,digits=2),
+            variance=round(var(ret)*100,digits=5),
+            N=n(),
+            df=N-1) %&gt;%
+  gt() %&gt;% 
+  tab_header(title= &quot;Table 1: Eléments du test du différences de variances&quot;)</code></pre>
+<div id="doqsaaegdl" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#doqsaaegdl table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#doqsaaegdl thead, #doqsaaegdl tbody, #doqsaaegdl tfoot, #doqsaaegdl tr, #doqsaaegdl td, #doqsaaegdl th {
+  border-style: none;
+}
+
+#doqsaaegdl p {
+  margin: 0;
+  padding: 0;
+}
+
+#doqsaaegdl .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#doqsaaegdl .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#doqsaaegdl .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#doqsaaegdl .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#doqsaaegdl .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#doqsaaegdl .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#doqsaaegdl .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#doqsaaegdl .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#doqsaaegdl .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#doqsaaegdl .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#doqsaaegdl .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#doqsaaegdl .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#doqsaaegdl .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#doqsaaegdl .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#doqsaaegdl .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#doqsaaegdl .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#doqsaaegdl .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#doqsaaegdl .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#doqsaaegdl .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#doqsaaegdl .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#doqsaaegdl .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#doqsaaegdl .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#doqsaaegdl .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#doqsaaegdl .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#doqsaaegdl .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#doqsaaegdl .gt_left {
+  text-align: left;
+}
+
+#doqsaaegdl .gt_center {
+  text-align: center;
+}
+
+#doqsaaegdl .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#doqsaaegdl .gt_font_normal {
+  font-weight: normal;
+}
+
+#doqsaaegdl .gt_font_bold {
+  font-weight: bold;
+}
+
+#doqsaaegdl .gt_font_italic {
+  font-style: italic;
+}
+
+#doqsaaegdl .gt_super {
+  font-size: 65%;
+}
+
+#doqsaaegdl .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#doqsaaegdl .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#doqsaaegdl .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#doqsaaegdl .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#doqsaaegdl .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#doqsaaegdl .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#doqsaaegdl .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#doqsaaegdl .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#doqsaaegdl div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="5" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 1: Eléments du test du différences de variances</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_center" rowspan="1" colspan="1" scope="col" id="jour_f">jour_f</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="moyenne">moyenne</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="variance">variance</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="N">N</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="df">df</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="jour_f" class="gt_row gt_center">Monday</td>
+<td headers="moyenne" class="gt_row gt_right">-0.01</td>
+<td headers="variance" class="gt_row gt_right">0.00792</td>
+<td headers="N" class="gt_row gt_right">236</td>
+<td headers="df" class="gt_row gt_right">235</td></tr>
+    <tr><td headers="jour_f" class="gt_row gt_center">Friday</td>
+<td headers="moyenne" class="gt_row gt_right">0.03</td>
+<td headers="variance" class="gt_row gt_right">0.00811</td>
+<td headers="N" class="gt_row gt_right">253</td>
+<td headers="df" class="gt_row gt_right">252</td></tr>
+    <tr><td headers="jour_f" class="gt_row gt_center">Other</td>
+<td headers="moyenne" class="gt_row gt_right">0.06</td>
+<td headers="variance" class="gt_row gt_right">0.00662</td>
+<td headers="N" class="gt_row gt_right">769</td>
+<td headers="df" class="gt_row gt_right">768</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>Testons la différence de variance des rendements du lundi et ceux des
+autres jours (mardi, mercredi, jeudi). Calculons le ratio de variance et
+la <em>p-value</em> du test. La probabilité de constater une valeur aussi
+extrême si H0 (égalité de variance - le ratio des variances égal à 1)
+était vrai. Le résultat est présenté dans la table 2.</p>
+<pre class="r"><code>Fish&lt;-var(dat_r$ret[dat_r$jour_f==&#39;Monday&#39;])/var(dat_r$ret[dat_r$jour_f==&#39;Other&#39;])
+
+data.frame(Fisher=Fish,
+           p_value=pf(Fish,235,768,lower.tail = FALSE)) %&gt;%
+  gt() %&gt;%
+  fmt_number(decimals=3) %&gt;% 
+  tab_header(title= &quot;Table 2: Test de différences de variances&quot;)</code></pre>
+<div id="ywotlrxrmb" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ywotlrxrmb table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#ywotlrxrmb thead, #ywotlrxrmb tbody, #ywotlrxrmb tfoot, #ywotlrxrmb tr, #ywotlrxrmb td, #ywotlrxrmb th {
+  border-style: none;
+}
+
+#ywotlrxrmb p {
+  margin: 0;
+  padding: 0;
+}
+
+#ywotlrxrmb .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#ywotlrxrmb .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#ywotlrxrmb .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#ywotlrxrmb .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#ywotlrxrmb .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#ywotlrxrmb .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#ywotlrxrmb .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#ywotlrxrmb .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#ywotlrxrmb .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#ywotlrxrmb .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#ywotlrxrmb .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ywotlrxrmb .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#ywotlrxrmb .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#ywotlrxrmb .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#ywotlrxrmb .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ywotlrxrmb .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#ywotlrxrmb .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#ywotlrxrmb .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#ywotlrxrmb .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ywotlrxrmb .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#ywotlrxrmb .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ywotlrxrmb .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#ywotlrxrmb .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ywotlrxrmb .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ywotlrxrmb .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ywotlrxrmb .gt_left {
+  text-align: left;
+}
+
+#ywotlrxrmb .gt_center {
+  text-align: center;
+}
+
+#ywotlrxrmb .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#ywotlrxrmb .gt_font_normal {
+  font-weight: normal;
+}
+
+#ywotlrxrmb .gt_font_bold {
+  font-weight: bold;
+}
+
+#ywotlrxrmb .gt_font_italic {
+  font-style: italic;
+}
+
+#ywotlrxrmb .gt_super {
+  font-size: 65%;
+}
+
+#ywotlrxrmb .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#ywotlrxrmb .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#ywotlrxrmb .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#ywotlrxrmb .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#ywotlrxrmb .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#ywotlrxrmb .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#ywotlrxrmb .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#ywotlrxrmb .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#ywotlrxrmb div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 2: Test de différences de variances</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Fisher">Fisher</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="p_value">p_value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="Fisher" class="gt_row gt_right">1.196</td>
+<td headers="p_value" class="gt_row gt_right">0.041</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>Si l’on retient un seuil d’erreurs (de type 1) de 5%, avec une <em>p-value</em>
+de 4,08%, on rejette clairement H0 l’égalité des variances (<em>Monday</em> <em>vs
+Other</em>). Les rendements des lundis sont plus variables que ceux des
+<em>Other</em>. Voyons ce qu’il en est concernant les vendredi et les autres
+jours (mardi, mercredi, jeudi). Répliquons la méthode. Le résultat est
+présenté dans la table 3.</p>
+<pre class="r"><code>Fish&lt;-var(dat_r$ret[dat_r$jour_f==&#39;Friday&#39;])/var(dat_r$ret[dat_r$jour_f==&#39;Other&#39;])
+
+data.frame(Fisher=Fish,p_value=pf(Fish,252,768,lower.tail = FALSE)) %&gt;%
+  gt() %&gt;%
+  fmt_number(decimals=3) %&gt;% 
+  tab_header(title= &quot;Table 3: Test de différences de variances&quot;)</code></pre>
+<div id="ejruluyvji" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ejruluyvji table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#ejruluyvji thead, #ejruluyvji tbody, #ejruluyvji tfoot, #ejruluyvji tr, #ejruluyvji td, #ejruluyvji th {
+  border-style: none;
+}
+
+#ejruluyvji p {
+  margin: 0;
+  padding: 0;
+}
+
+#ejruluyvji .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#ejruluyvji .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#ejruluyvji .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#ejruluyvji .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#ejruluyvji .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#ejruluyvji .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#ejruluyvji .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#ejruluyvji .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#ejruluyvji .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#ejruluyvji .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#ejruluyvji .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ejruluyvji .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#ejruluyvji .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#ejruluyvji .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#ejruluyvji .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ejruluyvji .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#ejruluyvji .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#ejruluyvji .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#ejruluyvji .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ejruluyvji .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#ejruluyvji .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ejruluyvji .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#ejruluyvji .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ejruluyvji .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ejruluyvji .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ejruluyvji .gt_left {
+  text-align: left;
+}
+
+#ejruluyvji .gt_center {
+  text-align: center;
+}
+
+#ejruluyvji .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#ejruluyvji .gt_font_normal {
+  font-weight: normal;
+}
+
+#ejruluyvji .gt_font_bold {
+  font-weight: bold;
+}
+
+#ejruluyvji .gt_font_italic {
+  font-style: italic;
+}
+
+#ejruluyvji .gt_super {
+  font-size: 65%;
+}
+
+#ejruluyvji .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#ejruluyvji .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#ejruluyvji .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#ejruluyvji .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#ejruluyvji .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#ejruluyvji .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#ejruluyvji .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#ejruluyvji .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#ejruluyvji div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 3: Test de différences de variances</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Fisher">Fisher</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="p_value">p_value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="Fisher" class="gt_row gt_right">1.225</td>
+<td headers="p_value" class="gt_row gt_right">0.021</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>On rejette également H0 l’hypothèse d’égalité des variances. Les
+rendement des vendredis sont plus variables que ceux des jour centraux
+de la semaine (mardi, mercredi, jeudi).</p>
+<p>L’ensemble peut être réaliser directement à partir de la fonction
+<strong>var.test()</strong>. Voyons cela est créons la table 4 .</p>
+<pre class="r"><code>dat_r&lt;-dat_r %&gt;%
+  mutate(Monday=jour_f==&quot;Monday&quot;, Other=jour_f==&quot;Other&quot;,
+         Friday=jour_f==&quot;Friday&quot;)
+
+test_v1&lt;-var.test(ret~Other,alternative = &quot;greater&quot;,
+                  data=filter(dat_r,jour_f==&quot;Monday&quot;|jour_f==&quot;Other&quot;))
+
+test_v2&lt;-var.test(ret~Other,alternative = &quot;greater&quot;,
+                  data=filter(dat_r,jour_f==&quot;Friday&quot;|jour_f==&quot;Other&quot;))
+
+rbind(c(stat=test_v1$statistic,p_value=test_v1$p.value),
+      c(stat=test_v2$statistic,p_value=test_v2$p.value)) %&gt;%
+  data.frame(tests=c(&quot;lundi vs autres&quot;,&quot;vendredi vs autres&quot;),.) %&gt;%
+  gt() %&gt;%
+  fmt_number(decimals=3) %&gt;% 
+  tab_header(title= &quot;Table 4: Tests de différences de variances (ensemble)&quot;)</code></pre>
+<div id="ykbcufrtrx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ykbcufrtrx table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#ykbcufrtrx thead, #ykbcufrtrx tbody, #ykbcufrtrx tfoot, #ykbcufrtrx tr, #ykbcufrtrx td, #ykbcufrtrx th {
+  border-style: none;
+}
+
+#ykbcufrtrx p {
+  margin: 0;
+  padding: 0;
+}
+
+#ykbcufrtrx .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#ykbcufrtrx .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#ykbcufrtrx .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#ykbcufrtrx .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#ykbcufrtrx .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#ykbcufrtrx .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#ykbcufrtrx .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#ykbcufrtrx .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#ykbcufrtrx .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#ykbcufrtrx .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#ykbcufrtrx .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ykbcufrtrx .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#ykbcufrtrx .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#ykbcufrtrx .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#ykbcufrtrx .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ykbcufrtrx .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#ykbcufrtrx .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#ykbcufrtrx .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#ykbcufrtrx .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ykbcufrtrx .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#ykbcufrtrx .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ykbcufrtrx .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#ykbcufrtrx .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ykbcufrtrx .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ykbcufrtrx .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ykbcufrtrx .gt_left {
+  text-align: left;
+}
+
+#ykbcufrtrx .gt_center {
+  text-align: center;
+}
+
+#ykbcufrtrx .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#ykbcufrtrx .gt_font_normal {
+  font-weight: normal;
+}
+
+#ykbcufrtrx .gt_font_bold {
+  font-weight: bold;
+}
+
+#ykbcufrtrx .gt_font_italic {
+  font-style: italic;
+}
+
+#ykbcufrtrx .gt_super {
+  font-size: 65%;
+}
+
+#ykbcufrtrx .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#ykbcufrtrx .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#ykbcufrtrx .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#ykbcufrtrx .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#ykbcufrtrx .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#ykbcufrtrx .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#ykbcufrtrx .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#ykbcufrtrx .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#ykbcufrtrx div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="3" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 4: Tests de différences de variances (ensemble)</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="tests">tests</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="stat.F">stat.F</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="p_value">p_value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="tests" class="gt_row gt_left">lundi vs autres</td>
+<td headers="stat.F" class="gt_row gt_right">1.196</td>
+<td headers="p_value" class="gt_row gt_right">0.041</td></tr>
+    <tr><td headers="tests" class="gt_row gt_left">vendredi vs autres</td>
+<td headers="stat.F" class="gt_row gt_right">1.225</td>
+<td headers="p_value" class="gt_row gt_right">0.021</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>Pour les deux tests, l’hypothèse d’égalité de variance est rejetée. On
+ne peut donc pas utiliser la version classique du test de <em>Student</em> pour
+nos comparaisons de rendements moyens. Nous allons utilisé
+l’approximation de <em>Welsh</em>. On a ainsi:</p>
+<p><span class="math display">\[
+t=\frac{\bar{r_1}-\bar{r_2}}{s_\bar{\Delta}}\to t_{df}
+\]</span></p>
+<p>où</p>
+<p><span class="math display">\[
+s_\bar{\Delta}=\sqrt{\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2}}
+\]</span></p>
+<p>et</p>
+<p><span class="math display">\[
+df=\frac{(\frac{s_1^2}{n_1}+\frac{s_2^2}{n_2})^2}{
+\frac{(s_1^2/n_1)^2}{n_1-1}+\frac{(s_2^2/n_2)^2}{n_2-1}
+}
+\]</span></p>
+<p>Calculons ces éléments pour le test sur le lundi (table 5).</p>
+<pre class="r"><code>dif&lt;-mean(dat_r$ret[dat_r$jour_f==&#39;Monday&#39;])-mean(dat_r$ret[dat_r$jour_f==&#39;Other&#39;])
+v_l&lt;-var(dat_r$ret[dat_r$jour_f==&#39;Monday&#39;])
+v_o&lt;-var(dat_r$ret[dat_r$jour_f==&#39;Other&#39;])
+s_delta&lt;-sqrt(v_l/236+v_o/769) 
+df&lt;-((v_l/236+v_o/769)^2)/((v_l/236)^2/235+(v_o/769)^2/768)
+
+data.frame(t=dif/s_delta,p_value=pt(dif/s_delta,df)*2) %&gt;% 
+  gt() %&gt;%
+  fmt_number(decimals=3) %&gt;% 
+  tab_header(title= &quot;Table 5: Test de différences de moyennes&quot;)</code></pre>
+<div id="kkacctlxor" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#kkacctlxor table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#kkacctlxor thead, #kkacctlxor tbody, #kkacctlxor tfoot, #kkacctlxor tr, #kkacctlxor td, #kkacctlxor th {
+  border-style: none;
+}
+
+#kkacctlxor p {
+  margin: 0;
+  padding: 0;
+}
+
+#kkacctlxor .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#kkacctlxor .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#kkacctlxor .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#kkacctlxor .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#kkacctlxor .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#kkacctlxor .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#kkacctlxor .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#kkacctlxor .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#kkacctlxor .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#kkacctlxor .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#kkacctlxor .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#kkacctlxor .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#kkacctlxor .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#kkacctlxor .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#kkacctlxor .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kkacctlxor .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#kkacctlxor .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#kkacctlxor .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#kkacctlxor .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kkacctlxor .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#kkacctlxor .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kkacctlxor .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#kkacctlxor .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kkacctlxor .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kkacctlxor .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kkacctlxor .gt_left {
+  text-align: left;
+}
+
+#kkacctlxor .gt_center {
+  text-align: center;
+}
+
+#kkacctlxor .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#kkacctlxor .gt_font_normal {
+  font-weight: normal;
+}
+
+#kkacctlxor .gt_font_bold {
+  font-weight: bold;
+}
+
+#kkacctlxor .gt_font_italic {
+  font-style: italic;
+}
+
+#kkacctlxor .gt_super {
+  font-size: 65%;
+}
+
+#kkacctlxor .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#kkacctlxor .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#kkacctlxor .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#kkacctlxor .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#kkacctlxor .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#kkacctlxor .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#kkacctlxor .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#kkacctlxor .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#kkacctlxor div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 5: Test de différences de moyennes</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="t">t</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="p_value">p_value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="t" class="gt_row gt_right">−1.010</td>
+<td headers="p_value" class="gt_row gt_right">0.313</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>La <em>p-value</em> est ici bien trop grande pour que l’on puisse rejeter H0
+(l’hypothèse d’égalité des moyennes). Il n’y a pas de différences
+statistiquement significatives entre les rendements du lundi est ceux
+des jours du milieu de la semaine et donc pas d’effet lundi observée sur
+la période de test.</p>
+<p>Voyons ce qu’il en ait pour les vendredis (table 6).</p>
+<pre class="r"><code>dif&lt;-mean(dat_r$ret[dat_r$jour_f==&#39;Friday&#39;])-mean(dat_r$ret[dat_r$jour_f==&#39;Other&#39;])
+v_l&lt;-var(dat_r$ret[dat_r$jour_f==&#39;Friday&#39;])
+v_o&lt;-var(dat_r$ret[dat_r$jour_f==&#39;Other&#39;]) 
+s_delta&lt;-sqrt(v_l/253+v_o/769)
+df&lt;-((v_l/253+v_o/769)^2)/((v_l/253)^2/252+(v_o/769)^2/768)
+
+data.frame(t=dif/s_delta,p_value=pt(dif/s_delta,df)*2) %&gt;%
+  gt()%&gt;%
+  fmt_number(decimals=3) %&gt;% 
+  tab_header(title= &quot;Table 6: Test de différences de moyennes&quot;)</code></pre>
+<div id="knsounkbaw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#knsounkbaw table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#knsounkbaw thead, #knsounkbaw tbody, #knsounkbaw tfoot, #knsounkbaw tr, #knsounkbaw td, #knsounkbaw th {
+  border-style: none;
+}
+
+#knsounkbaw p {
+  margin: 0;
+  padding: 0;
+}
+
+#knsounkbaw .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#knsounkbaw .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#knsounkbaw .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#knsounkbaw .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#knsounkbaw .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#knsounkbaw .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#knsounkbaw .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#knsounkbaw .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#knsounkbaw .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#knsounkbaw .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#knsounkbaw .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#knsounkbaw .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#knsounkbaw .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#knsounkbaw .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#knsounkbaw .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#knsounkbaw .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#knsounkbaw .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#knsounkbaw .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#knsounkbaw .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#knsounkbaw .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#knsounkbaw .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#knsounkbaw .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#knsounkbaw .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#knsounkbaw .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#knsounkbaw .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#knsounkbaw .gt_left {
+  text-align: left;
+}
+
+#knsounkbaw .gt_center {
+  text-align: center;
+}
+
+#knsounkbaw .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#knsounkbaw .gt_font_normal {
+  font-weight: normal;
+}
+
+#knsounkbaw .gt_font_bold {
+  font-weight: bold;
+}
+
+#knsounkbaw .gt_font_italic {
+  font-style: italic;
+}
+
+#knsounkbaw .gt_super {
+  font-size: 65%;
+}
+
+#knsounkbaw .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#knsounkbaw .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#knsounkbaw .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#knsounkbaw .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#knsounkbaw .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#knsounkbaw .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#knsounkbaw .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#knsounkbaw .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#knsounkbaw div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="2" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 6: Test de différences de moyennes</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="t">t</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="p_value">p_value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="t" class="gt_row gt_right">−0.470</td>
+<td headers="p_value" class="gt_row gt_right">0.638</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p>Comme pour le lundi, il n’y a pas de différence statistiquement
+significative entre les rendements du vendredi et ceux des jours du
+milieu de la semaine. Il n’y a donc pas d’effet weekend sur la période
+de teste.</p>
+<p>On peut obtenir ces résultats directement en utilisant la fonction
+<strong>t.test()</strong> en laissant ses options par défaut qui sont un test
+bilatéral et considérant l’inégalité des variances sur les échantillons
+comparés (table 7).</p>
+<pre class="r"><code>test_t1&lt;-t.test(ret~jour_f,data=filter(dat_r,jour_f==&quot;Monday&quot;|jour_f==&quot;Other&quot;))
+
+test_t2&lt;-t.test(ret~jour_f,data=filter(dat_r,jour_f==&quot;Friday&quot;|jour_f==&quot;Other&quot;))
+
+rbind(c(stat=test_t1$statistic,p_value=test_t1$p.value),
+      c(stat=test_t2$statistic,p_value=test_t2$p.value)) %&gt;%
+  data.frame(teste=c(&quot;lundi vs autres&quot;,&quot;vendredi vs autres&quot;),.) %&gt;%
+  gt() %&gt;%
+  fmt_number(decimals=3) %&gt;% 
+  tab_header(title= &quot;Table 7: Tests du différences de moyennes (ensemble)&quot;)</code></pre>
+<div id="bnppybcbpm" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#bnppybcbpm table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#bnppybcbpm thead, #bnppybcbpm tbody, #bnppybcbpm tfoot, #bnppybcbpm tr, #bnppybcbpm td, #bnppybcbpm th {
+  border-style: none;
+}
+
+#bnppybcbpm p {
+  margin: 0;
+  padding: 0;
+}
+
+#bnppybcbpm .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#bnppybcbpm .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#bnppybcbpm .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#bnppybcbpm .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#bnppybcbpm .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#bnppybcbpm .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#bnppybcbpm .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#bnppybcbpm .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#bnppybcbpm .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#bnppybcbpm .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#bnppybcbpm .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#bnppybcbpm .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#bnppybcbpm .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#bnppybcbpm .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#bnppybcbpm .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnppybcbpm .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#bnppybcbpm .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#bnppybcbpm .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#bnppybcbpm .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnppybcbpm .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#bnppybcbpm .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnppybcbpm .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#bnppybcbpm .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnppybcbpm .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#bnppybcbpm .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#bnppybcbpm .gt_left {
+  text-align: left;
+}
+
+#bnppybcbpm .gt_center {
+  text-align: center;
+}
+
+#bnppybcbpm .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#bnppybcbpm .gt_font_normal {
+  font-weight: normal;
+}
+
+#bnppybcbpm .gt_font_bold {
+  font-weight: bold;
+}
+
+#bnppybcbpm .gt_font_italic {
+  font-style: italic;
+}
+
+#bnppybcbpm .gt_super {
+  font-size: 65%;
+}
+
+#bnppybcbpm .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#bnppybcbpm .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#bnppybcbpm .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#bnppybcbpm .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#bnppybcbpm .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#bnppybcbpm .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#bnppybcbpm .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#bnppybcbpm .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#bnppybcbpm div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+  <thead>
+    <tr class="gt_heading">
+      <td colspan="3" class="gt_heading gt_title gt_font_normal gt_bottom_border" style>Table 7: Tests du différences de moyennes (ensemble)</td>
+    </tr>
+    
+    <tr class="gt_col_headings">
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="1" colspan="1" scope="col" id="teste">teste</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="stat.t">stat.t</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="p_value">p_value</th>
+    </tr>
+  </thead>
+  <tbody class="gt_table_body">
+    <tr><td headers="teste" class="gt_row gt_left">lundi vs autres</td>
+<td headers="stat.t" class="gt_row gt_right">−1.010</td>
+<td headers="p_value" class="gt_row gt_right">0.313</td></tr>
+    <tr><td headers="teste" class="gt_row gt_left">vendredi vs autres</td>
+<td headers="stat.t" class="gt_row gt_right">−0.470</td>
+<td headers="p_value" class="gt_row gt_right">0.638</td></tr>
+  </tbody>
+  
+  
+</table>
+</div>
+<p><strong>Résumons:</strong> on peut conclure que les rendements autour du weekend ne
+sont pas, sur la période étudiée, statistiquement différents de ceux
+constatés les autres jours de la semaine. Il n’y a pas ici d’effet
+weekend.</p>
+<p>L’anomalie a disparu (au moins sur le S&amp;P 500). Une des explications de
+cette disparition est que les agents au courant de son existence ont
+progressivement procédé à des arbitrages amenant à sa disparition.</p>
+<hr />
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-cross1973" class="csl-entry">
+Cross, Frank. 1973. <span>“The Behavior of Stock Prices on Fridays and Mondays.”</span> <em>Financial Analysts Journal</em> 29 (6): 67–69. <a href="https://doi.org/10.2469/faj.v29.n6.67">https://doi.org/10.2469/faj.v29.n6.67</a>.
+</div>
+<div id="ref-french1980" class="csl-entry">
+French, Kenneth R. 1980. <span>“Stock Returns and the Weekend Effect.”</span> <em>Journal of Financial Economics</em> 8 (1): 55–69. <a href="https://doi.org/10.1016/0304-405x(80)90021-5">https://doi.org/10.1016/0304-405x(80)90021-5</a>.
+</div>
+<div id="ref-gibbons1981" class="csl-entry">
+Gibbons, Michael R., and Patrick Hess. 1981. <span>“Day of the Week Effects and Asset Returns.”</span> <em>The Journal of Business</em> 54 (4): 579. <a href="https://doi.org/10.1086/296147">https://doi.org/10.1086/296147</a>.
+</div>
+<div id="ref-keim1984" class="csl-entry">
+KEIM, DONALD B., and ROBERT F. STAMBAUGH. 1984. <span>“A Further Investigation of the Weekend Effect in Stock Returns.”</span> <em>The Journal of Finance</em> 39 (3): 819–35. <a href="https://doi.org/10.1111/j.1540-6261.1984.tb03675.x">https://doi.org/10.1111/j.1540-6261.1984.tb03675.x</a>.
+</div>
+</div>
+</div>
