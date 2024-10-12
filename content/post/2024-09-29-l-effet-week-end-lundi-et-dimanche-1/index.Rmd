@@ -25,7 +25,7 @@ Nous commencerons par traité des effets calendaires qui sont les
 premiers éléments empiriques qui ont été mis en avant pour questionner
 l'hypothèse d'efficience des marchés financiers. Ces anomalies ont, pour
 la plupart, disparu (du moins sur les marchés les plus actifs) et sont
-sujette à des questionnements méthodologiques forts. La première de ces
+sujettes à des questionnements méthodologiques forts. La première de ces
 anomalies relevées fut l'effet weekend. Avant d'aller plus loin je dois
 préciser que cette application est principalement une réplication sous R
 du travail présenté par** **Savva Shanaev et Arina Shuraeva** **sous
@@ -414,4 +414,4 @@ L'anomalie a disparu (au moins sur le S&P 500). Une des explications de
 cette disparition est que les agents au courant de son existence ont
 progressivement procédé à des arbitrages amenant à sa disparition.
 
---------------------------------------------------------------------------
+------------------------------------------------------------------------
