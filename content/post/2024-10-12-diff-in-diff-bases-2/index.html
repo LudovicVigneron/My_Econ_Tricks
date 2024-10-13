@@ -1,0 +1,422 @@
+---
+title: diff in diff - bases 2
+author: Ludovic Vigneron
+date: '2024-10-12'
+slug: []
+categories:
+  - DID
+  - Inf_causale
+tags:
+  - DiD
+  - r
+  - Inf_causale
+bibliography: references.bib
+---
+
+
+
+<p><strong>Pour cette seconde note “rapide” sur la méthode Difference-in-Difference, nous allons considérer un exemple tiré du chapitre 18 du livre The Effect de Nick Huntinghton-Klein, que vous trouverez ici (mais qui est également disponible en version papier dans toutes les bonnes librairies). Il s’agit d’une réplication d’une étude réalisée par</strong> <span class="citation">Kessler and Roth (<a href="#ref-kessler2014">2014</a>)</span> <strong>plus spécifiquement d’une partie du tableau 2 que l’on peut trouver à la page 9.</strong></p>
+<p>Dans les papiers, les auteurs s’intéressent à la proportion d’individus acceptant d’être donneur d’organes aux USA. Les Etats-Unis sont un Etat fédéral. Il en résulte que les législations peuvent varier d’un Etat à l’autre. Dans la plus part d’entre eux, les individus sont supposés ne pas être donneur (c’est le choix par défaut). Néanmoins, lorsqu’ils réalisent les formalités pour obtenir leur permis de conduire, on leur donne la possibilité d’opter pour faire partir du programme de donneurs d’organes. S’ils cochent la casse, en cas de décès, leurs organes pourront être prélevés afin de sauver des vies. Le taux de donneurs aux Etat-Unis est plus faible que celui constaté dans d’autres pays notamment ceux où le choix de ne pas être donneur doit être exprimé plutôt que l’inverse. Les auteurs s’interrogent alors sur l’effet de la formulation de l’option sur le choix d’être donateur potentiel ou non.</p>
+<p>En Juillet 2011, la Californie décide de changer la formulation de l’option proposée pour que l’on ne soit plus sur un non par défaut simple. L’ancienne formulation proposée de cocher soit une casse d’acceptation de la participation au programme soit une pour faire un don pécuniaire. La nouvelle ajoute une casse à cocher pour indiquer que l’on ne souhaite pas être donneur (voir figure 1 p.7 du papier). Ici, le choix de ne pas être donneur peut ainsi s’exprimer de manière active.</p>
+<p>On a ici un cadre d’expérience permettant d’identifier (ou de chercher à identifier) l’effet du changement de formulation via une approche <em>Difference-in-Difference</em> avec pour traité la Californie et comme groupe de contrôle les Etats qui n’ont pas changé de formulation (ici 26 Etats).</p>
+<div id="chargeons-les-packages-et-les-données" class="section level1">
+<h1>Chargeons les packages et les données</h1>
+<p>Avant d’aller plus loin, chargeons les différents packages que nous allons mobiliser.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)
+library(zoo)
+library(fixest)
+library(lmtest)
+library(sandwich)</code></pre>
+<p>Les données sont disponibles dans la package <em>causaldata</em>. La base associée s’appelle organe_donations.</p>
+<pre class="r"><code>od &lt;- causaldata::organ_donations 
+head(od)</code></pre>
+<pre><code>## # A tibble: 6 × 4
+##   State  Quarter  Rate Quarter_Num
+##   &lt;chr&gt;  &lt;chr&gt;   &lt;dbl&gt;       &lt;int&gt;
+## 1 Alaska Q42010   0.75           1
+## 2 Alaska Q12011   0.77           2
+## 3 Alaska Q22011   0.77           3
+## 4 Alaska Q32011   0.78           4
+## 5 Alaska Q42011   0.78           5
+## 6 Alaska Q12012   0.79           6</code></pre>
+<p>Pratiquons quelques transformations et mises en forme pour nous faciliter la tache par la suite. Marquons la Californie dans une variable binaire et passons les Quarter en format temps.</p>
+<pre class="r"><code>od&lt;-od %&gt;% 
+  mutate(californie=State==&quot;California&quot;,
+         Annee=substring(Quarter,first=3),
+         trim=substring(Quarter,first=2,last=2),
+         An_trim=paste0(Annee,&quot;.&quot;,trim),
+         Trimestre=yq(An_trim)) %&gt;% 
+  select(-Annee,-trim,-An_trim)</code></pre>
+</div>
+<div id="analyses-préliminaires" class="section level1">
+<h1>Analyses préliminaires</h1>
+<p>Avant d’aller plus loin, voyons un peu ce que donne notre variable expliquée sur l’ensemble de la période d’étude pour chaque Etat. Pour ce faire, réalisons un <em>strip chart</em> en s’assurant de marquer spécifiquement les observations pour la Californie et la date du changement dans la formulation de la question.</p>
+<pre class="r"><code>G1&lt;-ggplot(data=od,aes(x=Trimestre+30,y=Rate,
+                       colour=californie,
+                       shape=californie,
+                       alpha=californie))+
+  geom_jitter(width = 30)+
+  geom_vline(xintercept = as.Date(&quot;2011-07-01&quot;),
+             linewidth=0.1,linetype=&quot;dashed&quot;)+
+  geom_text(aes(label=&quot;Californie&quot;,
+                x=as.Date(&quot;2012-02-01&quot;),
+                y=0.2))+
+  labs(title = &quot;Taux de dons d&#39;organes
+en Californie et dans les autres Etats&quot;,
+       x=&quot;Trimestre&quot;)+
+  scale_x_date(labels=label_date(format = &quot;%b %Y&quot;))+
+  scale_y_continuous(labels = label_percent())+
+  scale_shape_manual(values=c(1, 16))+
+  scale_colour_manual(values=c(&quot;Black&quot;,&quot;Black&quot;))+
+  scale_alpha_manual(values=c(0.5,1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&quot;bold&quot;),
+    axis.title.y = element_blank(),
+    axis.line = element_line(color=&quot;black&quot;,
+                               linewidth=0.1),
+    axis.ticks = element_line(color=&quot;black&quot;,
+                               linewidth=0.1),
+    panel.grid = element_blank(),
+    legend.position=&quot;none&quot;
+  )
+G1</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/graph_1-1.png" width="672" /></p>
+<p>On note d’une part que quelle que soit la date considérée la Californie fait partie des Etats pour lesquels le taux de donneurs est le plus bas, et d’autre part que ce taux ne varie pas beaucoup sur l’ensemble de la période d’étude.</p>
+<p>Voyons cela de manière plus précise au travers du tableau des moyennes (Control/Traité/Avant/Après).</p>
+<pre class="r"><code>moy_av_c&lt;-mean(filter(od,
+                      State!=&quot;California&quot;&amp;
+                        Trimestre&lt;as.Date(&quot;2011-07-01&quot;))$Rate)
+moy_ap_c&lt;-mean(filter(od,
+                      State!=&quot;California&quot;&amp;
+                        Trimestre&gt;=as.Date(&quot;2011-07-01&quot;))$Rate)
+moy_av_t&lt;-mean(filter(od,
+                      State==&quot;California&quot;&amp;
+                        Trimestre&lt;as.Date(&quot;2011-07-01&quot;))$Rate)
+moy_ap_t&lt;-mean(filter(od,
+                      State==&quot;California&quot;&amp;
+                        Trimestre&gt;=as.Date(&quot;2011-07-01&quot;))$Rate)
+table_moy&lt;-data.frame(Avant=c(moy_av_c,moy_av_t),
+                      Apres=c(moy_ap_c,moy_ap_t))
+row.names(table_moy)&lt;-c(&quot;Control&quot;,&quot;Traité (Californie)&quot;)
+table_moy</code></pre>
+<pre><code>##                         Avant     Apres
+## Control             0.4449308 0.4588564
+## Traité (Californie) 0.2713333 0.2628000</code></pre>
+<p>La tableau confirme que la moyenne du taux de donneur en Californie est plus faible que celle du groupe de contrôle. Cette moyenne augmente très légèrement après le juillet 2011 pour le groupe de contrôle mais diminue légèrement pour la Californie. Visualisons les choses sur notre <em>strip chart</em>.</p>
+<pre class="r"><code>G1+
+  geom_segment(aes(x=as.Date(&quot;2010-10-01&quot;),
+                   xend=as.Date(&quot;2011-07-01&quot;),
+                   y= moy_av_c,
+                   yend=moy_av_c),linewidth=0.7,
+               linetype=&quot;dashed&quot;,color=&quot;#817D7C&quot;)+
+  geom_segment(aes(x=as.Date(&quot;2011-07-01&quot;),
+                   xend=as.Date(&quot;2012-01-01&quot;)+60,
+                   y= moy_ap_c,
+                   yend=moy_ap_c),linewidth=0.7,
+               linetype=&quot;dashed&quot;,color=&quot;#817D7C&quot;)+
+    geom_segment(aes(x=as.Date(&quot;2010-10-01&quot;),
+                   xend=as.Date(&quot;2011-07-01&quot;),
+                   y= moy_av_t,
+                   yend=moy_av_t),linewidth=0.7,
+               color=&quot;black&quot;)+
+  geom_segment(aes(x=as.Date(&quot;2011-07-01&quot;),
+                   xend=as.Date(&quot;2012-01-01&quot;)+60,
+                   y= moy_ap_t,
+                   yend=moy_ap_t),linewidth=0.7,
+               color=&quot;black&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/graph_1_a-1.png" width="672" /></p>
+<p>Établissons les différences avant et après juillet 2011 pour les deux groupes.</p>
+<pre class="r"><code>table_d&lt;-table_moy %&gt;% 
+  mutate(dif_av_a_p=Apres-Avant)
+table_d %&gt;% round(digits=3)</code></pre>
+<pre><code>##                     Avant Apres dif_av_a_p
+## Control             0.445 0.459      0.014
+## Traité (Californie) 0.271 0.263     -0.009</code></pre>
+<p>Elles confirment la faible évolution positive du groupe de contrôle et la faible évolution négative pour la Californie. A partir de là, il est facile d’établir l’effet du traitement au travers la double différence (la <em>difference-in-difference</em>).</p>
+<pre class="r"><code>table_d$dif_av_a_p[2]-table_d$dif_av_a_p[1]</code></pre>
+<pre><code>## [1] -0.02245897</code></pre>
+<p>La modification opérée en Californie à conduit à réduire le taux de donneurs de prés de 2,246%.</p>
+</div>
+<div id="analyse-de-régression" class="section level1">
+<h1>Analyse de régression</h1>
+<p>La table des moyennes nous permet d’avoir une valeur pour l’effet du traitement mais elle ne fournit par de tests statistiques sur cette valeur. Pour y remédier, estimons l’effet du traitement via une régression.</p>
+<p>Pour cela, nous pouvons utiliser la spécification classique.</p>
+<p><span class="math display">\[
+outcome_{i,t}=\alpha+\beta_1.traite_i+\beta_2.post_t+\beta_3.traite_i\times{post_t}+\epsilon
+\]</span></p>
+<p>Le modèle est estimé par les moindres carrés ordinaires. La variable traite correspond ici à notre variable Californie. Il nous faut coder la variable post. Appelons la ap (pour après).</p>
+<pre class="r"><code>od&lt;-od %&gt;% 
+  mutate(ap=Trimestre&gt;=as.Date(&quot;2011-07-01&quot;))</code></pre>
+<p>Maintenant que nous avons nos deux variables explicatives, nous pouvons les utiliser dans la régression avec leur interaction.</p>
+<pre class="r"><code>reg_1&lt;-lm(Rate ~ californie+ap+californie*ap,
+          data=od)
+summary(reg_1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = Rate ~ californie + ap + californie * ap, data = od)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.33596 -0.09975 -0.00291  0.11394  0.33114 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)            0.44493    0.01705  26.101   &lt;2e-16 ***
+## californieTRUE        -0.17360    0.08858  -1.960   0.0518 .  
+## apTRUE                 0.01393    0.02411   0.578   0.5643    
+## californieTRUE:apTRUE -0.02246    0.12527  -0.179   0.8579    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1506 on 158 degrees of freedom
+## Multiple R-squared:  0.05416,	Adjusted R-squared:  0.0362 
+## F-statistic: 3.015 on 3 and 158 DF,  p-value: 0.03172</code></pre>
+<p>La valeur du coefficient associé au terme d’interaction correspond à l’arrondi prés à la <em>difference-in-difference</em>. Néanmoins, il n’apparaît pas statistiquement différent de zéro dans cette configuration du test. Isolons ce résultat en utilisant la fonction <strong>coeftest()</strong> du package <em>lmtest</em>.</p>
+<pre class="r"><code>coeftest(reg_1)[4,]</code></pre>
+<pre><code>##    Estimate  Std. Error     t value    Pr(&gt;|t|) 
+## -0.02245897  0.12526689 -0.17928898  0.85794051</code></pre>
+<p>On retrouve bien notre estimation primaire. Le test pratiqué a le défaut de ne pas prendre en compte la structure de la variabilité des valeurs. Celle-ci est plus importante dans sa dimension individuelle (Etat) que dans sa dimension temporelle. Aussi, un test considérant un <em>clustering</em> de la variable State apparaît plus approprié. Générons-le en spécifiant la matrice variance-covariance correspondant. Celle-ci est établie à partir de la fonction <strong>vcovCL()</strong> du package <em>sandwich</em>.</p>
+<pre class="r"><code>coeftest(reg_1,
+         vcov. = vcovCL(reg_1,
+                        cluster= ~State))[4,]</code></pre>
+<pre><code>##      Estimate    Std. Error       t value      Pr(&gt;|t|) 
+## -0.0224589744  0.0060727451 -3.6983232144  0.0002990217</code></pre>
+<p>Le test cette fois permet largement de rejeter l’hypothèse d’absence d’effet du traitement (avec une p-value de moins de 0,03%).</p>
+<p>On peut de manière équivalente estimer la <em>difference-in-difference</em> en utilisant une spécification alternative basé sur les <em>two-way-fixed-effect</em>.</p>
+<p><span class="math display">\[
+outcome_{i,t}=\alpha_i+\alpha_t+\beta.traited+\epsilon
+\]</span></p>
+<p>On a ainsi un premier effet fixe individuel (contrôlant ici pour l’Etat) et un second effet fixe cette fois temporelle (contrôlant ici pour le trimestre). La variable traited est ici une variable binaire prenant la valeur 1 pour le groupe des traités une fois qu’ils ont reçu le traitement (la Californie à partir de juillet 2011). Codons cette variable.</p>
+<pre class="r"><code>od &lt;- od %&gt;%
+  mutate(Treated = State == &#39;California&#39; &amp; 
+           Trimestre&gt;=as.Date(&quot;2011-07-01&quot;))</code></pre>
+<p>Reste alors à estimer la régression. Pour cela, le plus simple est d’utiliser la fonction <strong>feols()</strong> (<em>fixed effects OLS</em>) du package <em>fixest</em>. Indiquons pour le tableau de régression que l’on considère un clustering individuel pour la calcul de l’erreur standard. Faisons-le en indiquant dans l’option vcov “cluster” (il prend la premier effet fixe comme référence).</p>
+<pre class="r"><code>clfe &lt;- feols(Rate ~ Treated | State + Quarter,
+              data = od)
+summary(clfe,vcov = &quot;cluster&quot;)</code></pre>
+<pre><code>## OLS estimation, Dep. Var.: Rate
+## Observations: 162
+## Fixed-effects: State: 27,  Quarter: 6
+## Standard-errors: Clustered (State) 
+##              Estimate Std. Error  t value  Pr(&gt;|t|)    
+## TreatedTRUE -0.022459   0.006131 -3.66304 0.0011185 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## RMSE: 0.021982     Adj. R2: 0.974196
+##                  Within R2: 0.009221</code></pre>
+<p>On retrouve la même estimation de l’effet qui est statistiquement significatif. Cette estimation peut également être obtenue à partir de la fonction <strong>lm()</strong> de R base en portant State et Quarter comme variable effet fixe (série de dummies). N’affichons que la ligne qui nous intéresse dans le rendu de la régression, la dernière du tableau des coefficients.</p>
+<pre class="r"><code>reg_2&lt;-lm(Rate~State+Quarter+Treated, data=od)
+summary(reg_2)$coefficient[nrow(summary(reg_2)$coefficient),]</code></pre>
+<pre><code>##    Estimate  Std. Error     t value    Pr(&gt;|t|) 
+## -0.02245897  0.02049686 -1.09572767  0.27523942</code></pre>
+<p>On retrouve le coefficient correspondant à l’effet du traitement mais il apparaît non significatif à partir du test sans cluster. Réalisons le test sur le coefficient avec cluster sur State.</p>
+<pre class="r"><code>coeftest(reg_2,vcov. = vcovCL(reg_2,
+                              cluster= ~State))[33,]</code></pre>
+<pre><code>##     Estimate   Std. Error      t value     Pr(&gt;|t|) 
+## -0.022458974  0.006720766 -3.341728598  0.001089546</code></pre>
+<p>Avec le <em>clustering</em>, on constate que le coefficient est bien statistiquement différent de 0.</p>
+<p>Le traitement apparaît bien avoir un effet même si celui-ci est faible (une réduction de 2,24 points de pourcentage du taux de donneurs).</p>
+</div>
+<div id="examinons-la-parallel-trend-hypothesis" class="section level1">
+<h1>Examinons la <em>parallel trend hypothesis</em></h1>
+<p>L’effet du traitement est identifié à la seule condition que l’hypothèse de tendance parallèle d’évolution de l’outcome entre le groupe traité et le groupe de contrôle en l’absence de traitement soit tenue. Par définition, celle-ci n’est pas testable dans la mesure où l’on ne peut pas observer l’évolution des traités s’ils n’avaient pas été traités. Néanmoins, cela ne signifie pas que l’on ne peut rien faire pour convaincre qu’elle est plausible. En l’absence de <em>parallel trend</em>, on ne peut être sûr que le changement constaté sur le groupe des traités est dû au traitement. Mais, même s’il n’y a pas de test définitif, on peut essayer de convaincre de la plausibilité du <em>parallel trend</em> au travers notamment de tests sur la tendance pré-traitement ou de tests placebo.</p>
+<p>Commençons par la tendance pré-traitement. Il y a basiquement deux manières de procéder. La première est simplement d’observer l’évolution des moyennes de l’outcome pour les traités et non traités au travers d’un graphe. Pour le réaliser, calculons les moyennes trimestrielles sur le groupe de contrôle et la Californie.</p>
+<pre class="r"><code>par_1&lt;-od %&gt;% 
+          group_by(californie,Trimestre) %&gt;% 
+          summarise(moy_=mean(Rate))
+par_1</code></pre>
+<pre><code>## # A tibble: 12 × 3
+## # Groups:   californie [2]
+##    californie Trimestre   moy_
+##    &lt;lgl&gt;      &lt;date&gt;     &lt;dbl&gt;
+##  1 FALSE      2010-10-01 0.444
+##  2 FALSE      2011-01-01 0.442
+##  3 FALSE      2011-04-01 0.449
+##  4 FALSE      2011-07-01 0.460
+##  5 FALSE      2011-10-01 0.456
+##  6 FALSE      2012-01-01 0.461
+##  7 TRUE       2010-10-01 0.267
+##  8 TRUE       2011-01-01 0.273
+##  9 TRUE       2011-04-01 0.274
+## 10 TRUE       2011-07-01 0.264
+## 11 TRUE       2011-10-01 0.261
+## 12 TRUE       2012-01-01 0.264</code></pre>
+<p><img src="images/clipboard-40922044.png" /></p>
+<p>Créons le graphe.</p>
+<pre class="r"><code>ggplot(data=par_1,aes(x=Trimestre,y=moy_,
+                      colour=californie,
+                      shape=californie,
+                      alpha=californie))+
+  geom_point()+
+  geom_line()+
+  geom_vline(xintercept = as.Date(&quot;2011-07-01&quot;),
+             linewidth=0.1,linetype=&quot;dashed&quot;)+
+  geom_text(aes(label=&quot;Californie&quot;,
+                x=as.Date(&quot;2012-02-01&quot;),
+                y=0.25))+
+  labs(title = &quot;Taux de dons d&#39;organes
+en Californie et dans les autres Etats&quot;,
+       x=&quot;Trimestre&quot;)+
+  scale_x_date(labels=label_date(format = &quot;%b %Y&quot;))+
+  scale_y_continuous(labels = label_percent())+
+  scale_shape_manual(values=c(1, 16))+
+  scale_colour_manual(values=c(&quot;Black&quot;,&quot;Black&quot;))+
+  scale_alpha_manual(values=c(0.5,1))+
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust=0.5,face=&quot;bold&quot;),
+    axis.title.y = element_blank(),
+    axis.line = element_line(color=&quot;black&quot;,
+                               linewidth=0.1),
+    axis.ticks = element_line(color=&quot;black&quot;,
+                               linewidth=0.1),
+    panel.grid = element_blank(),
+    legend.position=&quot;none&quot;
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/graph_paral_td-1.png" width="672" /></p>
+<p>L’ensemble semble assez parallèle sur la période pré-traitement. Néanmoins, nous aimerions avoir un test statistique. Le plus simple consiste à estimer sur le période pré-traitement le modèle suivant:</p>
+<p><span class="math display">\[
+outcome_{i,t}=\alpha+\beta_1.periode+\beta_2.periode\times{Traite}+\epsilon
+\]</span></p>
+<p>Où periode est l’indexation temporaire des observations sur la période et Traite l’affectation au groupe des traités (ici californie). Si <span class="math inline">\(\beta_2\)</span> est statistiquement significatif, on peut questionner la parallel trend pré-traitement. La pente de la droite outcome/periode est différente entre les traités et les non traités.</p>
+<pre class="r"><code>reg_p1&lt;-lm(Rate~Quarter_Num+Quarter_Num*californie, 
+           data=filter(od,Trimestre&lt;as.Date(&quot;2011-07-01&quot;)))
+coeftest(reg_p1)[3,]</code></pre>
+<pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
+## -0.1765397  0.2446478 -0.7216077  0.4727212</code></pre>
+<p>Ici, il semble que la parallel trend pre-traitement tienne. La spécification retenu dans le test que nous venons de pratiquer est la plus simple possible. On peut envisager des formes plus complexes en ajoutant des termes polynomiaux ou d’autres éléments associés à une non linéarité de la tendance (qui peut être parallèle en étant non-linéaire).</p>
+<p>Si on trouve qu’il y a une tendance différente (pré-traitement), on cherchera en quoi elle est différente. Est-ce qu’elle est juste légèrement différente mais que cette différence est statistiquement significative du fait de la taille de l’échantillon? Est ce que les tendances divergent à cause de brèves sous périodes il y a quelques années? Il faut comprendre d’où vient le décalage.</p>
+<p>Lorsque le test de pré-tendance échoue, certains chercheurs cherchent à sauver leur travail en contrôlant pour la tendance en incluant une variable temps à la place des effets fixes temps dans régression. Cependant, cela n’est pas sans poser problème. Ce contrôle peut masquer une partir de l’effet du traitement tout particulièrement lorsque les effets sont de plus en plus fort ou de plus en plus faible à mesure que le temps passe (<span class="citation">Wolfers (<a href="#ref-wolfers2006">2006</a>)</span>). Il y a aussi des manières de contrôler uniquement pour les tendances pré-traitement qui consistent à réaliser une sorte d’étude d’évènements pour les groupes des traités et des non traités, mais cela peut rendre les choses encore pires (<span class="citation">Roth (<a href="#ref-roth2018">2018</a>)</span>).</p>
+<p>Considérons maintenant les tests placebos. Ceux-ci peuvent se résumer en quatre étapes. Tout d’abord, on isole les observations pré-traitement. Puis, on choisi une période traitement fictive. On estime alors une <em>difference-in-difference</em> à partir de ces éléments fictifs. Si on trouve un effet du traitement fictif à une date où il ne devrait pas en avoir, c’est qu’il y a quelque chose qui cloche avec votre méthode de recherche (peut être une violation du <em>parallel trend</em>…).</p>
+<p>Voyons cela sur nos données. Retenons deux tests placebos: le premier consistant à affecter le traitement au premier trimestre 2011 et le second consistant à l’affecter au second trimestre 2011. Commençons par limiter la base à la période pré-traitement. Puis, créons nos deux variables de traitements fictifs.</p>
+<pre class="r"><code>od_lim&lt;-od %&gt;%
+  filter(Trimestre&lt;as.Date(&quot;2011-07-01&quot;)) %&gt;% 
+  mutate(trait_plac_1=californie==TRUE&amp;
+           Quarter %in% c(&#39;Q12011&#39;,&#39;Q22011&#39;),
+         trait_plac_2=californie==TRUE&amp;
+           Quarter==&#39;Q22011&#39;)</code></pre>
+<p>Estimons les modèles <em>Diff-in-Diff</em> associés aux traitements placebos.</p>
+<pre class="r"><code>clfe1 &lt;- feols(Rate ~ trait_plac_1 | State + Quarter,
+    data = od_lim)
+clfe2 &lt;- feols(Rate ~ trait_plac_2 | State + Quarter,
+  data = od_lim)
+rbind(summary(clfe1,vcov = &quot;cluster&quot;)$coeftable,
+      summary(clfe2,vcov = &quot;cluster&quot;)$coeftable) %&gt;% 
+  round(digits=4)</code></pre>
+<pre><code>##                  Estimate Std. Error t value Pr(&gt;|t|)
+## trait_plac_1TRUE   0.0061     0.0051  1.1970   0.2421
+## trait_plac_2TRUE  -0.0017     0.0028 -0.5996   0.5540</code></pre>
+<p>On constate que dans les deux cas les tests pour les placebos ne sont pas statistiquement significatifs ce qui est rassurant vis-à-vis du <em>parallel trend</em> (pre-traitement).</p>
+<p>Une autre méthode placebo consiste, si on a plusieurs groupes de contrôle, à tous les utiliser, en excluant le groupe des traités et d’assigner de manière fictive le traitement à un des groupes de contrôle. Il s’agira alors d’estimer la <em>Diff-in-Diff</em> cette nouvelle base. Cette méthode est moins commune dans la mesure où elle ne traite pas du <em>parallel trend</em> directement. Mais c’est un test commun lorsque l’on utilise un groupe de contrôle synthétisé (<em>Synthetic control</em>).</p>
+</div>
+<div id="mesurer-lévolution-de-leffet-du-traitement-dans-le-temps" class="section level1">
+<h1>Mesurer l’évolution de l’effet du traitement dans le temps</h1>
+<p>Dans l’analyse pratiquée jusqu’ici, l’effet du traitement se limite à une comparaison entre deux périodes: avant et après le traitement. Néanmoins, l’estimation en <em>two-way-fixed-effect</em> permet de considérer autant de périodes de temps qu’on le souhaite. Cela peut nous permettre de mettre au jour des détails utiles. Lorsque l’on est intéressé par un traitement donné, il se peut que celui-ci devienne plus ou moins efficace avec le temps ou même mette du temps avant de produire un effet. Il peut être utile dans ces cas de modifier la <em>Diff-in-Diff</em> pour autoriser l’effet du traitement à être différent à chaque période. Cette approche est qualifiée de <em>dynamic treatment effects</em>.</p>
+<p>Une manière de pratiquer est de générer une variable temps centrée sur le traitement. Il s’agit simplement de prendre la variable temps et de lui enlever la période du traitement.</p>
+<p>Faisons-le sur notre base où les périodes sont indexées dans Quarter_Num et la période de traitement est le quatrième trimestre. Calculons les différences et passons le résultat au format facteur puis établissons la référence sur la période juste avant le traitement (-1) : la période 3. La période -1 est la plus fréquemment utilisée comme référence dans ce type d’analyse.</p>
+<pre class="r"><code>od&lt;-od %&gt;% 
+  mutate(dym=Quarter_Num-4,
+         dym_f=relevel(factor(dym),ref=3))</code></pre>
+<p>Il s’agit alors d’estimer le modèle <em>two-way-fixed-effect</em> en considérant une série d’interaction entre la variable traited et les valeurs du facteur que l’on vient d’établir.</p>
+<p><span class="math display">\[
+outcome_{i,t}=\alpha_i+\alpha_t+\beta_1.T_{-3}.traited+\beta_2.T_{-2}.traited+\beta_3.T_0.traited+\beta_4.T_1.traited+\beta_5.T_2.traited+...+\epsilon
+\]</span></p>
+<p><span class="math inline">\(T_{-1}\)</span> est ignoré pour éviter la colinéarité parfaite.</p>
+<p>Utilisons <strong>feols()</strong> pour réaliser estimation et regardons le résultat pour les coefficients des variables d’interaction.</p>
+<pre class="r"><code>clfe_d_ &lt;- feols(Rate ~ dym_f*californie | 
+            State + Quarter_Num, data = od)</code></pre>
+<pre><code>## The variables &#39;dym_f-3&#39;, &#39;dym_f-2&#39;, &#39;dym_f0&#39;, &#39;dym_f1&#39;, &#39;dym_f2&#39; and &#39;californieTRUE&#39; have been removed because of collinearity (see $collin.var).</code></pre>
+<pre class="r"><code>summary(clfe_d_,vcov = &quot;cluster&quot;)$coeftable %&gt;%
+  round(digits = 4)</code></pre>
+<pre><code>##                        Estimate Std. Error t value Pr(&gt;|t|)
+## dym_f-3:californieTRUE  -0.0029     0.0051 -0.5787   0.5678
+## dym_f-2:californieTRUE   0.0063     0.0023  2.7788   0.0100
+## dym_f0:californieTRUE   -0.0216     0.0050 -4.2842   0.0002
+## dym_f1:californieTRUE   -0.0203     0.0045 -4.5363   0.0001
+## dym_f2:californieTRUE   -0.0222     0.0100 -2.2136   0.0358
+## attr(,&quot;type&quot;)
+## [1] &quot;Clustered (State)&quot;</code></pre>
+<p>On peut se passer de l’étape de calcule de la variable période centrée en utilisant la fonction <strong>i()</strong> qui permet d’établir des interactions en indiquant comme référence 3.</p>
+<pre class="r"><code>clfe_d &lt;- feols(Rate ~ i(Quarter_Num, californie, ref = 3) | 
+            State + Quarter_Num, data = od)
+summary(clfe_d,vcov = &quot;cluster&quot;)$coeftable %&gt;%
+  round(digits = 4)</code></pre>
+<pre><code>##                           Estimate Std. Error t value Pr(&gt;|t|)
+## Quarter_Num::1:californie  -0.0029     0.0051 -0.5787   0.5678
+## Quarter_Num::2:californie   0.0063     0.0023  2.7788   0.0100
+## Quarter_Num::4:californie  -0.0216     0.0050 -4.2842   0.0002
+## Quarter_Num::5:californie  -0.0203     0.0045 -4.5363   0.0001
+## Quarter_Num::6:californie  -0.0222     0.0100 -2.2136   0.0358
+## attr(,&quot;type&quot;)
+## [1] &quot;Clustered (State)&quot;</code></pre>
+<p>Les coefficients s’interprétent en référence à la période juste avant le traitement (ici période -1). Pour faciliter l’interprétation, on recourt souvent à une représentation graphique basée sur les intervalles de confiance. Celle-ci s’obtient rapidement à partir de la commande <strong>coefplot()</strong>.</p>
+<pre class="r"><code>coefplot(clfe_d)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/coef_p_dyn_trait_1-1.png" width="672" /></p>
+<p>La référence est marquée par la ligne horizontale indiquant la valeur 0. Les intervalles ne croissant pas cette ligne correspondent au cas ou la valeur de l’outcome est statistiquement différent de la valeur de référence (au seuil de 95%). On voit clairement que c’est le cas de toute les observations post traitement (même si l’effet est moins net pour la troisième période après traitement). Ces observations post traitement sont les seules qui nous disent quelque chose sur celui-ci. Néanmoins, les observations prétraitement ne sont pas inutiles. Elles ne renseignent sur la <em>parallel trend</em> prétraitement. Idéalement elles ne seront pas statistiquement différentes de la référence (ou à défaut peu éloignées).</p>
+<p>Le graphe produit par <strong>coefplot()</strong> n’est pas de type <strong>ggplot()</strong> ce que le rend moins flexible du point de vue de la forme. A la place, on peut utiliser <strong>ggcoef()</strong> du package <em>ggally</em> de manière à adapter le graphe.</p>
+<pre class="r"><code>GGally::ggcoef(clfe_d,
+               errorbar_height = 0.05,
+               vline_linetype = &quot;dashed&quot;,
+               vline_color = &quot;black&quot;,
+               vline_size = 0.2)+
+  annotate(geom=&quot;point&quot;,x=0,y=2.5)+
+    labs(title=&quot;Effet dynamique du traitement&quot;,
+         subtitle = &quot;intervalle de confiance à 95%&quot;,
+         x=&quot;Estimation DiD &quot;,
+         y=&quot;Trimestre&quot;)+
+    scale_y_discrete(labels=unique(od$Quarter))+
+    coord_flip()+  
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&quot;bold&quot;),
+    plot.subtitle = element_text(hjust = 0.5,face=&quot;italic&quot;),
+    axis.line = element_line(color=&quot;black&quot;,
+                               linewidth=0.15),
+    axis.ticks = element_line(color=&quot;black&quot;,
+                               linewidth=0.1),
+    panel.grid = element_blank()
+  )</code></pre>
+<pre><code>## Registered S3 method overwritten by &#39;GGally&#39;:
+##   method from   
+##   +.gg   ggplot2</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/coef_p_dyn_trait_2-1.png" width="672" /></p>
+<p>L’intervalle de confiance ici est construit sur une base de 95% (alpha de 5%). C’est la valeur par défaut. Cela peut-être simplement modifié au travers l’option conf.level. Voyons ce que cela donne avec 99% (alpha 1%).</p>
+<pre class="r"><code>GGally::ggcoef(clfe_d,
+               conf.level = 0.99,
+               errorbar_height = 0.05,
+               vline_linetype = &quot;dashed&quot;,
+               vline_color = &quot;black&quot;,
+               vline_size = 0.2)+
+  annotate(geom=&quot;point&quot;,x=0,y=2.5)+
+    labs(title=&quot;Effet dynamique du traitement&quot;,
+         subtitle = &quot;intervalle de confiance à 99%&quot;,
+         x=&quot;Estimation DiD &quot;,
+         y=&quot;Trimestre&quot;)+
+    scale_y_discrete(labels=unique(od$Quarter))+
+    coord_flip()+  
+  theme_minimal()+
+  theme(
+    plot.title = element_text(hjust = 0.5,face=&quot;bold&quot;),
+    plot.subtitle = element_text(hjust = 0.5,face=&quot;italic&quot;),
+    axis.line = element_line(color=&quot;black&quot;,
+                               linewidth=0.15),
+    axis.ticks= element_line(color=&quot;black&quot;,
+                               linewidth=0.1),
+    panel.grid = element_blank()
+  )</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/coef_p_dyn_trait_3-1.png" width="672" /></p>
+<p>Ici, les choses sont plus nettes. Seuls les deux trimestres post traitement apparaissent statistiquement différents.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-kessler2014" class="csl-entry">
+Kessler, Judd, and Alvin Roth. 2014. <span>“Don’t Take ’No’ for an Answer: An Experiment with Actual Organ Donor Registrations.”</span> <a href="https://doi.org/10.3386/w20378">https://doi.org/10.3386/w20378</a>.
+</div>
+<div id="ref-roth2018" class="csl-entry">
+Roth, Jonathan. 2018. <span>“Should We Adjust for the Test for Pre-Trends in Difference-in-Difference Designs?”</span> <a href="https://doi.org/10.48550/ARXIV.1804.01208">https://doi.org/10.48550/ARXIV.1804.01208</a>.
+</div>
+<div id="ref-wolfers2006" class="csl-entry">
+Wolfers, Justin. 2006. <span>“Did Unilateral Divorce Laws Raise Divorce Rates? A Reconciliation and New Results.”</span> <em>American Economic Review</em> 96 (5): 1802–20. <a href="https://doi.org/10.1257/aer.96.5.1802">https://doi.org/10.1257/aer.96.5.1802</a>.
+</div>
+</div>
+</div>
