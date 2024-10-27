@@ -1,0 +1,210 @@
+---
+title: L'effet vacances [2]
+author: Ludovic Vigneron
+date: '2024-10-27'
+slug: []
+categories:
+  - Finance
+  - Finance comportementale
+tags:
+  - Effets calendaires
+  - Finance
+  - Finance comportementale
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+**Pour ce second post dans la série consacrée à la finance
+comportementale, revenons sur les effets calendaires qui ont, par le
+passé, été mis en évidence comme affectant les rendements des actions.
+Encore une fois, cette application est principalement une réplication
+sous R du travail présenté par Savva Shanaev et Arina Shuraeva sous
+excel sur leur chaîne
+youtube [NDEL](https://myecontricks.netlify.app/post/2024-09-29-l-effet-week-end-lundi-et-dimanche-1/www.youtube.com/@NEDLeducation)
+(que je recommande fortement).**
+
+# Le(s) papier(s) d'origine
+
+L'effet vacances (*holiday effect*) est une autre anomalie de marché au
+regard de l'hypothèse d'efficience détectée dans les années 80. Il a
+notamment été mis en évidence par @ariel1990 et @cadsby1992. Il consiste
+en la présence de rendements en moyenne plus importants que les autres
+jours la veille de périodes de vacances (des périodes de fremeture du
+marché plus longues que les simples weekends) .
+
+Sa présence a été justifié à la fois par des biais d'optimistes avant
+les périodes de congése et la prudence des s*hort sellers* (les vendeurs
+à découvert) qui préfèrent liquider leurs positions avant une longue
+fermeture du marché (ou pour un jours fériés).
+
+# Chargeons les packages et les données
+
+Pour tester l'effet vacances, nous ne mobiliserons ici qu'un seul
+package : le très classique *tidyverse*. Chargeons-le.
+
+```{r}
+#| label: charger_les_packages 
+#| message: false
+
+library(tidyverse)
+```
+
+Concernant les données, reprenons le jeu que nous avons établi pour
+l'effet *weekend* (vous pouvez les charger [ici](S&P500_2015_2020.csv).
+Celui-ci comprend des informations journalières concernant l'indice
+*Standard and Poor 500* sur la période 2015-2020.
+
+```{r}
+#| label: charger_les_données 
+#| message: false
+
+dat<-read_delim("S&P500_2015_2020.csv",delim=";")
+head(dat)
+```
+
+Reprendre ces données, nous évite pas mal de manipulations pour
+télécharger l'information, limiter la période d'étude, mettre l'ensemble
+dans une data frame, formater les dates et calculer les rendements.
+
+# Traitement des données
+
+Commençons par repérer les jours qui précédents les périodes de
+vacances. Ce faisant, il est important de les distinguer de ceux qui
+précédent les simples *weekend*. Pour ce faire, nous procédons par
+étapes. Tout d'abord, nous calculons pour chaque date le nombre de jours
+qui la sépare de la suivante. Un weekend ordinaire sera ainsi marqué par
+un écart de dates de 3 jours et le passage ordinaire d'un jour ouvré à
+l'autre d'un écart de 1. Tout les autres écarts correspondent donc à des
+vacances. Nous codons une variable sur cette base et générons en appui
+un facteur aux étiquettes plus claires. Enfin, la dernière observation
+de la série,le 31 décembre 2019, est marquée par un NA. Nous corrigeons
+cette erreur en indiquant qu'il s'agit bien d'une veille de vacances (le
+nouvel an).
+
+```{r}
+
+dat<-dat %>%
+  mutate(day_dif=lead(date_t)-date_t,
+         holiday=ifelse(day_dif==2,1, ifelse(day_dif>=4,1,0)),
+         holiday_f=factor(holiday,labels=c("no_holiday","holiday")))
+
+dat$holiday_f[length(dat$holiday_f)]<-"holiday"
+```
+
+Maintenant que toutes les veilles de vacances sont marquées, on peut
+calculer les rendements moyens sur ces jours et sur les autres.
+
+```{r}
+
+dat %>% 
+  group_by(holiday_f) %>% 
+  summarise(moyenne=round(mean(ret)*100,digits=4))
+```
+
+On relève que les jours hors veilles de vacances présentent un rendement
+moyenne de 4 points de base (0,04%) et que les veilles de vacance un
+rendement quasi nulle 0,08 points de base (0,0008%). Cela est déjà
+contraire à ce que devrait produire l'effet vacances (des rendements
+plus importants les veilles de vacances). Mais la différence constatée
+est-elle statistiquement significative ?
+
+# Tests statistiques
+
+La comparaison des moyennes se fait sur la base d'un test de Student.
+Pour connaître, la forme qu'il doit prendre il est nécessaire de tester
+au préalable l'égalité des variances. Pour ce faire, nous mobilisons un
+test de Fisher. Mais avant de le pratiquer établissons les variances, le
+nombre d'observations et les degrés de liberté associés aux groupes
+comparés.
+
+```{r}
+
+dat %>%
+  group_by(holiday_f) %>%
+  summarise(moyenne=round(mean(ret)*100,digits=4),
+            variance=round(var(ret),digits=6), 
+            N=n(),
+            df=N-1)
+```
+
+Il y a 46 jours qui sont des veilles de vacances sur la période d'étude.
+Les variances des deux échantillons sont relativement proches. Mais, on
+ne peut pas conclure à leur égalité sans test. Calculons le ratio de ces
+variances sous H0 (l'égalité des variances). Celui-ci suit une loi de
+Fisher à n-1,m-1 degrés de liberté. Tirons la *p-value* du test des
+valeurs observées;
+
+```{r}
+
+Fish<-var(dat$ret[dat$holiday_f=="holiday"])/var(dat$ret[dat$holiday_f=="no_holiday"]) 
+c(Fish=Fish,pv=pf(Fish,45,1211,lower.tail = FALSE)*2) %>% round(digits=4)
+```
+
+Avec une *p-value* de 22,41%, on ne peut raisonnablement pas rejeter H0
+(égalité des variances). Le même test peut être fait directement à
+partir de la fonction **var.test()**. Pour obtenir, le ratio dans le
+même sens que celui utilisé dans le calcul détaillé inversons la
+variable *holiday* (les 1 deviennent des 0 et les 0 des 1).
+
+```{r}
+
+var.test(ret~abs(holiday-1),data=dat)
+```
+
+Le test pratiqué ici est bilatéral. On peut également le pratiquer en
+unilatéral en posant que l'hypothèse alternative (H1) est que la
+variance des rendements les veilles de vacances est plus grande que
+celle des autres jours.
+
+```{r}
+
+var.test(ret~abs(holiday-1),data=dat,alternative="greater")
+```
+
+On aboutit à la même conclusion. H0 (l'égalité des variances) ne peut
+être rejetée avec un niveau de certitude suffisant. En conséquence, la
+forme du test de Student à utiliser est la forme classique. Soit la
+suivante :
+
+$$
+t=\frac{\bar{r_1}-\bar{r_2}}{s_p.\sqrt{\frac{1}{n_1}+\frac{1}{n_2}}}
+$$
+
+où
+
+$$
+s_p=\sqrt{\frac{(n_1-1)s_1^2+(n_2-1)s_2^2}{n_1+n_2-2}}
+$$
+
+```{r}
+
+sp<-sqrt(((46-1)*var(dat$ret[dat$holiday_f=="holiday"])+
+            (1212-1)*var(dat$ret[dat$holiday_f=="no_holiday"]))/(46+1212-2))
+t<-(mean(dat$ret[dat$holiday_f=="holiday"])-
+      mean(dat$ret[dat$holiday_f=="no_holiday"]))/(sp*sqrt((1/46)+(1/1212)))
+c(t=t,p_value=pt(-0.31528,nrow(dat)-2)*2)
+```
+
+Avec une *p-value* de 75,26%, on ne peut pas rejeter H0. Les rendements
+moyens sur les veilles de vacances ne sont pas statistiquement
+différents de ceux des autres jours. Il n'y a pas d'effet vacances sur
+la période d'étude. Encore, une fois l'anomalie semble avoir été
+arbitrée.
+
+Le test peut être pratiqué directement en utilisant la fonction
+**t.test()** et en veillant à sélectionner l'option var.equal=TRUE.
+
+```{r}
+
+t.test(ret~abs(holiday-1),data=dat,var.equal=TRUE)
+```
+
+**Résumons:** on peut conclure que les rendements autour des veilles de
+vacances ne sont pas, sur la période étudiée, statistiquement différents
+de ceux constatés les autres jours. Il n'y a pas ici d'effet vacances.
+
+L'anomalie a disparu. Une des explications de cette disparition est que
+les agents connaissant de son existence auraient progressivement procédé
+à des arbitrages amenant à sa disparition.
