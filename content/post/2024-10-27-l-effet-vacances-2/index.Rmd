@@ -21,8 +21,7 @@ comportementale, revenons sur les effets calendaires qui ont, par le
 passé, été mis en évidence comme affectant les rendements des actions.
 Encore une fois, cette application est principalement une réplication
 sous R du travail présenté par Savva Shanaev et Arina Shuraeva sous
-excel sur leur chaîne
-youtube [NDEL](https://myecontricks.netlify.app/post/2024-09-29-l-effet-week-end-lundi-et-dimanche-1/www.youtube.com/@NEDLeducation)
+excel sur leur chaîne youtube [NDEL](www.youtube.com/@NEDLeducation)
 (que je recommande fortement).**
 
 # Le(s) papier(s) d'origine
