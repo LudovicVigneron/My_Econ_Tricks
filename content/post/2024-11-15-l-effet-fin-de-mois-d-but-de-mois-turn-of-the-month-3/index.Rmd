@@ -1,0 +1,145 @@
+---
+title: L'effet fin de mois/début de mois (turn of the month) [3]
+author: Ludovic Vigneron
+date: '2024-11-15'
+slug: []
+categories:
+  - Effets calendaires
+  - Finance
+  - Finance comportementale
+tags:
+  - Effets calendaires
+  - Finance
+  - Finance comportementale
+bibliography: references.bib
+---
+
+**Dans ce troisième post de la série sur la finance comportementale, nous abordons une autre anomalie calendaire détectée sur les marchés. Les sources et inspirations sont les mêmes que pour les post précédents (la chaîne Youtube [NEDL](https://www.youtube.com/@NEDLeducation)) .**
+
+# Le(s) papier(s) d'origine
+
+L'effet fin de mois/début de mois (*turn of the month effect*) est une autre anomalie de marché au regard de l'hypothèse d'efficience détecté dans les années 80. Elle repose sur le constat que rendements les plus importants sont concentrés autour du passage d'un mois à l'autre (les tout débuts et fins de mois). Elle a été mesurée pour la première fois par @ariel1987 et @lakonishok1988. Pour Ariel, il s'agit des deux premières semaines du mois et du dernier jours du mois. Pour Lakonishok et Smidt, il s'agit des trois premiers jours du mois et des quatre derniers.
+
+Des justifications de l'effet associés à l'épargne des rémunérations perçues à rythme mensuel ont pu être mis en avant avec plus ou moins de succès.
+
+# Chargeons les packages et les données
+
+Pour tester l'effet fin de mois/debut (*turn of the month effect*), nous ne mobiliserons ici quelques packages : *zoo* qui permet de traiter facilement des données à la structure temporelles, le très classique *tidyverse* et *scale* qui nous permettra de mettre en forme les axes de nos graphes. Chargeons-les.
+
+```{r}
+#| label: charger_les_packages
+#| message: false
+
+library(zoo)
+library(tidyverse)
+library(scales)
+```
+
+Ceci étant fait, chargeons les données sur lesquelles, nous allons tester l'effet. Il s'agit encore une fois des rendements de l'indice *Standard & Poor* 500 (encore une fois vous pouvez les charger [ici](S&P500_return.csv)). La période de test retenue est celle courant du 31 décembre 1959 au 31 décembre 2020.
+
+```{r}
+#| label: charger_les_données
+
+dat<-read_delim("S&P500_return.csv",delim=";") %>% 
+  filter(date_t>=as.Date('1959-12-31',"%Y-%m-%d")&
+         date_t<=as.Date('2020-12-31',"%Y-%m-%d"))
+head(dat)
+```
+
+## Traitement des données
+
+Commençons par identifier les différents mois et couples mois-années de manière à positionner plus facilement par la suite nos périodes de fins et de débuts de mois. Pour cela, nous utilisons la fonction **month()** de *lubridate* (qui inclus dans le *tidyverse*) qui donne le numéro du mois (1 pour janvier...12 pour décembre) et la fonction **as.yearmon()** de *zoo* qui indique le couple mois-année.
+
+```{r}
+dat_<-dat %>% 
+  mutate(mois=month(date_t),
+         m_y=as.yearmon(date_t, "%Y %m"))
+head(dat_)
+```
+
+Complétons l'ensemble en numérotant les jours ouvrés (ceux pour lesquels nous avons de l'information) au sein de chaque mois.
+
+```{r}
+dat_<-dat_ %>% group_by(m_y) %>% 
+  mutate(day_of_m=1:length(m_y))
+head(dat_)
+```
+
+Ceci fait, notons que le 31 décembre 1959 est indexé comme le jour 1 du mois alors qu'il en est le dernier. Supprimons-le de la base pour éviter cette erreur.
+
+```{r}
+dat_<-dat_ %>% 
+  filter(date_t!=as.Date('31-12-1959',format="%d-%m-%Y"))
+head(dat_)
+```
+
+## Statistiques descriptives
+
+Pour avoir une idée de la présence ou non de l'effet, procédons à une analyse descriptive rapide. Commençons par calculer les rendements moyens de chaque jours du mois.
+
+```{r}
+tab<-dat_ %>% group_by(day_of_m) %>% 
+  summarise(n=n(),
+            moy=round(mean(ret),digits=6))
+tab
+```
+
+Le tableau est un peu long (23 lignes). Passons le données dans un graphe plus lisible avec en ordonnées les rendements moyennes et en abscisses l'indication des jours correspondant.
+
+```{r}
+ggplot(data=tab,aes(x = day_of_m, y=moy))+
+  geom_line()+
+  geom_hline(yintercept = 0,color='red')+
+  labs(x='Jours ouvré dans le mois',y='Rendement moyen')+
+  scale_x_continuous(breaks = 1:23)+
+  scale_y_continuous(labels = label_percent())+
+  coord_cartesian(expand=FALSE,ylim=c(-0.001,0.0024))+
+  theme_minimal()+
+  theme(
+    panel.grid.minor = element_blank()
+  )
+```
+
+On voit bien que les rendements sont plus importants en début et en fin de mois. Mais, cette tendance est-elle statistiquement significative?
+
+## Codage des variables indicatives des jours de début et fin de mois
+
+Commençons par les jours désignés comme début et fin de mois par Lakonishok et Smidt : les 3 premiers et les 4 dernier. Stockons l'information nécessaire au teste dans une data frame dédiée nommée dat_LS.
+
+```{r}
+dat_LS<-dat_ %>% 
+  mutate(w=ifelse(day_of_m<4,1,ifelse(lead(mois,4)==mois,0,1)),
+         TOM=ifelse(is.na(w)==TRUE|w==1,1,0)) %>% 
+  select(-w)
+```
+
+Créons de même une data frame, nommée dat_AR, intégrant le marquage des jours retenus par Ariel : les deux premières semaines (10 premiers jours) et le dernier.
+
+```{r}
+dat_AR<-dat_ %>% 
+  mutate(w=ifelse(day_of_m<=10,1,ifelse(lead(mois,1)==mois,0,1)),
+         TOM=ifelse(is.na(w)==TRUE|w==1,1,0)) %>% 
+  select(-w)
+```
+
+## Tests statistiques
+
+Pour réaliser le test, nous mobilisons une régression linéaire. Celle-ci nous permet d'obtenir le rendement moyen des jours qui ne sont pas considérés comme des début et fin de mois (la constante) et la différence entre ce rendement et celui des jours considérés comme des début et fin de mois (le coefficient).
+
+```{r}
+summary(lm(ret~TOM,data=dat_LS))
+```
+
+Les rendements les jours ordinaires ne sont pas statistiquement différents de zéro et les rendements des jours considérés comme début et fin de mois sont plus importants d'un peu plus de 0,0008 et par contre lui statistiquement différents de 0. C'est résultat correspondent à une moyenne des rendements journaliers sur les jours marquant le tournant des mois de 0,0881% (la somme de la constante et du coefficient) contre 0 en moyenne pour les autres jours.
+
+Passons au test des jours désignés par Ariel. La spécification est identique.
+
+```{r}
+summary(lm(ret~TOM,data=dat_AR))
+```
+
+La moyenne des rendements pour les jours ordinaires est également non statistiquement différente de zéro. Sur les jours désignés comme faisant partie du tournant du mois, elle est plus élevé de 0,003 points et la différence statistiquement significative mais seulement au seuil de 10% (le résultat est donc à prendre avec des pincettes). Le rendement moyenne de ces jours est de 0,04693% (somme de la constante et du coefficient).
+
+**Résumons:** on peut conclure que les rendements autour des jours de début et fin de mois sont, sur la période étudiée, statistiquement différents de ceux constatés les autres jours. Il n'y a un effet tournant du mois qui peut être observé particulièrement si on retient la spécification de Lakonishok et Smidt. Les choses sont moins nettes avec les jours désignés par Ariel.
+
+Il ne semble pas que l'anomalie ait été arbitrée.
