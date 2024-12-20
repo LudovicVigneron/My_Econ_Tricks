@@ -1,0 +1,233 @@
+---
+title: Sell in May and go away [4]
+author: Ludovic Vigneron
+date: '2024-12-20'
+slug: []
+categories:
+  - Effets calendaires
+  - Finance
+  - Finance comportementale
+tags:
+  - Effets calendaires
+  - Finance comportementale
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+
+
+<p><strong>Continuons la série sur la finance comportementale avec d’autres
+effets calendaires. Cette fois-ci, nous considérerons des périodes plus
+larges impliquant des récurrences se définissant sur l’année.
+L’inspiration est toujours la même
+(<a href="https://www.youtube.com/@NEDLeducation">NEDL</a>).</strong></p>
+<div id="les-papiers-dorigine" class="section level1">
+<h1>Le(s) papier(s) d’origine</h1>
+<p>Nous nous intéressons ici à des anomalies ont été relevées sur la base
+de périodes définies de l’année composées d’un ou de plusieurs mois.
+Nous en testerons deux: l’effet janvier(/avril) et l’effet ‘<em>sell in may
+and go away</em>’ (ou <em>Halloween</em>).</p>
+<p><span class="citation">Rozeff and Kinney (<a href="#ref-rozeff1976">1976</a>)</span> sont ainsi les premiers à relever la présence de rendements
+anormalement élevés au moins de janvier sur le <em>NYSE</em> à partir d’un
+indice équipondéré. Le phénomène est expliqué au moins partiellement par
+des considérations fiscales. On peut se reporter à <span class="citation">Thaler (<a href="#ref-thaler1987">1987</a>)</span> pour une
+synthèse des discutions autour de ce résultat à l’époque (reposant sur
+les plus petites capitalisations, les titres qui ont précédemment
+sous-performé, avec des rendement fort positif concentrés sur les
+premiers jours du mois…). L’anomalie a été documenté dans de nombreux
+pays. Au Royaume-Uni, la période fiscale est en avril pourtant l’effet
+janvier y a été documenté.</p>
+<p><span class="citation">Bouman and Jacobsen (<a href="#ref-bouman2002">2002</a>)</span> mettent en évidence la présence d’une période plus
+fréquemment baissière sur les marchés situées entre mai et septembre,
+voir entre mai et octobre confirmant l’adage comme quoi il faudrait
+mieux vendre ses actions en mai et ne revenir sur le marché qu’après
+<em>Halloween</em>.</p>
+</div>
+<div id="chargeons-les-packages-et-les-données" class="section level1">
+<h1>Chargeons les packages et les données</h1>
+<p>Pour tester les effets janvier et ‘<em>sell in may</em>’ , nous ne mobiliserons
+ici quelques packages : le très classique <em>tidyverse</em> et <em>scale</em> qui
+nous permettra de mettre en forme les axes de nos graphes.
+Chargeons-les.</p>
+<pre class="r"><code>library(tidyverse)
+library(scales)</code></pre>
+<p>Ceci étant fait, chargeons les données sur lesquelles nous allons
+testons les anomalies. Il s’agit encore une fois des rendements de
+l’indice <em>Standard &amp; Poor 500</em> (encore une fois vous pouvez le faire
+<a href="S&amp;P500_return.csv">ici</a>). La période de test retenue est ici celle
+courant du 31 décembre 1959 au 31 décembre 2020.</p>
+<pre class="r"><code>dat&lt;-read_delim(&quot;S&amp;P500_return.csv&quot;,delim=&quot;;&quot;) %&gt;%
+  filter(date_t&gt;=as.Date(&#39;1959-12-31&#39;,&quot;%Y-%m-%d&quot;)&amp;
+           date_t&lt;=as.Date(&#39;2020-12-31&#39;,&quot;%Y-%m-%d&quot;))
+
+head(dat)</code></pre>
+<pre><code>## # A tibble: 6 × 3
+##   date_t     SP500       ret
+##   &lt;date&gt;     &lt;dbl&gt;     &lt;dbl&gt;
+## 1 1959-12-31  59.9  0.00201 
+## 2 1960-01-04  59.9  0.000334
+## 3 1960-01-05  60.4  0.00801 
+## 4 1960-01-06  60.1 -0.00431 
+## 5 1960-01-07  59.7 -0.00732 
+## 6 1960-01-08  59.5 -0.00318</code></pre>
+</div>
+<div id="traitement-des-données" class="section level1">
+<h1>Traitement des données</h1>
+<p>Marquons les mois et périodes que nous allons mobilisés pour les tests.
+Commençons par les mois de janvier et d’avril, pour l’effet janvier ou
+équivalent. Ajoutons la période de l’année qui n’est pas située entre
+mai et octobre et donc celle qui coure entre courant d’octobre à mai
+(avant mai et après octobre). Si les effets existent (encore), nous
+devrions constaté des rendements en moyenne plus élevés en janvier (et
+ou avril) que sur les autres mois et sur la période composée des mois de
+octobre, novembre, décembre, janvier, février, mars, avril et mai (avant
+mai et après octobre).</p>
+<pre class="r"><code>dat&lt;-dat %&gt;%
+  mutate(mois=month(date_t),
+         mois_l=month(date_t,label=TRUE),
+         janv=mois==1, avr=mois==4,
+         hallowen=ifelse(mois&lt;=5,1,ifelse(mois&gt;=10,1,0)))</code></pre>
+</div>
+<div id="statistiques-descriptives" class="section level1">
+<h1>Statistiques descriptives</h1>
+<p>Avant d’entrer dans le vif de l’analyse présentons quelques éléments
+descriptifs. Commençons par calculer les rendements journaliers moyens
+pour chaque mois.</p>
+<pre class="r"><code>tab&lt;-dat %&gt;%
+  group_by(mois_l) %&gt;%
+  summarize(mois=unique(mois),
+            N=n(),
+            moyenne=round(mean(ret),digits=6)) %&gt;%
+  ungroup() 
+
+tab</code></pre>
+<pre><code>## # A tibble: 12 × 4
+##    mois_l  mois     N   moyenne
+##    &lt;ord&gt;  &lt;dbl&gt; &lt;int&gt;     &lt;dbl&gt;
+##  1 janv       1  1274  0.000501
+##  2 févr       2  1168  0.000023
+##  3 mars       3  1333  0.000444
+##  4 avr        4  1260  0.000757
+##  5 mai        5  1291  0.000092
+##  6 juin       6  1303 -0.000005
+##  7 juil       7  1282  0.000341
+##  8 août       8  1348  0.000118
+##  9 sept       9  1237 -0.000289
+## 10 oct       10  1344  0.000424
+## 11 nov       11  1232  0.000794
+## 12 déc       12  1284  0.000656</code></pre>
+<p>Présentons ces éléments sous la forme d’un graphe. Marquons en bleu la
+moyenne des rendements journaliers moyens de chaque mois et en rouge les
+rendements nuls.</p>
+<pre class="r"><code>ggplot(data=tab,aes(x=mois,y=moyenne))+
+  geom_line()+
+  geom_point()+
+  geom_hline(yintercept = 0,color=&#39;red&#39;)+
+  geom_hline(yintercept = mean(tab$moyenne),color=&#39;blue&#39;)+
+  annotate(&quot;text&quot;,label=&quot;moyenne&quot;,
+           x=11,
+           y=mean(tab$moyenne)+0.00004, color=&#39;blue&#39;)+
+  labs(y=&quot;rendements moyens&quot;)+
+  scale_x_continuous(breaks = 1:12,labels=tab$mois_l)+
+  scale_y_continuous(labels=label_percent())+
+  theme_minimal()+
+  theme( 
+    axis.title.x = element_blank(),
+    panel.grid.minor = element_blank())</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>Le graphe marque la présente de rendements moyennes supérieurs sur les
+périodes d’intérêts. Ils sont plus fréquemment au dessus de la moyenne
+générale. Néanmoins, cela ne dit pas si ces différences sont
+statistiquement significatives. Procédons au test.</p>
+</div>
+<div id="tests-statistiques" class="section level1">
+<h1>Tests statistiques</h1>
+<p>Commençons par tester l’effet janvier (et avril) qui se justifierait par
+des périodes fiscales (liquidation des positions perdante en décembre
+pour matérialiser les moins-values avant le redémarrage de l’année
+fiscale de manière à réduire l’impôt à payer et le rachat des titres
+concernés début janvier). Régressons les rendements journaliers sur les
+variables marquant les mois test (janvier et avril).</p>
+<pre class="r"><code>reg&lt;-summary(lm(ret~janv+avr,data=dat))
+
+reg</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = ret ~ janv + avr, data = dat)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.204931 -0.004531  0.000128  0.004769  0.115538 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)   
+## (Intercept) 2.620e-04  9.047e-05   2.896  0.00378 **
+## janvTRUE    2.390e-04  3.009e-04   0.794  0.42714   
+## avrTRUE     4.948e-04  3.025e-04   1.636  0.10184   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.01024 on 15353 degrees of freedom
+## Multiple R-squared:  0.0002018,	Adjusted R-squared:  7.155e-05 
+## F-statistic: 1.549 on 2 and 15353 DF,  p-value: 0.2124</code></pre>
+<p>Aucun des deux coefficients attachés à janvier et avril n’est
+statistiquement significatif. On ne peut donc pas sur la période
+conclure à la présence d’une anomalie calendaire de type effet janvier
+(ou même avril).</p>
+<p>Testons la seconde anomalie :‘<em>sell in may and go away</em>’ (vendre en mai
+et revenir sur le marché après <em>Halloween</em>). Régressons nos rendements
+journaliers sur la variable marquant la période avant mai et après
+<em>Halloween</em> (octobre à avril).</p>
+<pre class="r"><code>reg&lt;-summary(lm(ret~hallowen,data=dat))
+
+reg</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = ret ~ hallowen, data = dat)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.205133 -0.004534  0.000142  0.004780  0.115337 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept) 4.483e-05  1.425e-04   0.315   0.7530  
+## hallowen    4.185e-04  1.749e-04   2.393   0.0167 *
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.01024 on 15354 degrees of freedom
+## Multiple R-squared:  0.0003727,	Adjusted R-squared:  0.0003076 
+## F-statistic: 5.725 on 1 and 15354 DF,  p-value: 0.01674</code></pre>
+<p>On a un coefficient positif et statistiquement significatif (au seuil de
+5%). Il apparaît que l’anomalie persiste sur la période étudiée. Les
+rendements journaliers sont, en moyenne, plus important entre octobre et
+mai qu’entre mai et octobre.</p>
+<p><strong>Résumons:</strong> on peut conclure que l’effet janvier ne semble plus
+pouvoir être mesuré sur la période d’étude. Néanmoins, notons que notre
+test s’éloigne des conditions dans lesquelles il a été initialement
+mesuré. L’indice <em>S&amp;P 500</em> est un indice pondéré par les capitalisations
+alors que dans le papier de Rozeff et Kinney l’indice utilisé était
+équipondèré. Dans un indice pondéré par les capitalisations le poids des
+petites capitalisation est faibles. Hors, c’est sur elles que l’effet a
+été documenté. Ainsi, nos conclusion ici sont mitigés: soit l’effet a
+été maintenant arbitré, soit notre test est trop éloigné de la
+configuration initiale pour être valable.</p>
+<p>Concernant l’effet ‘<em>sell in may</em>’, le test est plus conforme à
+l’original. Il montre que l’anomalie semble persister même s’il n’est
+statistiquement significatif qu’au seuil de 5%. Sur la période d’étude,
+il ne semble pas être arbitré (ou du moins pleinement arbitré).</p>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-bouman2002" class="csl-entry">
+Bouman, Sven, and Ben Jacobsen. 2002. <span>“The Halloween Indicator, <span>“</span>Sell in May and Go Away<span>”</span>: Another Puzzle.”</span> <em>American Economic Review</em> 92 (5): 1618–35. <a href="https://doi.org/10.1257/000282802762024683">https://doi.org/10.1257/000282802762024683</a>.
+</div>
+<div id="ref-rozeff1976" class="csl-entry">
+Rozeff, Michael S., and William R. Kinney. 1976. <span>“Capital Market Seasonality: The Case of Stock Returns.”</span> <em>Journal of Financial Economics</em> 3 (4): 379–402. <a href="https://doi.org/10.1016/0304-405x(76)90028-3">https://doi.org/10.1016/0304-405x(76)90028-3</a>.
+</div>
+<div id="ref-thaler1987" class="csl-entry">
+Thaler, Richard H. 1987. <span>“Anomalies: The January Effect.”</span> <em>Journal of Economic Perspectives</em> 1 (1): 197–201. <a href="https://doi.org/10.1257/jep.1.1.197">https://doi.org/10.1257/jep.1.1.197</a>.
+</div>
+</div>
+</div>
