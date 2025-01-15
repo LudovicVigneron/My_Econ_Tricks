@@ -321,7 +321,7 @@ ggplot(bas_g, aes(x = post,
 rm(list = ls(all.names = TRUE))
 ```
 
-Notez qu'ici la ligne pointillé n'est pas parallèle à la rouge comme ce devrait être le cas dans une *Diff in Diff* classique. Cela est dû à l'ajustement via les variables de contrôle.
+Notez qu'ici la ligne pointillé n'est pas parallèle à la rouge comme ce devrait être le cas dans une *Diff in Diff* classique. **Cela est dû à l'ajustement via les variables de contrôle**.
 
 # ***Difference in Difference*** **avec périodes multiples**
 
