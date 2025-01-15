@@ -721,7 +721,7 @@ Comme précédemment on ne peut pas rejeter H0, autrement-dit on ne peut pas rej
 
 Cela va dans le même sens que l’analyse graphique et que notre test précédent.
 
-### **Analyse graphique graphique de la temporalité du traitement**
+### **Analyse graphique de la temporalité du traitement**
 
 En plus de la *parallel trend* (ou comme autre test de cette dernière), on peut s’interroger sur la temporalité des effets du traitement. Est-ce que la date retenue est bien celle à partir de laquelle celui-ci produit des effets? Est-ce qu’il n’y a pas d’anticipation ou de retard ce qui pourrait remettre en cause (au moins en partie) le cadre méthodologique (la *parallel trend* serait en partie remise en cause)? Pour le voir, on peut présenter le graphe de l’effet du traitement dans le temps (comme nous l’avons fait dans le post précédent). Autrement-dit, nous procédons à l’étude des *dynamic treatement effects*.
 
@@ -797,7 +797,7 @@ GGally::ggcoef(reg_dyn,
   )
 ```
 
-### Test statistique de la temporalité du traitement 
+### Test statistique de la temporalité du traitement
 
 En complément avec l’analyse graphique, on peut pratiquer un test de causalité de type test de Granger pour vérifier si les effets du traitement sont observés avant sa mise en oeuvre (officielle, la date d’évènement). Sous Stata, il est pratiqué en post estimation via la commande **estat granger**. Répliquons la.
 
