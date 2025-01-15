@@ -228,7 +228,7 @@ On a une augmentation moyenne de 0,52 points supérieurs de waz pour le groupe d
 
 Le même résultat peut être obtenu à partir de la syntaxe *dplyr*.
 
-```{r message=false}
+```{r message=FALSE}
 
 moy<-dat_red_1 %>% 
   group_by(hightreat,post) %>% 

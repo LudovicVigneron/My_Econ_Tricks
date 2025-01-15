@@ -16,7 +16,7 @@ bibliography: references.bib
 
 
 
-<p><strong>Pour cette troisième note “rapide” sur la méthode <em>Difference-in-Difference</em>, nous allons considérer deux exemples tirés du cours d’introduction aux méthodes causales proposé par A. Colin Cameron de l’université de Californie-Davis (que vous trouverez ici). Ils sont initialement développés à partir de Stata. Nous nous efforcerons à la fois de les reproduire sous R et d’approfondir différents concepts. Mais avant d’aller plus loin, comme à chaque fois, chargeons les packages que nous allons utiliser: le <em>tidyverse</em>, que l’on ne présente plus, et <em>haven</em>, qui permet de lire et écrire des fichiers notamment au format .dta (le format de Stata), <em>labbeled</em>, qui permet de travailler plus facilement les données à étiquette (comme celles issues de Stata), <em>lmtest</em> et <em>sandwich</em>, qui permettent de réaliser des tests spécifiques sur les coefficients de régression.</strong></p>
+<p><strong>Pour cette troisième note “rapide” sur la méthode <em>Difference-in-Difference</em>, nous allons considérer deux exemples tirés du cours d’introduction aux méthodes causales proposé par A. Colin Cameron de l’université de Californie-Davis (que vous trouverez <a href="https://cameron.econ.ucdavis.edu/causal/">ici</a>). Ils sont initialement développés à partir de Stata. Nous nous efforcerons à la fois de les reproduire sous R et d’approfondir différents concepts. Mais avant d’aller plus loin, comme à chaque fois, chargeons les packages que nous allons utiliser: le <em>tidyverse</em>, que l’on ne présente plus, et <em>haven</em>, qui permet de lire et écrire des fichiers notamment au format .dta (le format de Stata), <em>labbeled</em>, qui permet de travailler plus facilement les données à étiquette (comme celles issues de Stata), fixest, qui permet l’estimation de modèles à effets fixes, <em>lmtest</em> et <em>sandwich</em>, qui permettent de réaliser des tests spécifiques sur les coefficients de régression, et car, qui proposent des tests complémentaires.</strong></p>
 <pre class="r"><code># packages de gestion des données
 library(tidyverse)
 library(haven)
@@ -29,16 +29,16 @@ library(sandwich)
 library(car)</code></pre>
 <div id="x2-difference-in-difference" class="section level1">
 <h1><strong>2x2 <em>Difference in Difference</em></strong></h1>
-<p>Ceci fait, abordons la première partie. L’ensemble est tiré de <span class="citation">Tanaka (<a href="#ref-tanaka2014">2014</a>)</span>. Dans ce papier, l’auteur se pose la question de savoir si un meilleur accès aux soins améliore la santé. Plus précisément si la gratuité des soins à un impacte positif sur le statut nutritionnel des enfants pauvres. Pour ce faire, il prend la cas de l’Afrique du sud post-Apartheid. Cela leur permet d’exploiter une variation exogène de la tarification des services de santé, le passage à la gratuité, du fait des différences marquées concernant l’implantation des cliniques sur le territoire héritées du régime discriminatoire qui régnait dans le pays avant 1991. En 1994, le gouvernement rend gratuit les services de santé pour les enfants de moins de 6 ans. Il s’agira ici de la date de traitement. Le changement tarifaire augmente en principe l’accès aux soins néanmoins pour que le changement soit effectif il faut que les ménages pauvres résident dans une région avec une clinique. Les enfants de ménages situés dans de telles région seront donc le groupé traité. Dans le cas contraire, si le ménage est situé dans une région sans clinique, la gratuité ne sert à rien puisque l’accès matériel aux soins reste très difficile. Les enfants de ces ménages seront le groupe de contrôle.</p>
+<p>Ceci fait, abordons la première partie. L’ensemble est tiré de <span class="citation">Tanaka (<a href="#ref-tanaka2014">2014</a>)</span>. Dans ce papier, l’auteur se pose la question de savoir si un meilleur accès aux soins améliore la santé. Plus précisément si la gratuité des soins à un impacte positif sur le statut nutritionnel des enfants pauvres. Pour ce faire, il prend la cas de l’Afrique du sud post-Apartheid. Cela lui permet d’exploiter une variation exogène de la tarification des services de santé, le passage à la gratuité. et des différences marquées concernant l’implantation des cliniques sur le territoire héritées du régime discriminatoire qui régnait dans le pays avant 1991. En 1994, le gouvernement rend gratuit les services de santé pour les enfants de moins de 6 ans. Il s’agira ici de la date de traitement. Le changement tarifaire augmente en principe l’accès aux soins. Néanmoins, pour que cela soit effectif, il faut que les ménages pauvres résident dans une région avec une clinique (aient un accès possible aux soins). Les enfants des ménages situés dans de telles régions sont le groupe traité. Les enfants des ménages est situés dans une région sans clinique, où la gratuité ne sert à rien puisque l’accès matériel aux soins reste très difficile, sont le groupe de contrôle.</p>
 <div id="chargement-et-exploration-des-données" class="section level2">
 <h2><strong>Chargement et exploration des données</strong></h2>
-<p>Chargeons donc les données. Celles-ci sont disponibles <a href="https://cameron.econ.ucdavis.edu/causal/AED_HEALTHACCESS.DTA">ici</a>. Le fichier est un .dta. Utilisons la fonction read correspondant dans le package <em>haven</em>.</p>
+<p>Chargeons les données de l’étude. Celles-ci sont disponibles <a href="https://cameron.econ.ucdavis.edu/causal/AED_HEALTHACCESS.DTA">ici</a>. Le fichier est un .dta. Utilisons la fonction read correspondant dans le package <em>haven</em>.</p>
 <pre class="r"><code>dat&lt;-read_dta(&quot;AED_HEALTHACCESS.dta&quot;)</code></pre>
 <p>Voyons ce que l’on a. Commençons dénombrer les variables et les observations.</p>
-<pre class="r"><code>c(nb_obs=nrow(dat),nb_var=length(dat))</code></pre>
-<pre><code>## nb_obs nb_var 
-##   1071     26</code></pre>
-<p>La base obtenue comprend 1071 observations pour 26 variables, mais qu’elles sont-elles? Un des avantages des bases de données issues de logiciels comme Stata est qu’ils attachent différents attributs aux objets qu’ils traitent. Parmi eux, on trouve notamment des labels contenant des courts textes descriptifs utilisés notamment pour décrire les variables (ce qui peut être utile).</p>
+<pre class="r"><code>data.frame(nb_obs=nrow(dat),nb_var=length(dat))</code></pre>
+<pre><code>##   nb_obs nb_var
+## 1   1071     26</code></pre>
+<p>La base obtenue comprend 1071 observations pour 26 variables, mais qu’elles sont-elles? Un des avantages des bases de données issues de logiciels comme Stata est qu’ils attachent différents attributs aux objets qu’ils traitent. Parmi eux, on trouve notamment des labels contenant de courts textes descriptifs des variables (ce qui peut être utile).</p>
 <p>Pour obtenir, la liste des attributs d’un objet. Il suffit d’utiliser le fonction <strong>attributes()</strong>. Utilisons la sur dat notre base de données.</p>
 <pre class="r"><code>dat %&gt;% attributes()</code></pre>
 <pre><code>## $class
@@ -154,7 +154,7 @@ library(car)</code></pre>
 ## [16] &quot;nonclinic&quot;   &quot;male&quot;        &quot;age&quot;         &quot;age93_0&quot;     &quot;age93_1&quot;    
 ## [21] &quot;age93_2&quot;     &quot;age93_3&quot;     &quot;age98_0&quot;     &quot;age98_1&quot;     &quot;age98_2&quot;    
 ## [26] &quot;age98_3&quot;</code></pre>
-<p>On retrouve énormément d’élément allant du type de la nature de l’objet aux noms des différentes variables qui le compose en passant par l’indexation des observations. Toutes ces informations ne sont pas nécessairement intéressantes. On peut les appeler une à une en les ciblant à l’aide de la fonction <strong>attr()</strong> en précisant l’élément via l’option which. Isolons le label de la base.</p>
+<p>On retrouve énormément d’éléments allant de la nature de l’objet aux noms des différentes variables qui le compose en passant par l’indexation des observations. Toutes ces informations ne sont pas nécessairement intéressantes… On peut les appeler une à une en les ciblant à l’aide de la fonction <strong>attr()</strong> en précisant l’élément via l’option which. Isolons le label de la base.</p>
 <pre class="r"><code>dat %&gt;% attr(which=&#39;label&#39;)</code></pre>
 <pre><code>## [1] &quot;Data for A. Colin Cameron (2022), ANALYSIS OF ECONOMIC DATA, Amazon&quot;</code></pre>
 <p>Ces commandes peuvent être utilisées sur chaque variable. Passons en revue les attributs de la variable waz.</p>
@@ -164,7 +164,7 @@ library(car)</code></pre>
 ## 
 ## $format.stata
 ## [1] &quot;%6.2f&quot;</code></pre>
-<p>La commande peut être utilisée pour modifier l’attribue ou même en créer un. Traduisons le label de waz et ajoutons cette traduction à la variable comme attribut trad.</p>
+<p>La commande peut être utilisée pour modifier l’attribut ou même en créer un. Traduisons le label de waz et ajoutons cette traduction à la variable comme attribut trad.</p>
 <pre class="r"><code>attributes(dat$waz)$trad&lt;-&quot;z Score pondéré par l&#39;âge&quot;
 attributes(dat$waz)</code></pre>
 <pre><code>## $label
@@ -176,7 +176,7 @@ attributes(dat$waz)</code></pre>
 ## $trad
 ## [1] &quot;z Score pondéré par l&#39;âge&quot;</code></pre>
 <p>Je ne saurais que vous conseiller de systématiquement ajouter ce type d’attributs à vos variables de manière à documenter votre travail particulièrement lorsque celui a vocation à être partagé.</p>
-<p>On peut à partir de la fonction <strong>att()</strong> et de la commande d’itération <strong>sapply()</strong> répliquer la fonction describe de Stata.</p>
+<p>On peut à partir de la fonction <strong>att()</strong> et de la commande d’itération <strong>sapply()</strong> répliquer la fonction <strong>describe</strong> de Stata.</p>
 <pre class="r"><code>data.frame(Type_stockage=sapply(dat,typeof),
            Format=sapply(dat,attr,which=&#39;format.stata&#39;),
            Label=sapply(dat,attr,which=&#39;label&#39;))</code></pre>
@@ -234,7 +234,7 @@ attributes(dat$waz)</code></pre>
 ## age98_1                                       =1 if age 1 in 1998
 ## age98_2                                       =1 if age 2 in 1998
 ## age98_3                                       =1 if age 3 in 1998</code></pre>
-<p>Le même type de résultat moins ergonomique peut être obtenu via <strong>str()</strong>.</p>
+<p>Le même type de résultat (en moins ergonomique) peut être obtenu via <strong>str()</strong>.</p>
 <pre class="r"><code>dat %&gt;% str()</code></pre>
 <pre><code>## tibble [1,071 × 26] (S3: tbl_df/tbl/data.frame)
 ##  $ hhid93     : num [1:1071] 590020 590100 590100 590110 590070 ...
@@ -318,7 +318,7 @@ attributes(dat$waz)</code></pre>
 ##   ..- attr(*, &quot;format.stata&quot;)= chr &quot;%9.0g&quot;
 ##  - attr(*, &quot;label&quot;)= chr &quot;Data for A. Colin Cameron (2022), ANALYSIS OF ECONOMIC DATA, Amazon&quot;
 ##  - attr(*, &quot;notes&quot;)= chr [1:19] &quot;Variable flag is constructed by CDC anthro program, values of 7 with all measures flagged were dropped from data set&quot; &quot;-5 indicates individual not identified in 1998&quot; &quot;Not all new cores chosen correctly but leave as is since likely to be key decision makers&quot; &quot;Person codes for new and non-members (pcode &gt;= 40) DO NOT represent the same person across split HHs&quot; ...</code></pre>
-<p>Le package <em>labelled</em> est spécifiquement pour travailler les bases dans lesquelles les variables présentes des attributs. Sa fonction <strong>look_for()</strong> permet d’obtenir un tableau proche de celui présenté par describe dans Stata. Je ne saurai que recommander son utilisation.</p>
+<p>Le package <em>labelled</em> a été créé spécifiquement pour travailler les bases dans lesquelles les variables présentes des attributs. Sa fonction <strong>look_for()</strong> permet d’obtenir un tableau proche de celui présenté par <strong>describe</strong> dans Stata. Je ne saurai que recommander son utilisation.</p>
 <pre class="r"><code>dat %&gt;% look_for()</code></pre>
 <pre><code>##  pos variable    label                                  col_type missing values
 ##  1   hhid93      Household identification No            dbl      0             
@@ -347,7 +347,7 @@ attributes(dat$waz)</code></pre>
 ##  24  age98_1     =1 if age 1 in 1998                    dbl      0             
 ##  25  age98_2     =1 if age 2 in 1998                    dbl      0             
 ##  26  age98_3     =1 if age 3 in 1998                    dbl      0</code></pre>
-<p>Ceci étant posé. Continuons notre exploration de la base. Les différents relevés sont réalisés sur des zones administratives qui sont ou non équipées en clinique. Si elles le sont, elle permet d’identifier le groupe de traités. Si elles ne le sont pas, elle permet d’identifier le groupe de contrôle.</p>
+<p>Ceci étant posé. Continuons notre exploration de la base. Les différents relevés sont réalisés sur des zones administratives (community) qui sont ou non équipées en clinique. Si elles le sont, elle permet d’identifier le groupe des traités. Si elles ne le sont pas, elle permet d’identifier le groupe de contrôle. Dénombrons ces différents types de zone.</p>
 <pre class="r"><code>data.frame(nb_communauté=length(unique(dat$idcommunity)),
            com_traitée=length(unique(dat$idcommunity[which(dat$hightreat==1)])),
            com_controle=length(unique(dat$idcommunity[which(dat$hightreat==0)])))</code></pre>
@@ -373,7 +373,7 @@ attributes(dat$waz)</code></pre>
 ##  9         193     19 traité       13        6
 ## 10         195     10 traité        6        4
 ## # ℹ 44 more rows</code></pre>
-<p>On remarque que le nombre d’observations est différent d’une communauté à l’autre et que ce nombre différent également entre la période pré et la période post traitement. Nous n’avons donc pas ici un panel cylindré autrement-dit des individus suivis sur l’ensemble de la durée de l’étude. Cela n’est pas dû à une disparition des individus sur la période post traitement dans la mesure où pour certaine communauté le nombre d’observations est supérieure après le traitement.</p>
+<p>On remarque que le nombre d’observations est différent d’une communauté à l’autre et que ce nombre diffère également entre la période pré et la période post traitement. Nous n’avons donc pas ici un panel cylindré, autrement-dit des individus suivis sur l’ensemble de la durée de l’étude. Cela ne semble pas dû à une disparition des individus sur la période post traitement dans la mesure où pour certaine communauté le nombre d’observations est supérieure après le traitement.</p>
 <p>Voyons ce qu’il en est globalement. Comptons le nombre d’observations du groupe des traités et du groupe de contrôle, toujours en distinguant les périodes avant et après traitement.</p>
 <pre class="r"><code>dat %&gt;% 
   mutate(traite=ifelse(dat$hightreat==1,&#39;traité&#39;,&#39;controle&#39;)) %&gt;% 
@@ -386,8 +386,8 @@ attributes(dat$waz)</code></pre>
 ##   &lt;chr&gt;    &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
 ## 1 controle   613   325   288   -37
 ## 2 traité     458   246   212   -34</code></pre>
-<p>Il y a quelque soit le groupe traités ou contrôles une diminution du nombre d’observations avec le temps.</p>
-<p>On peut par ailleurs noter que les mesures avant/après ne sont prises qu’à deux dates: 1993, juste avant la réforme, et 1998, 4 ans après. A cette date la différence entre l’équipement en clinique des communautés est devenue petite. L’équipement est alors bien plus homogène.</p>
+<p>Il y a, quelque soit le groupe (traités ou contrôles), une diminution du nombre d’observations avec le temps.</p>
+<p>On peut par ailleurs noter que les mesures avant/après ne sont prises qu’à deux dates: 1993, juste avant la réforme, et 1998, 4 ans après. Au delà de cette date la différence entre l’équipement en cliniques des communautés est devenue petite. L’équipement est alors bien plus homogène. Les différences ne permettraient surement plus d’établir du distinction nette.</p>
 <pre class="r"><code>dat %&gt;% 
   mutate(traite=ifelse(dat$hightreat==1,&#39;traité&#39;,&#39;controle&#39;)) %&gt;% 
   select(traite,year) %&gt;% 
@@ -399,7 +399,7 @@ attributes(dat$waz)</code></pre>
 ## 2 traité      93   246
 ## 3 controle    93   325
 ## 4 controle    98   288</code></pre>
-<p>Pour avoir une vision encore plus claire de là structure de données, prenons le cas d’une communauté en particulier et examinons-la en détail. Prenons la numéro 59.</p>
+<p>Pour avoir une vision encore plus claire de la structure de données, prenons le cas d’une communauté en particulier et examinons-la en détail. Prenons la numéro 59.</p>
 <pre class="r"><code>dat %&gt;% filter(idcommunity==59)</code></pre>
 <pre><code>## # A tibble: 12 × 26
 ##    hhid93 pcode idcommunity  year hightreat  post postXhigh    waz     whz
@@ -431,12 +431,12 @@ attributes(dat$waz)</code></pre>
 ## #   immuniz &lt;dbl&gt;, nonclinic &lt;dbl&gt;, male &lt;dbl&gt;, age &lt;dbl&gt;, age93_0 &lt;dbl&gt;,
 ## #   age93_1 &lt;dbl&gt;, age93_2 &lt;dbl&gt;, age93_3 &lt;dbl&gt;, age98_0 &lt;dbl&gt;, age98_1 &lt;dbl&gt;,
 ## #   age98_2 &lt;dbl&gt;, age98_3 &lt;dbl&gt;</code></pre>
-<p>Les deux mesures sont réalisées sur l’échantillon des traités (hightreat égale à 1: là où il y a des cliniques en 1993). Il y en a une réalisée pré traitement et une post traitement. La mesure de 93 est faite sur une fille de moins d’un 1 et la seconde en 98 sur un garçon de 3 ans.</p>
-<p>On est loin d’avoir un panel la spécification en <em>two ways fixed effect</em> (TWFE) n’est donc pas envisageable. nous resterons donc sur la spécification classique.</p>
-<p>Maintenant que nous avons une visions plus claire de la structure de la base. Passons à l’analyse des variables. Revenons pour cela sur la définition de la variable expliquée waz. Il s’agit d’un Z-score autrement-dit le nombre d’écart-types qui sépare la valeur observée de la moyenne sur le groupe étudié. Ici, la mesure porte sur le poids des enfants. Le groupe étudié est défini par l’age de l’enfant. Ainsi, par exemple, une valeur de waz de -1 correspond à un enfant qui présenterait un poids inférieur de 1 écart-type à la moyenne des enfants de son âge. Plus cette mesure est négative, plus on est face à des enfants en mauvaise santé. Si le traitement, la gratuité des soins, est efficace après sa mise en oeuvre, on devrait constater une augmentation de la variable plus importante que celle constatée sur groupe de contrôle. Autrement-dit, on attend une <em>Diff in Diff</em> positive.</p>
+<p>Les deux mesures sont réalisées sur l’échantillon des traités (hightreat égale à 1: là où il y a des cliniques en 1993). Il y en a une réalisée pré traitement et une post traitement. La mesure de 93 est faite sur une fille de moins d’un 1 an et la seconde en 98 sur un garçon de 3 ans.</p>
+<p>On est loin d’avoir un panel. La spécification en <em>two ways fixed effect</em> (TWFE) n’est donc pas envisageable. nous resterons donc sur la spécification classique (<em>2x2 Diff in Diff</em>).</p>
+<p>Maintenant que nous avons une vision plus claire de la structure de la base. Passons à l’analyse des variables. Revenons pour cela sur la définition de la variable expliquée waz. Il s’agit d’un Z-score autrement-dit le nombre d’écart-types qui sépare la valeur observée de la moyenne sur le groupe étudié. Ici, la mesure porte sur le poids des enfants. Le groupe étudié est défini par l’age de l’enfant. Ainsi, par exemple, une valeur de waz de -1 correspond à un enfant qui présenterait un poids inférieur de 1 écart-type à la moyenne des enfants de son âge. Plus cette mesure est négative, plus on est face à des enfants en mauvaise santé. Si le traitement, la gratuité des soins, est efficace après sa mise en oeuvre, on devrait constater une augmentation de la variable plus importante sur le groupe des traités que celle constatée sur le groupe de contrôle. Autrement-dit, on attend une <em>Diff in Diff</em> positive.</p>
 <p>Pour commencer, limitons notre analyse à une <em>Diff in Diff</em> simple sans variables de contrôles. Ne gardons que waz, hightreat, post, postXhigh et idcommunity.</p>
 <pre class="r"><code>dat_red_1&lt;- dat %&gt;% select(waz,hightreat,post,postXhigh,idcommunity)</code></pre>
-<p>Présentons quelques statistiques descriptives sur le modèle ce que propose Stata par défaut avec sa fonction summarize.</p>
+<p>Présentons quelques statistiques descriptives sur le modèle ce que propose Stata par défaut avec sa fonction <strong>summarize</strong>.</p>
 <pre class="r"><code>dat_red_1 %&gt;% 
   select(-idcommunity) %&gt;% 
   summarize_all(
@@ -449,7 +449,7 @@ attributes(dat$waz)</code></pre>
 ## 2 hightreat 1071  0.4276377 0.4949671  0.00 1.00
 ## 3      post 1071  0.4668534 0.4991332  0.00 1.00
 ## 4 postXhigh 1071  0.1979458 0.3986373  0.00 1.00</code></pre>
-<p>waz est la seule variable continue du lot. On peut noter qu’elle est en moyenne négative. Les enfants objets de l’étude sont les enfants de famille pauvres. Ils présentent pour leur age un poids inférieur à la moyenne (des enfants du même age dans la population générale). Les autres variables sont catégorielles. Leur moyenne correspond à des proportions. On a ainsi 42,7% des observations qui sont faîtes sur le groupe traité, 46,6% qui sont réalisées après 1994 et 19,7% des observations qui sont faîtes sur les traités après 94.</p>
+<p>waz est la seule variable continue du lot. On peut noter qu’elle est en moyenne négative. Les enfants objets de l’étude sont les enfants de famille pauvres. Ils présentent pour leur age un poids inférieur à la moyenne (des enfants du même age dans la population générale). Les autres variables sont catégorielles binaires. Leur moyenne correspond à des proportions. On a ainsi 42,7% des observations qui sont faîtes sur le groupe traité, 46,6% qui sont réalisées après 1994 (en 1998) et 19,7% des observations qui sont faîtes sur les traités après 94.</p>
 </div>
 <div id="analyses-2x2-diff-in-diff" class="section level2">
 <h2><strong>Analyses 2x2 Diff in Diff</strong></h2>
@@ -475,7 +475,7 @@ mat</code></pre>
 <pre class="r"><code>(mat[2,2]-mat[1,2])-(mat[2,1]-mat[1,1])</code></pre>
 <pre><code>## [1] 0.5216188</code></pre>
 <pre class="r"><code>rm(mat)</code></pre>
-<p>On a une augmentation de 0,52 points supérieurs de waz pour le groupe des traités (ceux qui avez une cliniques dans la communauté en 1993) par rapport au groupe de contrôle.</p>
+<p>On a une augmentation moyenne de 0,52 points supérieurs de waz pour le groupe des traités (ceux qui avez une cliniques dans la communauté en 1993) par rapport au groupe de contrôle.</p>
 <p>Le même résultat peut être obtenu à partir de la syntaxe <em>dplyr</em>.</p>
 <pre class="r"><code>moy&lt;-dat_red_1 %&gt;% 
   group_by(hightreat,post) %&gt;% 
@@ -570,6 +570,7 @@ bas_g</code></pre>
   )</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
 <pre class="r"><code>rm(list = ls(all.names = TRUE))</code></pre>
+<p>Notez qu’ici la ligne pointillé n’est pas parallèle à la rouge comme ce devrait être le cas dans une <em>Diff in Diff</em> classique. <strong>Cela est dû à l’ajustement via les variables de contrôle</strong>.</p>
 </div>
 </div>
 <div id="difference-in-difference-avec-périodes-multiples" class="section level1">
@@ -577,13 +578,13 @@ bas_g</code></pre>
 <p>Pour le second exemple développé, nous changeons de configuration avec cette fois plus de deux périodes de mesures (avant et après le traitement) et pour cela nous utiliserons une des bases de données mobilisées dans le manuel de Stata pour illustrer l’usage de sa fonction <em>didregress</em>. Dans cet application, on a un fournisseur de soins de santé qui gère des hôpitaux qui s’interroge sur l’impact de l’automatisation des procédures d’admission sur la satisfaction des patients. On a des données mensuelles sur les patients entre janvier et juillet. La procédure a été mise en place en avril dans une partie de ces hôpitaux.</p>
 <div id="chargement-et-exploration-des-données-1" class="section level2">
 <h2><strong>Chargement et exploration des données</strong></h2>
-<p>Les données sont à charger à partir de l’url associé au manuel de Stata 17. Pour cela, il suffit d’introduire l’adresse comme argument dans la fonction <strong>read_dta()</strong>.</p>
+<p>Les données sont à charger à partir de l’url associée au manuel de Stata 17. Pour cela, il suffit d’introduire l’adresse comme argument dans la fonction <strong>read_dta()</strong>.</p>
 <pre class="r"><code>dat2&lt;-read_dta(&quot;https://www.stata-press.com/data/r17/hospdd.dta&quot;)</code></pre>
-<p>Ceci étant fait, voyons ce que contient la base. Comptons le nombre d’observation et le nombre de variables.</p>
-<pre class="r"><code>c(nb_obs=nrow(dat2),nb_var=length(dat2))</code></pre>
-<pre><code>## nb_obs nb_var 
-##   7368      5</code></pre>
-<p>On a 7 368 observations et 5 variables. Mais que représentent ces variables? Utilisons notre réplication de describe pour accéder aux labels des variables.</p>
+<p>Ceci étant fait, voyons ce que contient la base. Comptons le nombre d’observations et le nombre de variables.</p>
+<pre class="r"><code>data.frame(nb_obs=nrow(dat2),nb_var=length(dat2))</code></pre>
+<pre><code>##   nb_obs nb_var
+## 1   7368      5</code></pre>
+<p>On a 7 368 observations et 5 variables. Mais que représentent ces variables? Utilisons notre réplication de <strong>describe</strong> pour accéder aux labels des variables.</p>
 <pre class="r"><code>data.frame(Type_stockage=sapply(dat2,typeof),
            Format=sapply(dat2,attr,which=&#39;format.stata&#39;),
            Label=sapply(dat2,attr,which=&#39;label&#39;))</code></pre>
@@ -593,7 +594,7 @@ bas_g</code></pre>
 ## month            double  %8.0g                      Month
 ## procedure        double  %9.0g        Admission procedure
 ## satis            double  %9.0g Patient satisfaction score</code></pre>
-<p>Les commentaires laissés ne sont pas très parlant. Revenons aux commandes R classique avec <strong>str()</strong>.</p>
+<p>Les commentaires laissés ne sont pas très parlant. Revenons aux commandes R classiques avec <strong>str()</strong>.</p>
 <pre class="r"><code>str(dat2)</code></pre>
 <pre><code>## tibble [7,368 × 5] (S3: tbl_df/tbl/data.frame)
 ##  $ hospital : num [1:7368] 1 1 1 1 1 1 1 1 1 1 ...
@@ -618,7 +619,7 @@ bas_g</code></pre>
 ##   ..- attr(*, &quot;label&quot;)= chr &quot;Patient satisfaction score&quot;
 ##   ..- attr(*, &quot;format.stata&quot;)= chr &quot;%9.0g&quot;
 ##  - attr(*, &quot;label&quot;)= chr &quot;Artificial hospital admission procedure data&quot;</code></pre>
-<p>Les choses sont plus claires. hospital est l’identifiant des hôptiaux. frequency un indicateur de la fréquentation des hôpitaux par le patient avec 5 valeurs (1 Low … 5 Very hight). month est le mois de la visite. Il va de 1 pour janvier à 7 pour juillet. procedure, qui est notre variable d’intérêt, prend la valeur 1 à la fois s’il l’hôpital est traité (il a automatisé sa procédure d’admission à partir d’avril) et si l’observation est effectuée en avril en après (après la mise en place du traité). satis est notre variable expliquée. Il s’agit d’une moyenne de différentes notes de 0 (pas satisfait du tout à 10 très très satisfait) attribuées par les patients sur quatre critères concernant l’admission.</p>
+<p>Les choses sont plus claires. hospital est l’identifiant des hôptiaux. frequency est un indicateur de la fréquentation des hôpitaux par le patient avec 5 valeurs (1 Low … 5 Very hight). month est le mois de la visite. Il va de 1 pour janvier à 7 pour juillet. procedure, qui est notre variable d’intérêt, prend la valeur 1 à la fois s’il l’hôpital est traité (s’il a automatisé sa procédure d’admission à partir d’avril) et si l’observation est effectuée en avril ou après (après la mise en place du traitement). satis est notre variable expliquée. Il s’agit d’une moyenne de différentes notes qui vont de 0 (pas satisfait du tout) à 10 (très très satisfait) attribuées par les patients sur quatre critères concernant l’admission.</p>
 <p><strong>look_for()</strong> permet d’obtenir quelque chose d’un peu mieux.</p>
 <pre class="r"><code>dat2 %&gt;% look_for()</code></pre>
 <pre><code>##  pos variable  label                      col_type missing values       
@@ -648,7 +649,7 @@ bas_g</code></pre>
 ## 4        1 2 [Medium]    4 [April]    1 [New]    3.00
 ## 5        1 1 [Low]       3 [March]    0 [Old]    3.11
 ## 6        1 1 [Low]       7 [July]     1 [New]    2.88</code></pre>
-<p>On peut noter que l’on a pour un même hôpital et un même mois plusieurs observations. Simplement il y a plusieurs patients admis par mois. Rein d’étonnant. Mais examinons cela de plus prés. Combien y a t-il d’hôpital ?</p>
+<p>On peut noter que l’on a pour un même hôpital et un même mois plusieurs observations. Simplement il y a plusieurs patients admis par mois. Rein d’étonnant. Mais examinons cela de plus prés. Combien y a t-il d’hôpitaux ?</p>
 <pre class="r"><code>length(unique(dat2$hospital))</code></pre>
 <pre><code>## [1] 46</code></pre>
 <p>On a 46 hôpitaux. Combien y a-t-il d’observations par hôpital?</p>
@@ -674,8 +675,8 @@ bas_g</code></pre>
 ##  9        2 2 [February]    21
 ## 10        2 3 [March]       21
 ## # ℹ 312 more rows</code></pre>
-<p>On peut noter qu’il y a toujours plus d’observations sur le mois de janvier (1) que sur les autres et cela sur tout les hôpitaux.</p>
-<p>Ok, disons que l’on a une vision générale de la structure des données. Intéressons nous à la répartition du traitement. Voyons combien on a d’hôpitaux traités et combien constituent le groupe de contrôle.</p>
+<p>On peut noter qu’il y a toujours plus d’observations sur le mois de janvier (1) que sur les autres et cela sur tous les hôpitaux.</p>
+<p>Ok, disons que l’on a une vision générale de la structure des données. Intéressons-nous à la répartition du traitement. Voyons combien on a d’hôpitaux traités et combien constituent le groupe de contrôle.</p>
 <pre class="r"><code>cont&lt;-dat2 %&gt;%
   group_by(hospital) %&gt;%
   summarise(b=ifelse(sum(procedure)==0,&quot;Controles&quot;,&quot;Traités&quot;)) 
@@ -700,7 +701,7 @@ cbind(Controle=
 <pre><code>##         Controle Traite
 ## minimum        1      4
 ## maximum        1      4</code></pre>
-<p>Ici, on a une base homogène. Toutes les observations du groupe de contrôle entre dans la base dés le mois de janvier et le traitement est appliqué pour tous les traités en avril. On est sur une <em>Diff in Diff</em> classique pas une <em>staggered</em>.</p>
+<p>Ici, on a une base homogène. Toutes les observations du groupe de contrôle entrent dans la base dés le mois de janvier et le traitement est appliqué pour tous les traités en avril. On est sur une <em>Diff in Diff</em> classique pas une <em>staggered</em>.</p>
 <p>Avant de la mettre en oeuvre, jetons un œil sur la distribution de la variable expliquée. Utilisons pour cela un histogramme rapidement fait.</p>
 <pre class="r"><code>ggplot(data=dat2,aes(x=satis))+
   geom_histogram(color=&#39;black&#39;,bins=30)+
@@ -711,10 +712,11 @@ cbind(Controle=
 </div>
 <div id="analyse-diff-in-diff-multipériodes" class="section level2">
 <h2>Analyse <em>Diff in Diff</em> multipériodes</h2>
-<p>Maintenant que nous connaissons mieux la structure de nos données, on a des cross-sections répétées (pas un panel), nous pouvons procéder à l’estimation de notre <em>Diff in Diff</em>. Pour cela, nous utiliserons les TWFE (<em>two ways fixed effects</em>). Pour les tests sur le coefficient d’intérêt, dans la mesure où le recueil des données se fait par hôpitaux (et donc qu’il doit y avoir plus de variabilité entre les différents hôpitaux que sur les observations par hôpitaux), on utilise des erreurs standards clusterisées sur la base des hôpitaux<span class="math display">\[
+<p>Maintenant que nous connaissons mieux la structure de nos données, on a des cross-sections répétées (pas un panel), nous pouvons procéder à l’estimation de notre <em>Diff in Diff</em>. Pour cela, nous utiliserons les TWFE (<em>two ways fixed effects</em>). Pour les tests sur le coefficient d’intérêt, dans la mesure où le recueil des données se fait par hôpitaux (et donc qu’il doit y avoir plus de variabilité entre les différents hôpitaux que sur les observations par hôpitaux), on utilise des erreurs standards clusterisées sur la base des hôpitaux. Le modèle estimé est le suivant:</p>
+<p><span class="math display">\[
 satis_{i,t,s}=\gamma_i+\gamma_t+D_{s,t}+\epsilon_{i,t,s}
 \]</span></p>
-<p>où <em>i</em> correspond à un hôpital, <em>t</em> à un mois et <em>s</em> un individu. <em>D</em> indique si l’individu a été traité à la date t (ici s’il est passé par un hôpital qui a la nouvelle procédure le mois où il a été soigné…).</p>
+<p>où <em>i</em> correspond à un hôpital, <em>t</em> à un mois et <em>s</em> un individu. <em>D</em> indique si l’individu a été traité à la date <em>t</em> (ici s’il est passé par un hôpital qui avait mis en place la nouvelle procédure le mois où il a été soigné…).</p>
 <p>On a ainsi:</p>
 <pre class="r"><code>reg_2&lt;-lm(satis~procedure+factor(hospital)+factor(month),
           data=dat2)
@@ -722,7 +724,7 @@ coeftest(reg_2,vcov.=vcovCL(reg_2,cluster=dat2$hospital))[2,] %&gt;%
      round(digits = 7)</code></pre>
 <pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
 ##  0.8479879  0.0321121 26.4071077  0.0000000</code></pre>
-<p>Le test confirme l’effet positif de l’automatisation de la procédure d’admission. Cette automatisation permet en moyenne d’augmenter la note de satisfaction moyenne de 0,85 points. Autrement-dit, si les hôpitaux traités (automatisés) ne l’avez pas été, la satisfaction aurait été 0,85 points plus bas.</p>
+<p>Le test confirme l’effet positif de l’automatisation de la procédure d’admission. Cette automatisation permet en moyenne d’augmenter la note de satisfaction en moyenne de 0,85 points. Autrement-dit, si les hôpitaux traités (automatisés) ne l’avez pas été, la satisfaction aurait été 0,85 points plus bas.</p>
 <p>Le même résultat peut être obtenu à partir d’une spécification classique en <em>2x2 Diff in Diff</em>. Pour cela, il est nécessaire de commencer par réaliser quelque manipulations de données. Générons les variables Traite et post.</p>
 <pre class="r"><code>dat2_&lt;-dat2 %&gt;% 
   group_by(hospital) %&gt;% 
@@ -734,7 +736,7 @@ coeftest(reg_,vcov.=vcovCL(reg_,cluster=dat2$hospital))[4,] %&gt;%
      round(digits = 7)</code></pre>
 <pre><code>##   Estimate Std. Error    t value   Pr(&gt;|t|) 
 ##  0.8479879  0.0320051 26.4954049  0.0000000</code></pre>
-<p>La spécification en TWFE ne permet pas de reconstituer la matrice des moyennes contrairement à celle en <em>2x2 Diff in Diff</em> que nous venons de mettre en oeuvre. Établissons-la à partir des coefficients.</p>
+<p>La spécification en <em>TWFE</em> ne permet pas de reconstituer la matrice des moyennes contrairement à celle en <em>2x2 Diff in Diff</em> que nous venons de mettre en oeuvre. Établissons-la à partir de ses coefficients.</p>
 <pre class="r"><code>cont_av&lt;-coef(reg_)[1] %&gt;% sum()
 cont_ap&lt;-coef(reg_)[c(1,3)] %&gt;% sum()
 trait_av&lt;-coef(reg_)[c(1,2)] %&gt;% sum()
@@ -799,7 +801,7 @@ bas_g</code></pre>
 <h2><strong>Tests complémentaires</strong></h2>
 <div id="analyses-graphiques-de-la-parallel-trend-hypothesis" class="section level3">
 <h3><strong>Analyses graphiques de la <em>parallel trend hypothesis</em></strong></h3>
-<p>Examinons l’hypothèse de <em>parallel trend</em>. Commençons par une rapide analyse graphique. Reprenons celle développée dans le post précédant. Calculons donc les moyennes de l’<em>outcome</em> sur les différents mois respectivement sur le groupe des traités et des non traités (le groupe de contrôle). Créons une fonction pour faciliter les réplications qui suivront. Celle-ci doit permettre de générer un tableau présentant pour chaque mois la satisfaction moyenne sur les groupes des traités et de contrôle, ainsi que le graphe associée.</p>
+<p>Examinons l’hypothèse de <em>parallel trend</em>. Commençons par une rapide analyse graphique. Reprenons celle développée dans le post précédant. Calculons donc les moyennes de l’<em>outcome</em> sur les différents mois respectivement sur le groupe des traités et des non traités (le groupe de contrôle). Créons une fonction pour faciliter les réplications qui suivront. Celle-ci doit permettre de générer un tableau présentant pour chaque mois la satisfaction moyenne sur le groupes de traités et le groupe de contrôle, ainsi que le graphe associée.</p>
 <pre class="r"><code>parallel_plot&lt;-function(var1,trait,time,data,table=TRUE){
     par_1&lt;-data %&gt;% 
           group_by({{trait}},{{time}}) %&gt;% 
@@ -863,7 +865,7 @@ bas_g</code></pre>
 <pre class="r"><code>parallel_plot(satis,Traite,month,dat2_,table=FALSE)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-48-1.png" width="672" /></p>
 <p>Le graphe obtenu correspond au premier généré par la fonction <strong>estat trendplots</strong> de Stata. Il s’agit d’une commande post estimation. A sa lecture, on peut dire qu’à première vue que la <em>parallel trend</em> pré traitement semble tenir.</p>
-<p>Mais allons plus loin. Essayons d’établir le second graphe. Celui-ci est obtenue en commençant par unifier le départ des deux séries puis en les prolongeant à partir d’un trend linéaire. Si la parallel trend est respecte les deux séries devrait se superposer sur le période pré traitement.</p>
+<p>Mais allons plus loin. Essayons d’établir le second graphe. Celui-ci est obtenue en commençant par unifier le départ des deux séries puis en les prolongeant à partir d’un <em>trend</em> linéaire. Si la <em>parallel trend</em> est respectée les deux séries devrait se superposer sur le période pré traitement.</p>
 <p>Établissons donc le point de départ en faisant la moyenne des observations sur la première période d’observation.</p>
 <pre class="r"><code>m1&lt;-mean(dat2_$satis[which(dat2_$month==1)])
 m1</code></pre>
@@ -880,7 +882,7 @@ rm(aj_c,aj_t)</code></pre>
 <p>On peut vérifier que l’ajustement a été correctement effectué en calculant la moyen sur le premier mois de notre satisfaction ajustée.</p>
 <pre class="r"><code>mean(dat2_1$satis_[which(dat2_1$month==1)])</code></pre>
 <pre><code>## [1] 3.444675</code></pre>
-<p>L’ajustement apparaît être correcte.</p>
+<p>L’ajustement apparaît être correcte. Etablisons notre second graphe.</p>
 <pre class="r"><code>parallel_plot(satis_,Traite,month,dat2_1,table=FALSE)</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-53-1.png" width="672" /></p>
 </div>
@@ -897,14 +899,14 @@ coeftest(reg_p1)[4,]</code></pre>
 <pre><code>##    Estimate  Std. Error     t value    Pr(&gt;|t|) 
 ## -0.01324090  0.03888429 -0.34052052  0.73348401</code></pre>
 <pre class="r"><code>rm(reg_p1)</code></pre>
-<p>Ici, on ne peut pas rejeté H0, autrement-dit les <em>trend</em> sur le groupe des traités et la groupe de contrôle semble être les mêmes ce qui va dans le sens de la <em>parallel trend</em>.</p>
-<p>Stata propose un test construit sur le même principe, mais en mobilisant une spécification étendue. La spécification retenue prend pour point de départ celle de la régression en <em>Diff-in-Diff</em> pour lui ajoute deux variables proposant une triple interaction la première entre une variable marquant la période pré, l’appartenance au groupe de traité et la période et la seconde entre une variable marquant la période post et les mêmes variables.</p>
+<p>Ici, on ne peut pas rejeté H0, autrement-dit les <em>trend</em> sur le groupe des traités et le groupe de contrôle semblent être les mêmes ce qui va dans le sens de la <em>parallel trend</em>.</p>
+<p>Stata propose un test construit sur le même principe, mais en mobilisant une spécification étendue. La spécification retenue prend pour point de départ celle de la régression en <em>Diff-in-Diff</em> pour lui ajouter deux variables proposant une triple interaction la première entre une variable marquant la période pré, l’appartenance au groupe de traité et la période, et la seconde entre une variable marquant la période post et les mêmes variables.</p>
 <p>On a ainsi pour une <em>Diff-in-Diff</em> estimé en <em>TWFE</em> :</p>
 <p><span class="math display">\[
 satis_{i,t,s}=\gamma_i+\gamma_t+D_{s,t}+\zeta_1.pre.traité.month+\zeta_2.post.traité.month+\epsilon_{i,t,s}
 \]</span></p>
-<p>Le test porte alors sur <span class="math inline">\(\zeta_1\)</span> si ce coefficient est statistiquement différent de zéro alors il y a une différence de <em>trend</em> entre les traités et le groupe de contrôle sur la période pré traitement et donc la <em>parallel trend</em> ne tiendrait pas. Le test pratiqué est alors un test de <em>Wald</em> qui établi sa statistique comme le carré du <em>t stat</em> ordinaire. Cette statistique suit alors une loi de <em>Fisher</em> à 1 et n-1 degré de liberté (n étant le nombre d’individu utilisé pour les effets fixes ici d’hôpitaux). Répliquons le test.</p>
-<p>Commençons par préparons les données avant de procéder à l’estimation du modèle. Marquons les périodes pré et post traitement, établissons pour chaque hôpital s’il est traité ou non, enfin calculons les interactions triples.</p>
+<p>Le test porte alors sur <span class="math inline">\(\zeta_1\)</span>. Si ce coefficient est statistiquement différent de zéro, alors il y a une différence de <em>trend</em> entre les traités et le groupe de contrôle sur la période pré traitement. Et donc la <em>parallel trend</em> ne tiendrait pas. Le test pratiqué est alors un test de <em>Wald</em> qui établi sa statistique comme le carré du <em>t stat</em> ordinaire. Cette statistique, sous H0 (<span class="math inline">\(\zeta_1=0\)</span>), suit une loi de <em>Fisher</em> à 1 et n-1 degré de liberté (n étant le nombre d’individu utilisé pour les effets fixes ici le nombre d’hôpitaux). Répliquons le test.</p>
+<p>Commençons par préparer les données avant de procéder à l’estimation du modèle. Marquons les périodes pré et post traitement, établissons pour chaque hôpital s’il est traité ou non, enfin calculons les interactions triples.</p>
 <pre class="r"><code>dat2p&lt;-dat2 %&gt;% 
   mutate(pre=ifelse(month&lt;4,1,0),
          post=ifelse(month&gt;3,1,0)) %&gt;% 
@@ -913,7 +915,7 @@ satis_{i,t,s}=\gamma_i+\gamma_t+D_{s,t}+\zeta_1.pre.traité.month+\zeta_2.post.t
   ungroup() %&gt;% 
   mutate(avant=pre*trait*month,
          apres=post*trait*month)</code></pre>
-<p>Ceci fait on peut procéder à la régression, sortir le t stat du coefficient l’élevé au carré et définir le <em>p-value</em> via la loi de <em>Fisher</em> a 1 et n-1 degrés de liberté. Ici, n correspond au nombre d’hôpitaux (46).</p>
+<p>Ceci fait, on peut procéder à la régression, sortir le t stat du coefficient, l’élevé au carré et définir la <em>p-value</em> via la loi de <em>Fisher</em> a 1 et n-1 degrés de liberté. Ici, n correspond au nombre d’hôpitaux (46).</p>
 <pre class="r"><code>reg_2p&lt;-lm(satis~procedure+avant+apres+factor(hospital)+factor(month),
           data=dat2p)
 Fish&lt;-coeftest(reg_2p,vcov.=vcovCL(reg_2p,cluster=dat2p$hospital))[3,3]^2 %&gt;%
@@ -923,20 +925,20 @@ c(F=Fish,pv=prob) %&gt;% round(digits=4)</code></pre>
 <pre><code>##      F     pv 
 ## 0.5516 0.4615</code></pre>
 <pre class="r"><code>rm(reg_2p,Fish,prob,dat2p)</code></pre>
-<p>Comme précédemment on ne peut pas rejeter H0 autrement-dit on ne peut pas rejeté l’hypothèse que <span class="math inline">\(\zeta_1\)</span> soit nulle et donc qu’il n’y ait pas de différence de <em>trend</em> entre les futures traités et le groupe de contrôle. L’hypothèse de <em>parallel trend</em> pré traitement ne peut donc pas pas être rejetée.</p>
-<p>Cela va dans le même sens que l’analyse graphique et notre test précédent.</p>
+<p>Comme précédemment on ne peut pas rejeter H0, autrement-dit on ne peut pas rejeté l’hypothèse que <span class="math inline">\(\zeta_1\)</span> soit nulle et donc qu’il n’y ait pas de différence de <em>trend</em> entre les futures traités et le groupe de contrôle. L’hypothèse de <em>parallel trend</em> pré traitement ne peut donc pas pas être rejetée.</p>
+<p>Cela va dans le même sens que l’analyse graphique et que notre test précédent.</p>
 </div>
-<div id="analyse-graphique-graphique-de-la-temporalité-du-traitement" class="section level3">
-<h3><strong>Analyse graphique graphique de la temporalité du traitement</strong></h3>
+<div id="analyse-graphique-de-la-temporalité-du-traitement" class="section level3">
+<h3><strong>Analyse graphique de la temporalité du traitement</strong></h3>
 <p>En plus de la <em>parallel trend</em> (ou comme autre test de cette dernière), on peut s’interroger sur la temporalité des effets du traitement. Est-ce que la date retenue est bien celle à partir de laquelle celui-ci produit des effets? Est-ce qu’il n’y a pas d’anticipation ou de retard ce qui pourrait remettre en cause (au moins en partie) le cadre méthodologique (la <em>parallel trend</em> serait en partie remise en cause)? Pour le voir, on peut présenter le graphe de l’effet du traitement dans le temps (comme nous l’avons fait dans le post précédent). Autrement-dit, nous procédons à l’étude des <em>dynamic treatement effects</em>.</p>
-<p>Il s’agit d’estimer dans un seul modèle, pour une série de dates, l’effet du traitement sur les traités (même s’ils n’ont pas encore été traité) via une spécification de type <em>2x2 Diff in Diff</em> . Cela se concrétise par une série d’interactions entre les différentes dates retenues et la variable binaire marquant le fait d’appartenir au groupe des traités. Les dates choisies correspondent (généralement retenu) aux périodes avant l’évènement à l’exception de celle le précédent immédiatement (qui sera notre référence) et de l’ensemble de celles après.</p>
+<p>Il s’agit d’estimer dans un seul modèle, pour une série de dates, l’effet du traitement sur les traités (même s’ils n’ont pas encore été traité) via une spécification de type <em>2x2 Diff in Diff</em> . Cela se concrétise par une série d’interactions entre les différentes dates retenues et la variable binaire marquant le fait d’appartenir au groupe des traités. Les dates choisies (généralement retenues) correspondent aux périodes avant l’évènement à l’exception de celle qui le précédent immédiatement (qui sera notre référence) et de l’ensemble de celles après l’évènement.</p>
 <p>On a donc ici à estimer le modèle suivant:</p>
 <p><span class="math display">\[
 satis_{it}=\gamma_i+\gamma_t+\beta_1.T_{−2}.Traité+\beta_2.T_{−1}.Traité+\beta_3.T_1.Traité+\beta_4.T_2.Traité+\beta_5.T_3.Traité+\beta_6.T_4.Traité+\epsilon_{it}
 \]</span></p>
 <p>où <span class="math inline">\(T_{−1}\)</span> correspond à janvier, <span class="math inline">\(T_{−2}\)</span> à février, <span class="math inline">\(T_1\)</span> à avril, <span class="math inline">\(T_2\)</span> à mai, etc…</p>
-<p>Le traitement est attribué en avril, le mois 4, sur les 7 disponibles. Si on fixe la référence au mois 3, on a 2 <em>leads</em> (dans la mesure où ils correspondraient à des anticipations du traitement) et 4 <em>lags</em> (dans la mesure où ils correspondraient des effets retardés du traitement).</p>
-<p>Pour mettre en oeuvre l’estimation, commençons par centrer nos dates autour de l’évènement en reprenant la base nous ayant permis d’estimer la <em>2x2 diff in diff</em> qui comprend la variable Traite qui indique si l’observation est issue d’un hôpital qui adoptera ou a adopté le nouveau système. Établissons la variable comme un facteur pour permettre les interactions date par date.</p>
+<p>Le traitement est attribué en avril, le mois 4 sur les 7 disponibles. Si on fixe la référence au mois 3, on a 2 <em>leads</em> (dans la mesure où ils correspondraient à des anticipations du traitement) et 4 <em>lags</em> (dans la mesure où ils correspondraient des effets retardés du traitement).</p>
+<p>Pour mettre en oeuvre l’estimation, commençons par centrer nos dates autour de l’évènement en reprenant la base nous ayant permis d’estimer la <em>2x2 diff in diff</em> . Celle-ci comprend la variable Traite qui indique si l’observation est issue d’un hôpital qui adoptera ou a adopté le nouveau système. Établissons la variable comme un facteur pour permettre les interactions date par date.</p>
 <pre class="r"><code>dat3&lt;-dat2_ %&gt;% 
   mutate(m_cent3=month-3,
          m_cent3f=relevel(factor(m_cent3),ref=&quot;0&quot;))
@@ -952,12 +954,12 @@ head(dat3)</code></pre>
 ## 4        1 2 [Medium]    4 [April] 1 [New]    3.00 Trait… TRUE        1 1       
 ## 5        1 1 [Low]       3 [March] 0 [Old]    3.11 Trait… FALSE       0 0       
 ## 6        1 1 [Low]       7 [July]  1 [New]    2.88 Trait… TRUE        4 4</code></pre>
-<p>Ceci fait il ne nous reste plus qu’à établir la régression. Ici, compte tenu du grand nombre de coefficients qui seront calculés (58), nous utiliserons la fonction <strong>feols()</strong> du package <em>fixest</em> pour l’estimation. Il nous permet ici d’obtenir uniquement la série de coefficient qui nous intéresse. Présentons-les ainsi que les tests associés (toujours avec le <em>clustering</em> sur hospital).</p>
+<p>Ceci fait il ne nous reste plus qu’à établir la régression. Ici, compte tenu du grand nombre de coefficients qui seront calculés (58), nous utiliserons la fonction <strong>feols()</strong> du package <em>fixest</em> pour l’estimation. Elle nous permet d’obtenir uniquement la série de coefficient qui nous intéresse. Présentons-les ainsi que les tests associés (toujours avec le <em>clustering</em> sur hospital).</p>
 <pre class="r"><code>reg_dyn &lt;- feols(satis ~ m_cent3f*Traite | 
             hospital + month,
-            data = dat3)</code></pre>
-<pre><code>## The variables &#39;m_cent3f-2&#39;, &#39;m_cent3f-1&#39;, &#39;m_cent3f1&#39;, &#39;m_cent3f2&#39;, &#39;m_cent3f3&#39;, &#39;m_cent3f4&#39; and &#39;TraiteTraités&#39; have been removed because of collinearity (see $collin.var).</code></pre>
-<pre class="r"><code>coeftest(reg_dyn,vcov.=vcovCL(reg_dyn,cluster=dat3$hospital))%&gt;%
+            data = dat3)
+
+coeftest(reg_dyn,vcov.=vcovCL(reg_dyn,cluster=dat3$hospital))%&gt;%
      round(digits = 7)</code></pre>
 <pre><code>## 
 ## t test of coefficients:
@@ -971,7 +973,7 @@ head(dat3)</code></pre>
 ## m_cent3f4:TraiteTraités  0.897888   0.050960 17.6193   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>On constate que dans leur ensemble les coefficient des <em>leads</em> ne sont pas statistiquement significatifs contrairement à l’ensemble des <em>lags</em>. Cela confirme l’absence d’anticipation du traitement. Produisons le graphe permettant de mettre en évidence ce résultat. Celui ce base sur la présentation des intervalles de confiance à 95% des coefficients des différents <em>leads</em> et <em>lags</em>. Ceux-ci peuvent simplement être obtenu à partir de la fonction <strong>coefci()</strong> du package <em>lmtest</em>.</p>
+<p>On constate que dans leur ensemble les coefficient des <em>leads</em> ne sont pas statistiquement significatifs contrairement à ceux de l’ensemble des <em>lags</em>. Cela confirme l’absence d’anticipation du traitement. Produisons le graphe permettant de mettre en évidence ce résultat. Celui-ci ce base sur la présentation des intervalles de confiance à 95% des coefficients des différents <em>leads</em> et <em>lags</em>. Ceux-ci peuvent simplement être obtenu à partir de la fonction <strong>coefci()</strong> du package <em>lmtest</em>.</p>
 <pre class="r"><code>coefci(reg_dyn,vcov.=vcovCL(reg_dyn,cluster=dat3$hospital),level=0.95)</code></pre>
 <pre><code>##                                2.5 %     97.5 %
 ## m_cent3f-2:TraiteTraités -0.04155824 0.09735225
@@ -980,7 +982,7 @@ head(dat3)</code></pre>
 ## m_cent3f2:TraiteTraités   0.81233554 0.99576416
 ## m_cent3f3:TraiteTraités   0.72599932 0.96344865
 ## m_cent3f4:TraiteTraités   0.79799120 0.99778581</code></pre>
-<p>Pour assembler le graphe ici nous avons plusieurs possibilités (comme dans le post précédent), on peut par exemple utiliser la fonction <strong>coefplot()</strong> du package <em>fixest</em> ou <strong>ggcoef()</strong> du package <em>GGally</em>. Nous optons pour la second solution qui, comme le nom l’indique, utilise la syntaxe de ggplot.</p>
+<p>Pour assembler le graphe, nous avons plusieurs possibilités (comme dans le post précédent). On peut par exemple utiliser la fonction <strong>coefplot()</strong> du package <em>fixest</em> ou <strong>ggcoef()</strong> du package <em>GGally</em>. Nous optons pour la second solution qui, comme le nom l’indique, utilise la syntaxe de ggplot.</p>
 <pre class="r"><code>GGally::ggcoef(reg_dyn,
                errorbar_height = 0.15,
                errorbar_size = 1,
@@ -1006,14 +1008,12 @@ head(dat3)</code></pre>
                                linewidth=0.1),
     panel.grid.minor = element_blank()
   )</code></pre>
-<pre><code>## Registered S3 method overwritten by &#39;GGally&#39;:
-##   method from   
-##   +.gg   ggplot2</code></pre>
-<pre><code>## Warning: The `exponentiate` argument is not supported in the `tidy()` method
-## for `fixest` objects and will be ignored.</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-60-1.png" width="672" /></p>
-<p>Test statistique de la temporalité du traitement En complément avec l’analyse graphique, on peut pratiquer un test de causalité de type test de Granger pour vérifier si les effets du traitement sont observés avant sa mise en oeuvre (officielle, la date d’évènement). Sous Stata, il est pratiqué en post estimation via la commande <strong>estat granger</strong>. Répliquons la.</p>
-<p>Le test part de la même modélisation que celle que nous avons mobilisé pour générer le graphe du <em>dynamic treatement effects</em> à la différence prés que seul les <em>leads</em> sont considérés. Il s’agira alors de tester l’hypothèse jointe (H0) que les coefficients associés sont tous égaux à 0. Cela est réalisé à partir d’un test de Wald dont la statistique suit une loi de Fisher égale au nombre de <em>leads</em> et au nombre de <em>cluster</em> moins 1.</p>
+</div>
+<div id="test-statistique-de-la-temporalité-du-traitement" class="section level3">
+<h3>Test statistique de la temporalité du traitement</h3>
+<p>En complément avec l’analyse graphique, on peut pratiquer un test de causalité de type test de Granger pour vérifier si les effets du traitement sont observés avant sa mise en oeuvre (officielle, la date d’évènement). Sous Stata, il est pratiqué en post estimation via la commande <strong>estat granger</strong>. Répliquons la.</p>
+<p>Le test part de la même modélisation que celle que nous avons mobilisée pour générer le graphe du <em>dynamic treatement effects</em> à la différence prés que seul les <em>leads</em> sont considérés. Il s’agira alors de tester l’hypothèse jointe (H0) que les coefficients associés sont tous égaux à 0. Cela est réalisé à partir d’un test de Wald dont la statistique suit une loi de Fisher égale au nombre de <em>leads</em> et au nombre de <em>cluster</em> moins 1.</p>
 <p>Avant de procéder au test, créons une variable indiquant les <em>leads</em>, la référence et les <em>lags</em>.</p>
 <pre class="r"><code>dat3&lt;-dat3 %&gt;% 
   mutate(leads_=ifelse(m_cent3%in%c(-2,-1,0),m_cent3f,&quot;lags&quot;),
@@ -1033,9 +1033,9 @@ head(dat3)[,c(3,8:11)]</code></pre>
 <p>Une fois les données prêtes, il ne reste plus qu’à réaliser la régression. Observons-en les résultats.</p>
 <pre class="r"><code>reg_dyn_ &lt;- feols(satis ~ leads_f*Traite | 
             hospital + month,
-            data = dat3)</code></pre>
-<pre><code>## The variables &#39;leads_f-2&#39;, &#39;leads_f-1&#39;, &#39;leads_flags&#39; and &#39;TraiteTraités&#39; have been removed because of collinearity (see $collin.var).</code></pre>
-<pre class="r"><code>coeftest(reg_dyn_,vcov.=vcovCL(reg_dyn_,cluster=dat3$hospital))%&gt;%
+            data = dat3)
+
+coeftest(reg_dyn_,vcov.=vcovCL(reg_dyn_,cluster=dat3$hospital))%&gt;%
      round(digits = 7)</code></pre>
 <pre><code>## 
 ## t test of coefficients:
@@ -1046,7 +1046,7 @@ head(dat3)[,c(3,8:11)]</code></pre>
 ## leads_flags:TraiteTraités 0.867369   0.042337 20.4873   &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<p>Les deux coefficients associés aux <em>leads</em> ne sont pas statistiquement différents de zéro. Il ne semble pas y avoir d’anticiaption des effets du traitement. Néanmoins, pour aller au bout de la démarche, pratiquons le test d’hypothèse jointe sur ces coefficients (H0 les deux coefficients sont égale à 0). Pour cela, utilisons la fonction <strong>linearHypothesis()</strong> qui est issue du package <em>car</em>. Indiquons les hypothèses en tester et la nature de la statistique retenue (ici F pour Fisher).</p>
+<p>Les deux coefficients associés aux <em>leads</em> ne sont pas statistiquement différents de zéro. Il ne semble pas y avoir d’anticiaption des effets du traitement. Néanmoins, pour aller au bout de la démarche, pratiquons le test d’hypothèse jointe sur ces coefficients (H0 les deux coefficients sont égale à 0). Pour cela, utilisons la fonction <strong>linearHypothesis()</strong> qui est issue du package <em>car</em>. Indiquons les hypothèses à tester et la nature de la statistique retenue (ici F pour Fisher).</p>
 <pre class="r"><code>linearHypothesis(reg_dyn_,c(&quot;leads_f-2:TraiteTraités = 0&quot;,
                             &quot;leads_f-1:TraiteTraités = 0&quot;),
                  test=&quot;F&quot;,
@@ -1067,7 +1067,7 @@ head(dat3)[,c(3,8:11)]</code></pre>
 ## 2   7313  2 0.3278 0.7205</code></pre>
 <pre class="r"><code>rm(reg_dyn,reg_dyn_,dat3)</code></pre>
 <p>Le test confirme que l’on ne peut par raisonnablement rejeter H0. Cela va dans le sens d’une absence d’effets du traitement avant la date désignée comme étant celle de sa mise en place. L’hypothèse de non anticipation semble tenir.</p>
-<p>Pour résumer, la mise en place automatisation de la procédure d’enregistrement des patients apparaît bien améliorer la satisfaction des patients. La méthode utilisée pour le mettre en évidence l’analyse en <em>Diff in Diff</em> (double différence) le confirme. Par ailleurs, les hypothèses sur lesquelles reposent cette méthode pour être mise en oeuvre <em>parallel trend</em> et non anticipation apparaissent également vérifiées.</p>
+<p>Pour résumer, la mise en place de l’automatisation de la procédure d’enregistrement des patients apparaît bien améliorer la satisfaction des patients. La méthode utilisée pour le mettre en évidence l’analyse en <em>Diff in Diff</em> (double différence) le confirme. Par ailleurs, les hypothèses sur lesquelles reposent cette méthode pour être mise en oeuvre <em>parallel trend</em> et non anticipation apparaissent également vérifiées.</p>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-tanaka2014" class="csl-entry">
 Tanaka, Shinsuke. 2014. <span>“Does Abolishing User Fees Lead to Improved Health Status? Evidence from Post-Apartheid South Africa.”</span> <em>American Economic Journal: Economic Policy</em> 6 (3): 282–312. <a href="https://doi.org/10.1257/pol.6.3.282">https://doi.org/10.1257/pol.6.3.282</a>.
