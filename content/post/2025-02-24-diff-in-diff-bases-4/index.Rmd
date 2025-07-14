@@ -1,0 +1,20 @@
+---
+title: Diff in Diff - bases 4
+author: Ludovic Vigneron
+date: '2025-02-24'
+categories:
+  - DID
+  - Inf_causale
+  - r
+tags:
+  - DiD
+  - Inf_causale
+  - r
+---
+
+**Insert Lead paragraph here.**
+
+
+
+
+
