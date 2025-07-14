@@ -10,8 +10,8 @@ tags:
   - DiD
   - Inf_causale
   - R
+bibliography: references.bib
 ---
-
 
 **Dans ce nouveau post, nous allons faire un pas de coté et laisser pour un temps la question de l'estimation d'une *diff-in-diff* pour ne concentrer sur les tests de la *parallel trend hypothesis*. Rappelons-le, celle-ci fait référence au fait que l'évolution de l'*outcome* pour le groupe des traités aurait dû suivre une évolution parallèle à celles du groupe de contrôle en l'absence de traitement. Si c'est le cas, toute déviation vis-à-vis de cette trajectoire intervenant suite au traitement ne peut être causée que par celui-ci. Cette déviation est alors l'effet du traitement sur les traités. En l'absence de *parallel trend* la méthode *diff-in-diff* n'est pas en mesure d'identifier le lien causale entre le traitement et l'*outcome*. Il est donc important de convaincre de sa plausibilité et cela sachant qu'il est impossible de tester directement son existence. En effet, on ne peut, par définition, pas observer ce qui se serait passé en l'absence de traitement pour les traités après le traitement.**
 
@@ -282,7 +282,7 @@ La troisième statistique, le ratio de vraisemblance, correspond à la mise en r
 
 Examinons maintenant la seconde difficulté. Celle associée au fait que les tests de *parallel trend* basés que la période pré-traitement conduisent à écarter certaines situations pouvant s'avérer dignes d'intérêt. En ne retenant pour l'analyse que les cas où ces tests n'excluent pas la *parallel trend* (pré-traitement), on créé une forme de biais de sélection quant au les résultats produits.
 
-Pour palier à la difficulté, @rambachan2023 proposent de réaliser une étude de sensibilité du résultat à la violation de la *parallel trend*. Prenons, pour illustrer cela, un des exemples mis en avant dans ce papier: l'un des résultats de l'étude de @benzarti2019 .
+Pour palier à la difficulté, @rambachan2023 proposent de réaliser une étude de sensibilité du résultat à la violation de la *parallel trend*. Prenons, pour illustrer cela, un des exemples mis en avant dans ce papier: l'un des résultats de l'étude de @benzarti2019.
 
 Cette étude s'intéresse aux effets d'une forte baisse de la TVA sur la restauration en France mise en oeuvre en juillet 2009. Elle est alors passée de 19,5% à 5,5%. L'étude montre notamment que les bénéfices associées à cette baisse de taxe profites principalement aux propriétaires des restaurants (très peu aux consommateurs et pas du tout aux salariés).
 
@@ -428,5 +428,3 @@ createSensitivityPlot_relativeMagnitudes(d_rm_r_, O_R_)+
 ```
 
 Restons en là. Jonathan Roth seul ou avec son coauteur Ashesh Rambachan propose d'aller au delà des tests classiques portant sur la *parallel trend* *hypothesis,* dont l'examen est un prérequi pour l'identification d'un effet causal via l'analyse *diff-in-diff,* soit en ayant du recul sur leur capacité à mettre en évidence une violation, soit en prolongeant l'analyse pour établir la taille de la violation potentielle qui conduirait à remettre en question les résultats de l'analyse *diff-in-diff*. Pour ce faire, ils proposent des outils que nous avons présenté ici rapidement. J'espère que cette bref introduction vous sera utile et vous aura convaincu de l'utilité de ces analyses complémentaires.
-
-

@@ -10,6 +10,7 @@ tags:
   - DiD
   - Inf_causale
   - R
+bibliography: references.bib
 ---
 
 
@@ -20,7 +21,7 @@ tags:
 <p>Cette approche présente néanmoins des limites. Nous en examinerons ici deux ainsi que des solutions qui sont proposées pour les dépasser. Tout d’abord, elle peut avoir une puissance faible, autrement-dit elle peut échouer à détecter une violation de la <em>parallel trend</em> alors que cette violation est existe. Ensuite, elle conduit à ne considère que des cas où les tests confirme la présence d’une <em>parallel trend</em> linéaire sur la période traitement. Cela crée de fait une forme de biais de sélection quand au situation examinée. Nous excluons les situations le test rejette la <em>parallel trend</em> mais celle-ci serait au moins partiellement présente.</p>
 <div id="la-puissance-des-tests-de-parallel-trend" class="section level2">
 <h2>La puissance des tests de <em>parallel trend</em></h2>
-<p>Jonathan <span class="citation">@roth2022</span> propose dans un papier de l’AER une méthode pour évaluer la puissance et les distorsions associées à la <em>parallel trend</em>. Le package <em>pretrends</em> permet de mettre en place cette méthode.</p>
+<p>Jonathan <span class="citation">Roth (<a href="#ref-roth2022">2022</a>)</span> propose dans un papier de l’AER une méthode pour évaluer la puissance et les distorsions associées à la <em>parallel trend</em>. Le package <em>pretrends</em> permet de mettre en place cette méthode.</p>
 <p>Pour mieux comprendre comment cette méthode fonctionne, reprenons l’exemple qu’il développe dans ses différentes présentations. Mais avant de commencer chargeons les packages qui nous seront utiles pour la suite.</p>
 <pre class="r"><code># manipulation et chargement de données
 library(tidyverse)
@@ -35,7 +36,7 @@ library(panelView)
 # test de la parlléle trend
 library(pretrends)
 library(HonestDiD)</code></pre>
-<p>Ceci étant fait. Intéressons-nous aux données. L’illustration du package est réalisée à partir de celles de <span class="citation">@he2017</span> . Il ne reprend que les éléments associés à l’estimation d’un des modèles <em>diff in diff</em> du papier. Nous remontrons ici un peu plus loin de manière à extraire nous-même ces éléments.</p>
+<p>Ceci étant fait. Intéressons-nous aux données. L’illustration du package est réalisée à partir de celles de <span class="citation">He and Wang (<a href="#ref-he2017">2017</a>)</span> . Il ne reprend que les éléments associés à l’estimation d’un des modèles <em>diff in diff</em> du papier. Nous remontrons ici un peu plus loin de manière à extraire nous-même ces éléments.</p>
 <p>Le <em>replication pack</em> pour cette étude est disponible sur la page correspondante de le AEJ. Nous n’avons pas besoin de l’ensemble des fichiers mis à disposition. Le seul dont nous avons besoin est nommé workfile_AEJ.dta . Il comprend les données nécessaires à la réplication de la plus part des tableaux et notamment celles permettant de répliquer la table 5. C’est à partir du premier modèle de cette table que nous travaillerons. Vous pouvez trouvez le fichier <a href="data/workfile_AEJ.dta">ici</a>. Une fois le fichier obtenu et placé dans notre environnement de travail, il ne reste plus qu’à charger la base dans R en utilisant <strong>read_dta()</strong> du package <em>haven</em>.</p>
 <pre class="r"><code>dat_&lt;- read_dta(&quot;data/workfile_AEJ.dta&quot;)</code></pre>
 <p>Avant d’aller plus loin, rappelons ce que réalise l’étude. Elle s’intéresse aux effets sur les programme de réduction de la pauvreté d’une politique mises en place en Chine visant à améliorer la qualité bureaucratique au niveau local en affectant des diplômés des universités à l’administration de villages. La politique est nommé CGVO (<em>College Graduate Village Officials</em>). Les diplômés n’étant pas affectés à tous les villages ni même affectés au même moment, l’étude établie l’effet de la politique à partir d’une <em>diff-in-diff</em>. La période étudiée cours de 2000 à 2011 et elle concerne 255 villages. L’étude met en évidence que la politique améliore le ciblage et la mise en oeuvre des programmes gouvernementaux d’assistance sociale. Elle donne également des éléments quant aux mécanismes à l’œuvre.</p>
@@ -186,7 +187,7 @@ ref&lt;- -1</code></pre>
                 targetPower = 0.8,
                 tVec = timing,
                 referencePeriod = ref)</code></pre>
-<pre><code>## [1] 0.08501353</code></pre>
+<pre><code>## [1] 0.085033</code></pre>
 <p>Cette distorsion (minimum détectable) correspond à la pente de la droite liant les points situés (à la manière des rouges sur la figure précédente) sur les intervalles de confiance de la période pré-traitement. Cette droite présente pour chaque période défini les valeur suivante et 0 pour la période de référence.</p>
 <pre class="r"><code>0.08503895 * (timing - ref)</code></pre>
 <pre><code>## [1] -0.25511685 -0.17007790 -0.08503895  0.08503895  0.17007790  0.25511685
@@ -214,7 +215,7 @@ ref&lt;- -1</code></pre>
 <p>Un autre élément disponible intéressant est composé de trois statistiques exprimant à leur manière la puissance du test. Il est nommé df_power. Appelons-le et procédons à l’interprétation des informations fournies.</p>
 <pre class="r"><code>pretrends_res$df_power</code></pre>
 <pre><code>##       Power Bayes.Factor Likelihood.Ratio
-## 1 0.8003279    0.2267709        0.1442778</code></pre>
+## 1 0.8001419    0.2267783        0.1442778</code></pre>
 <p>La première statistique est la puissance du test de <em>parallel trend</em> classique. Nous l’avons fixé à 80%. Il s’agit de la probabilité de rejeter <span class="math inline">\(H_0\)</span>, la présence d’une <em>parallel trend</em>, si <span class="math inline">\(H_1\)</span>, son absence, est vraie. Dans le cas d’espèce, il y a une probabilité de 80% de détecter une violation de la <em>parallel trend</em> correspondant à une pente de 0,085 pour une droite qui lierait les intervalles de confiance sur le <em>Granger plot</em>.</p>
 <p>La second statistique, le facteur de Bayes, indique les chances relatives que le test détecte une violation de la <em>parallel trend</em> si la tendance hypothétique, <span class="math inline">\(H_1\)</span> (une tendance linéaire avec une pente de 0,085), est vraie, contre celle qu’il la détecte si la <em>parallel trend,</em> <span class="math inline">\(H_0\)</span> (la pente est de 0), est vraie. Il compare ainsi la précision avec laquelle chaque hypothèse prédit les données observées. Une valeur inférieure à 1 permet de pencher en faveur de <span class="math inline">\(H_0\)</span> tandis qu’une valeur supérieure à 1 amène à pencher pour <span class="math inline">\(H_1\)</span>. Ici, il est de 0,227 ce qui va dans le sens de la <em>parallel trend</em> mais modérément.</p>
 <p>La troisième statistique, le ratio de vraisemblance, correspond à la mise en regarde de la vraisemblance du fait d’observer les coefficients du test classique si <span class="math inline">\(H_1\)</span> est vraie et la situation correspond à la tendance théorisée (ici une pente de 0,085), et de la vraisemblance du fait d’observer ces coefficients si <span class="math inline">\(H_0\)</span> est vraie, autrement-dit si la <em>parallel trend</em> est vraie. Le ratio est de 0,14 ce qui une nouvelle fois va dans le sens de la <em>parallel trend</em>.</p>
@@ -222,7 +223,7 @@ ref&lt;- -1</code></pre>
 <div id="le-biais-de-sélection-des-cas-étudiés" class="section level2">
 <h2>Le biais de sélection des cas étudiés</h2>
 <p>Examinons maintenant la seconde difficulté. Celle associée au fait que les tests de <em>parallel trend</em> basés que la période pré-traitement conduisent à écarter certaines situations pouvant s’avérer dignes d’intérêt. En ne retenant pour l’analyse que les cas où ces tests n’excluent pas la <em>parallel trend</em> (pré-traitement), on créé une forme de biais de sélection quant au les résultats produits.</p>
-<p>Pour palier à la difficulté, <span class="citation">@rambachan2023</span> proposent de réaliser une étude de sensibilité du résultat à la violation de la <em>parallel trend</em>. Prenons, pour illustrer cela, un des exemples mis en avant dans ce papier: l’un des résultats de l’étude de <span class="citation">@benzarti2019</span> .</p>
+<p>Pour palier à la difficulté, <span class="citation">Rambachan and Roth (<a href="#ref-rambachan2023">2023</a>)</span> proposent de réaliser une étude de sensibilité du résultat à la violation de la <em>parallel trend</em>. Prenons, pour illustrer cela, un des exemples mis en avant dans ce papier: l’un des résultats de l’étude de <span class="citation">Benzarti and Carloni (<a href="#ref-benzarti2019">2019</a>)</span>.</p>
 <p>Cette étude s’intéresse aux effets d’une forte baisse de la TVA sur la restauration en France mise en oeuvre en juillet 2009. Elle est alors passée de 19,5% à 5,5%. L’étude montre notamment que les bénéfices associées à cette baisse de taxe profites principalement aux propriétaires des restaurants (très peu aux consommateurs et pas du tout aux salariés).</p>
 <p>Le résultat qui va nous intéresser ici est celui présenté dans la table 2 à la colonne 5. Il s’agit de l’impact du changement réglementaire sur le résultat des entreprises. Celui-ci correspond à une augmentation de 24% mesurée via une estimation <em>diff-in-diff</em> en TWFE à partir d’un groupe de contrôle constitué d’entreprises d’entreprises du secteur des services non affectées par la baisse de TVA. Ce résultat, comme les autres, est suivi de tests de robustesse de type de <em>dynamic traitement effect</em> illustré par un <em>Granger plot</em>. On retrouve le graphe associé dans la figure 2 panel E.</p>
 <p>Ce sera notre point de départ. Dans la mesure où les données associées à l’ensemble sont difficilement disponibles, elles sont issues de la base Amadeus distribuée par le bureau Van Dyck, nous ne referons pas toute l’analyse. Nous nous rabattrons sur les éléments mis à disposition via le package <em>HonestDiD</em>. On y trouve directement des éléments issus de l’estimation de la <em>diff-in-diff</em> (estimation des bêtas, matrice variance-covariance de l’estimation, timing…). Utilisons la fonction <strong>data()</strong> pour y accéder.</p>
@@ -386,4 +387,18 @@ createSensitivityPlot_relativeMagnitudes(d_rm_r_, O_R_)+
     legend.title = element_blank())</code></pre>
 <p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-23-1.png" width="672" /></p>
 <p>Restons en là. Jonathan Roth seul ou avec son coauteur Ashesh Rambachan propose d’aller au delà des tests classiques portant sur la <em>parallel trend</em> <em>hypothesis,</em> dont l’examen est un prérequi pour l’identification d’un effet causal via l’analyse <em>diff-in-diff,</em> soit en ayant du recul sur leur capacité à mettre en évidence une violation, soit en prolongeant l’analyse pour établir la taille de la violation potentielle qui conduirait à remettre en question les résultats de l’analyse <em>diff-in-diff</em>. Pour ce faire, ils proposent des outils que nous avons présenté ici rapidement. J’espère que cette bref introduction vous sera utile et vous aura convaincu de l’utilité de ces analyses complémentaires.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-benzarti2019" class="csl-entry">
+Benzarti, Youssef, and Dorian Carloni. 2019. <span>“Who Really Benefits from Consumption Tax Cuts? Evidence from a Large VAT Reform in France.”</span> <em>American Economic Journal: Economic Policy</em> 11 (1): 38–63. <a href="https://doi.org/10.1257/pol.20170504">https://doi.org/10.1257/pol.20170504</a>.
+</div>
+<div id="ref-he2017" class="csl-entry">
+He, Guojun, and Shaoda Wang. 2017. <span>“Do College Graduates Serving as Village Officials Help Rural China?”</span> <em>American Economic Journal: Applied Economics</em> 9 (4): 186–215. <a href="https://doi.org/10.1257/app.20160079">https://doi.org/10.1257/app.20160079</a>.
+</div>
+<div id="ref-rambachan2023" class="csl-entry">
+Rambachan, Ashesh, and Jonathan Roth. 2023. <span>“A More Credible Approach to Parallel Trends.”</span> <em>Review of Economic Studies</em> 90 (5): 2555–91. <a href="https://doi.org/10.1093/restud/rdad018">https://doi.org/10.1093/restud/rdad018</a>.
+</div>
+<div id="ref-roth2022" class="csl-entry">
+Roth, Jonathan. 2022. <span>“Pretest with Caution: Event-Study Estimates After Testing for Parallel Trends.”</span> <em>American Economic Review: Insights</em> 4 (3): 305–22. <a href="https://doi.org/10.1257/aeri.20210236">https://doi.org/10.1257/aeri.20210236</a>.
+</div>
+</div>
 </div>
