@@ -29,7 +29,7 @@ library(broom)
 library(modelsummary)
 ```
 
-Les données utilisées sont disponibles ici. Téléchargeons-les dans notre dossier de travail et chargeons-les dans notre environnement.
+Les données utilisées sont disponibles [ici](/data/injury.csv). Téléchargeons-les dans notre dossier de travail et chargeons-les dans notre environnement.
 
 ```{r charger_les_donnees}
 #| message: false
