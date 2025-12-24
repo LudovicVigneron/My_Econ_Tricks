@@ -36,7 +36,7 @@ Dans cette troisième vidéo, nous décrivons les principes généraux du calcul
 
 [![](interet_comp_v2.png){width="640"}](https://youtu.be/LOxV4A5j0Fg)
 
-La première fiche de travaux dirigés est consacrée à l'intérêt composé. Vous pouvez la charger [ici](td2_en_v1.pdf).
+La seconde fiche de travaux dirigés est consacrée à l'intérêt composé. Vous pouvez la charger [ici](td2_en_v1.pdf).
 
 # Thème 4 : les annuités
 
@@ -44,7 +44,7 @@ Dans cette quatrième vidéo, nous établissons les principes de calcul des vale
 
 [![](annuités_v4.png){width="640"}](https://youtu.be/hxbeWeQRuWA)
 
-La première fiche de travaux dirigés est consacrée aux calcules d'annuité. Vous pouvez la charger [ici](td3_en_v1.pdf).
+La troisième fiche de travaux dirigés est consacrée aux calcules d'annuités. Vous pouvez la charger [ici](td3_en_v1.pdf).
 
 # Thème 5 : l’amortissement
 
@@ -52,4 +52,4 @@ Dans cette cinquième vidéo, nous passons en revue les différents calculs perm
 
 [![](amortissement_v2.png){width="640"}](https://youtu.be/UV-rIdnFxYs)
 
-La première fiche de travaux dirigés est consacrée aux tableaux d'amortissement d'emprunts. Vous pouvez la charger [ici](td4_en_v1.pdf).
+La quatrième fiche de travaux dirigés est consacrée aux tableaux d'amortissement d'emprunts. Vous pouvez la charger [ici](td4_en_v1.pdf).
