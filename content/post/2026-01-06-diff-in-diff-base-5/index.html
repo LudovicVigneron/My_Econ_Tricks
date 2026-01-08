@@ -1,0 +1,2264 @@
+---
+title: Diff in Diff - base 5
+author: Ludovic Vigneron
+date: '2026-01-06'
+slug: []
+categories:
+  - DID
+  - R
+  - Inf_causale
+tags:
+  - DiD
+  - Inf_causale
+---
+
+
+
+<p><strong>Après une pause bien trop longue, revenons sur la question de l’estimation des modèles <em>diff-in-diff</em>. Nous intéressons à l’équivalence entre les <em>2x2 diff-in-diff</em> et les <em>two-way fixed effects</em> (TWFE). Essayons de mieux la comprendre en explicitant le lien entre ces deux spécifications qui permettent l’estimation de l’effet moyen du traitement sur les traités (ATET). Pour ce faire, nous revenons aux moyennes estimées sur les différents sous-échantillons mis en évidence et jouons sur l’interprétation des régressions de l’<em>outcome</em> sur une série de variables binaires comme des moyennes pondérées.</strong></p>
+<p>Cela est réalisée en revenant sur un exemple que nous avons déjà traité (le cas 2 du post <a href="https://myecontricks.netlify.app/post/2025-01-11-diff-in-diff-bases-3/">Diff-in-diff base 3</a>), celui portant sur l’effet sur la satisfaction des patients (l’<em>outcome</em>: <strong>satis</strong>) de la mise en place d’une nouvelle procédure d’admission automatisée dans les hôpitaux à une date donnée. Le traitement est donc “la mise en place de la procédure”. Le groupe de contrôle est constitué d’hôpitaux qui, sur la période d’étude, n’ont pas mis en place la procédure. Les observations sont réalisées sur 7 mois (3 mois avant le traitement et 4 mois après).</p>
+<p>Mais avant d’aller plus loin chargeons les packages que nous mobiliserons par la suite.</p>
+<pre class="r"><code># packages de gestion des données
+library(tidyverse)
+library(haven)
+library(labelled)
+
+# packages de regression et tests
+library(fixest)
+library(lmtest)
+library(sandwich)
+library(car)</code></pre>
+<p>Ceci fait. Chargeons les données de l’étude via <strong>read_dta()</strong> du package <em>haven</em> dans la mesure où l’ensemble est issu de stata.</p>
+<pre class="r"><code>dat&lt;-read_dta(&quot;https://www.stata-press.com/data/r17/hospdd.dta&quot;)</code></pre>
+<div id="posons-le-contexte" class="section level1">
+<h1><strong>Posons le contexte</strong></h1>
+<p>Laissons de côté la description du panel pour en venir directement à l’estimation du modèle <em>diff-in-diff</em> que nous allons décortiquer. Utilisons les TWFE. Pour cela, mobilisons directement la fonction <strong>feols()</strong> du package <em>fixest</em> ainsi que <strong>coeftest()</strong> du package <em>lmtest</em> et <strong>vcovCL()</strong> de <em>sandwich</em> pour réaliser le test sur le coefficient d’intérêt (celui donnant la double différence).</p>
+<p>Il s’agit d’estimer <strong>satis</strong> en retenant comme variables expliquées <strong>procedure</strong> (1 pour les traités après la mise en place du traitement et 0 dans les cas contraires) puis <strong>hospital</strong> et <strong>month</strong> qui marquent respectivement les effets fixes individuels et temporels.</p>
+<pre class="r"><code>reg_f&lt;-feols(satis~procedure| 
+                 hospital + month,
+                 data = dat)
+
+coeftest(reg_f,vcov.=vcovCL(reg_f,cluster=dat$hospital)) %&gt;%
+     round(digits = 7)</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##           Estimate Std. Error t value  Pr(&gt;|t|)    
+## procedure 0.847988   0.031999  26.501 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>L’effet du traitement sur les traités (ATET) est de 0,847988. Autrement-dit, les hôpitaux traités ont connu une augmentation de 0,847988 en moyenne de la satisfaction suite à la mise en place de la nouvelle procédure au regard de ce qu’ils auraient connu s’ils ne l’avaient pas adopté (sous l’hypothèse de <em>parallel trend</em> …).</p>
+<p>Le même résultat peut être obtenu via la régression au format <em>2x2 diff-in-diff</em>. Celle-ci nous permet en plus de retrouver, au travers des coefficients estimés, les moyennes pour les différents groupes définis par les variables binaires <strong>Traite</strong> (1 si l’hôpital a mis en place la nouvelle procédure, 0 sinon) et <strong>Post</strong> (1 si la mesure de satisfaction a été relevée après le mois 3 et donc après la mise en place du traitement chez les traités). Rappelons que <strong>procedure</strong> est le produit des variables binaires <strong>Traite</strong> et <strong>Post</strong>. On a:</p>
+<pre class="r"><code>dat_&lt;-dat %&gt;% 
+  mutate(Traite=hospital%in%1:18,
+         Post=month&gt;3)
+ reg_&lt;-lm(satis~Traite+Post+Traite*Post,data=dat_)
+ coef(reg_)</code></pre>
+<pre><code>##         (Intercept)          TraiteTRUE            PostTRUE TraiteTRUE:PostTRUE 
+##           3.3925093           0.1328739          -0.0100198           0.8479879</code></pre>
+<p>Cela se réécrit facilement pour obtenir la table des moyennes associées à notre double différence.</p>
+<pre class="r"><code>avant&lt;-c(Controle=coef(reg_)[1],Traite=sum(coef(reg_)[1:2]))
+aprés&lt;-c(Controle=sum(coef(reg_)[c(1,3)]),Traite=sum(coef(reg_)))
+tab_moy&lt;-rbind(avant,aprés) %&gt;% data.frame() %&gt;% 
+  rename(Controle=`Controle..Intercept.`)
+tab_moy</code></pre>
+<pre><code>##       Controle   Traite
+## avant 3.392509 3.525383
+## aprés 3.382490 4.363351</code></pre>
+<p>Voyons comment on passe de l’un à l’autre.</p>
+</div>
+<div id="leffet-du-traitement-sans-contrôle" class="section level1">
+<h1><strong>L’effet du traitement sans contrôle</strong></h1>
+<p>Commençons par calculer la moyenne de <strong>satis</strong> sur l’ensemble de la base. Celle nous servira de référence. En effet, elle peut mécaniquement être retrouvée à partir de la moyenne pondérée des moyennes établies pour les différents groupes isolés.</p>
+<pre class="r"><code>mean(dat$satis)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Sur l’ensemble de la période d’étude, tous hôpitaux confondus, la satisfaction moyenne est de 3,61974. Cette valeur nous servira de référence.</p>
+<p>Venons en à l’effet de la mise en place de la procédure sur la satisfaction. Pour ce faire, nous utilisons la variable <strong>procedure</strong>.</p>
+<p>Comptons les observations pour les différentes valeurs de <strong>procedure</strong> ainsi que la moyenne de <strong>satis</strong> sur les groupes ainsi délimités.</p>
+<pre class="r"><code>dp&lt;-dat %&gt;%
+  summarise(nombre=n(),moyenne=mean(satis),.by=&quot;procedure&quot;) %&gt;% 
+  data.frame()
+dp</code></pre>
+<pre><code>##   procedure nombre  moyenne
+## 1         1   1532 4.363351
+## 2         0   5836 3.423695</code></pre>
+<p>On peut retrouver la moyenne générale de <strong>satis</strong> simplement en faisant la moyenne pondérée par le nombre d’observations des moyennes calculées sur chaque groupe. On a donc ici:</p>
+<pre class="r"><code>(5836/7368)*3.423695+(1532/7368)*4.363351</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>On retrouve bien la moyenne globale de <strong>satis</strong>. Le même calcul peut être réalisé encore plus rapidement à partir de la fonction <strong>weighted.mean()</strong>.</p>
+<pre class="r"><code>weighted.mean(dp$moyenne,dp$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Venons-en à l’effet moyen du traitement (ATE en anglais). Celui-ci correspond la différence de <strong>satis</strong> moyenne entre les traités et le groupe de contrôle. Soit ici:</p>
+<pre class="r"><code>4.363351-3.423695</code></pre>
+<pre><code>## [1] 0.939656</code></pre>
+<p>Sur l’ensemble de la période, il y a en moyenne une différence entre les traités et les non traités de 0,939656.</p>
+<p>La même valeur est obtenue directement en régressant <strong>satis</strong> par <strong>procedure</strong>.</p>
+<pre class="r"><code>reg_p&lt;-lm(satis~procedure, data=dat)
+summary(reg_p)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = satis ~ procedure, data = dat)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -3.3202 -0.6573 -0.0935  0.5579  5.3495 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  3.42370    0.01289  265.65   &lt;2e-16 ***
+## procedure    0.93966    0.02826   33.25   &lt;2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.9845 on 7366 degrees of freedom
+## Multiple R-squared:  0.1305,	Adjusted R-squared:  0.1304 
+## F-statistic:  1105 on 1 and 7366 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Le coefficient associé à <strong>procedure</strong> nous donne l’effet moyen du traitement (ATE).</p>
+<p>L’ensemble des valeurs moyennes pour les différents groupes peut être obtenu en utilisant les différents éléments donnés par la régression.</p>
+<pre class="r"><code>data.frame(procedure_0=reg_p$coefficients[1],
+           procedure_1=reg_p$coefficients[1]+reg_p$coefficients[2],
+           diff=reg_p$coefficients[2]) %&gt;% remove_rownames</code></pre>
+<pre><code>##   procedure_0 procedure_1      diff
+## 1    3.423695    4.363351 0.9396562</code></pre>
+<p>Mais ce n’est pas l’ATE qui nous intéresse mais l’ATET (<em>Average Treatement Effect on Treated</em>, l’effet moyen du traitement sur les traités) et nous pouvons l’obtenir en incluant les effets fixes temporels et individuels. Voyons cela progressivement.</p>
+</div>
+<div id="introduction-effet-fixes-temporels-les-mois" class="section level1">
+<h1><strong>Introduction effet fixes temporels (les mois)</strong></h1>
+<div id="les-mois-seuls" class="section level2">
+<h2><strong>les mois seuls</strong></h2>
+<p>Commençons par les mois seuls. Calculons la moyenne de <strong>satis</strong> sur chaque mois et dénombrons les observations.</p>
+<pre class="r"><code>dm&lt;-dat %&gt;% 
+  group_by(month) %&gt;%
+  summarise(nombre=n(),moyen=mean(satis)) %&gt;% 
+  data.frame()
+dm</code></pre>
+<pre><code>##   month nombre    moyen
+## 1     1   1842 3.444675
+## 2     2    921 3.435067
+## 3     3    921 3.466644
+## 4     4    921 3.794029
+## 5     5    921 3.787910
+## 6     6    921 3.793475
+## 7     7    921 3.786119</code></pre>
+<p>Si on fait la moyenne pondérée de l’ensemble, on retrouve bien notre moyenne globale.</p>
+<pre class="r"><code>weighted.mean(dm$moyen,dm$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Les moyennes sur les mois peuvent aussi être obtenues à partir d’une régression (ignorons la constante pour faciliter la lecture). C’est ce que font les effets fixes temps. Ils fixent la moyenne de la variable expliquée pour chaque période.</p>
+<pre class="r"><code>reg_m&lt;-lm(satis~factor(month)-1,data=dat)
+cbind(coef(reg_m))</code></pre>
+<pre><code>##                    [,1]
+## factor(month)1 3.444675
+## factor(month)2 3.435067
+## factor(month)3 3.466644
+## factor(month)4 3.794029
+## factor(month)5 3.787910
+## factor(month)6 3.793475
+## factor(month)7 3.786119</code></pre>
+</div>
+<div id="mois-et-procédure" class="section level2">
+<h2><strong>Mois et procédure</strong></h2>
+<p>Ceci étant posé. Introduisons la variable <strong>procedure</strong> pour avoir l’effet du traitement en contrôlant pour les facteurs variant uniquement dans le temps (les effets fixes temporels). La régression prend alors la forme suivante (sans la constante).</p>
+<pre class="r"><code>reg_mp&lt;-lm(satis~procedure+factor(month)-1,data=dat)
+cbind(coef(reg_mp))</code></pre>
+<pre><code>##                     [,1]
+## procedure      0.9808618
+## factor(month)1 3.4446750
+## factor(month)2 3.4350674
+## factor(month)3 3.4666436
+## factor(month)4 3.3861352
+## factor(month)5 3.3800164
+## factor(month)6 3.3855816
+## factor(month)7 3.3782250</code></pre>
+<p>L’effet de la nouvelle procédure, considérant tous ce qui bouge avec le temps comme fixe, est une augmentation moyenne de 0,9808618 (que l’on soit traité ou non).</p>
+<p>Notons que les moyennes de <strong>satis</strong> des trois premiers mois sont les mêmes que dans la configuration excluant <strong>procedure</strong>. Cela n’est pas surprenant dans la mesure où le traitement n’a pas encore été administré sur cette période (<strong>procedure</strong> est égal à 0 pour toutes les observations sur cette période).</p>
+<p>Voyons à quoi cela correspond en termes de moyennes pondérées. Pour cela, détaillons les choses en calculant pour chaque mois et pour chaque valeur de <strong>procedure</strong> la <strong>satis</strong> moyenne de même que la taille des groupes.</p>
+<pre class="r"><code>dmp&lt;-dat %&gt;% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=c(&quot;procedure&quot;,&quot;month&quot;)) %&gt;% 
+  arrange(procedure,month) %&gt;% data.frame()
+dmp</code></pre>
+<pre><code>##    procedure month nombre  moyenne
+## 1          0     1   1842 3.444675
+## 2          0     2    921 3.435067
+## 3          0     3    921 3.466644
+## 4          0     4    538 3.404663
+## 5          0     5    538 3.364763
+## 6          0     6    538 3.394999
+## 7          0     7    538 3.365534
+## 8          1     4    383 4.340971
+## 9          1     5    383 4.382305
+## 10         1     6    383 4.353215
+## 11         1     7    383 4.376914</code></pre>
+<p>A partir de là, on peut sans difficulté recalculer la moyenne pondérée de ces éléments pour retrouver la moyenne globale.</p>
+<pre class="r"><code>weighted.mean(dmp$moyenne,dmp$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Mais ce n’est pas ce qui nous intéresse en générale. Ce que l’on veut c’est la différence entre les traités et les non traités après le traitement. Isolons donc les données issues de la période <strong>post</strong> traitement (après le mois 3). On a ainsi:</p>
+<pre class="r"><code>post&lt;-dmp %&gt;% 
+  filter(month&gt;3)
+post</code></pre>
+<pre><code>##   procedure month nombre  moyenne
+## 1         0     4    538 3.404663
+## 2         0     5    538 3.364763
+## 3         0     6    538 3.394999
+## 4         0     7    538 3.365534
+## 5         1     4    383 4.340971
+## 6         1     5    383 4.382305
+## 7         1     6    383 4.353215
+## 8         1     7    383 4.376914</code></pre>
+<p>Pour retrouver la différence moyenne entre les traités et les non traités sur la période post-traitement, on peut établir les moyennes pondérées des différents mois considérés sur les groupes correspondant. On a alors:</p>
+<pre class="r"><code>data.frame(procedure_0=post %&gt;% 
+              filter(procedure==0) %&gt;% 
+              summarise(weighted.mean(moyenne,nombre)) %&gt;%
+              unlist() %&gt;% unname(),
+           procedure_1=post %&gt;% 
+              filter(procedure==1) %&gt;% 
+              summarise(weighted.mean(moyenne,nombre)) %&gt;%
+              unlist() %&gt;% unname()) %&gt;% 
+  mutate(diff=procedure_1-procedure_0)</code></pre>
+<pre><code>##   procedure_0 procedure_1      diff
+## 1     3.38249    4.363351 0.9808618</code></pre>
+<p>Cette différence correspond bien au coefficient pour <strong>procedure</strong> issue de la régression à effets fixes temps. Notons également que la période post-traitement correspond à la variable <strong>Post</strong> utilisée dans l’estimation de la 2x2 <em>diff-in-diff</em>. D’ailleurs, on peut retrouver cette différence à partir de cette estimation en faisant la somme du coefficient de la variable <strong>Traite</strong> et de celui associé à la double différence (l’interaction <strong>Traite</strong> <strong>Post</strong>).</p>
+<pre class="r"><code>data.frame(Traite=coef(reg_)[2],
+           DID=coef(reg_)[4],
+           somme=coef(reg_)[2]+coef(reg_)[4]) %&gt;% 
+  remove_rownames()</code></pre>
+<pre><code>##      Traite       DID     somme
+## 1 0.1328739 0.8479879 0.9808618</code></pre>
+<p>Cela correspond simplement à la différence entre les <strong>satis</strong> moyennes des traités et du groupe de contrôle sur la période post traitement.</p>
+<pre class="r"><code>tab_moy %&gt;% 
+  slice(2) %&gt;% 
+  mutate(diff=Traite-Controle)</code></pre>
+<pre><code>##       Controle   Traite      diff
+## aprés  3.38249 4.363351 0.9808618</code></pre>
+<p>Avant de passer à l’examen des effets fixes individuels, voyons ce que les résultats de la régression nous permettent de mettre en avant quant aux moyennes pour chaque mois pour les traités et le groupe de contrôle.</p>
+<pre class="r"><code>data.frame(control=coef(reg_mp)[2:8],
+           traite=coef(reg_mp)[2:8]+c(0,0,0,rep(coef(reg_mp)[1],4))) %&gt;% 
+mutate(diff=traite-control)</code></pre>
+<pre><code>##                 control   traite      diff
+## factor(month)1 3.444675 3.444675 0.0000000
+## factor(month)2 3.435067 3.435067 0.0000000
+## factor(month)3 3.466644 3.466644 0.0000000
+## factor(month)4 3.386135 4.366997 0.9808618
+## factor(month)5 3.380016 4.360878 0.9808618
+## factor(month)6 3.385582 4.366443 0.9808618
+## factor(month)7 3.378225 4.359087 0.9808618</code></pre>
+</div>
+</div>
+<div id="introduction-effet-fixes-individuels-les-hôpitaux" class="section level1">
+<h1><strong>Introduction effet fixes individuels (les hôpitaux)</strong></h1>
+<div id="les-hôpitaux-seuls" class="section level2">
+<h2><strong>Les hôpitaux seuls</strong></h2>
+<p>Passons à l’examen des effets fixes individuels. Commençons par leur prise en compte seuls (sans introduction de la variable <strong>procedure</strong>). Calculons la satisfaction moyenne par hôpitaux et incluons leur dénombrement.</p>
+<pre class="r"><code>dh&lt;-dat %&gt;% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=&quot;hospital&quot;) %&gt;% 
+  data.frame()
+dh</code></pre>
+<pre><code>##    hospital nombre  moyenne
+## 1         1    184 3.593731
+## 2         2    168 4.002297
+## 3         3    152 4.127356
+## 4         4    200 3.821241
+## 5         5    200 3.448378
+## 6         6    200 4.041594
+## 7         7    232 4.998147
+## 8         8    176 3.665607
+## 9         9    160 2.075216
+## 10       10    168 5.276576
+## 11       11    176 3.814696
+## 12       12    160 3.498427
+## 13       13    184 4.089324
+## 14       14    152 3.826774
+## 15       15    152 3.449237
+## 16       16    168 5.007999
+## 17       17    144 4.017274
+## 18       18     88 3.747007
+## 19       19    152 2.424435
+## 20       20    168 3.217124
+## 21       21    136 4.364074
+## 22       22    144 3.969052
+## 23       23    152 3.871457
+## 24       24    120 2.861611
+## 25       25     96 3.816211
+## 26       26    168 3.383984
+## 27       27    192 2.771083
+## 28       28    136 3.881732
+## 29       29    160 3.418288
+## 30       30     88 3.001815
+## 31       31    168 3.681822
+## 32       32    160 2.846391
+## 33       33    168 2.715762
+## 34       34    216 3.169325
+## 35       35    192 3.523848
+## 36       36    184 5.307879
+## 37       37     96 3.310141
+## 38       38    176 3.082931
+## 39       39    144 3.146240
+## 40       40    176 4.291270
+## 41       41    192 3.020002
+## 42       42    128 4.050874
+## 43       43    152 2.397304
+## 44       44    104 3.204149
+## 45       45    192 2.955987
+## 46       46    144 3.248228</code></pre>
+<p>Dans la mesure où il y a 46 hôpitaux, le tableau est un peu long. La moyenne pondérée des éléments du tableau nous donne, sans surprise, la moyenne sur l’ensemble des observations.</p>
+<pre class="r"><code>weighted.mean(dh$moyenne,dh$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Les différentes moyennes par hôpital s’obtient également <em>via</em> la régression (nous ignorons la constante).</p>
+<pre class="r"><code>reg_h&lt;-lm(satis~factor(hospital)-1,data=dat)
+cbind(coef(reg_h))</code></pre>
+<pre><code>##                        [,1]
+## factor(hospital)1  3.593731
+## factor(hospital)2  4.002297
+## factor(hospital)3  4.127356
+## factor(hospital)4  3.821241
+## factor(hospital)5  3.448378
+## factor(hospital)6  4.041594
+## factor(hospital)7  4.998147
+## factor(hospital)8  3.665607
+## factor(hospital)9  2.075216
+## factor(hospital)10 5.276576
+## factor(hospital)11 3.814696
+## factor(hospital)12 3.498427
+## factor(hospital)13 4.089324
+## factor(hospital)14 3.826774
+## factor(hospital)15 3.449237
+## factor(hospital)16 5.007999
+## factor(hospital)17 4.017274
+## factor(hospital)18 3.747007
+## factor(hospital)19 2.424435
+## factor(hospital)20 3.217124
+## factor(hospital)21 4.364074
+## factor(hospital)22 3.969052
+## factor(hospital)23 3.871457
+## factor(hospital)24 2.861611
+## factor(hospital)25 3.816211
+## factor(hospital)26 3.383984
+## factor(hospital)27 2.771083
+## factor(hospital)28 3.881732
+## factor(hospital)29 3.418288
+## factor(hospital)30 3.001815
+## factor(hospital)31 3.681822
+## factor(hospital)32 2.846391
+## factor(hospital)33 2.715762
+## factor(hospital)34 3.169325
+## factor(hospital)35 3.523848
+## factor(hospital)36 5.307879
+## factor(hospital)37 3.310141
+## factor(hospital)38 3.082931
+## factor(hospital)39 3.146240
+## factor(hospital)40 4.291270
+## factor(hospital)41 3.020002
+## factor(hospital)42 4.050874
+## factor(hospital)43 2.397304
+## factor(hospital)44 3.204149
+## factor(hospital)45 2.955987
+## factor(hospital)46 3.248228</code></pre>
+<p>On retrouve bien les 46 mêmes moyennes.</p>
+</div>
+<div id="hôpitaux-et-procédure" class="section level2">
+<h2><strong>Hôpitaux et procédure</strong></h2>
+<p>Introduisons la variable <strong>procedure</strong> dans l’analyse pour avoir l’effet du traitement en contrôlant pour les facteurs ne variant pas dans temps mais uniquement d’un individu/hôpital à l’autre (les effets fixes individuels). La régression prend alors la forme suivante (sans la constante).</p>
+<pre class="r"><code>reg_hp&lt;-lm(satis~procedure+factor(hospital)-1,
+          data=dat)
+cbind(coef(reg_hp))</code></pre>
+<pre><code>##                         [,1]
+## procedure          0.8379681
+## factor(hospital)1  3.1747469
+## factor(hospital)2  3.5833133
+## factor(hospital)3  3.7083717
+## factor(hospital)4  3.4022570
+## factor(hospital)5  3.0293939
+## factor(hospital)6  3.6226103
+## factor(hospital)7  4.5791632
+## factor(hospital)8  3.2466226
+## factor(hospital)9  1.6562319
+## factor(hospital)10 4.8575915
+## factor(hospital)11 3.3957122
+## factor(hospital)12 3.0794434
+## factor(hospital)13 3.6703400
+## factor(hospital)14 3.4077895
+## factor(hospital)15 3.0302534
+## factor(hospital)16 4.5890148
+## factor(hospital)17 3.5982898
+## factor(hospital)18 3.3280229
+## factor(hospital)19 2.4244352
+## factor(hospital)20 3.2171244
+## factor(hospital)21 4.3640740
+## factor(hospital)22 3.9690523
+## factor(hospital)23 3.8714572
+## factor(hospital)24 2.8616109
+## factor(hospital)25 3.8162106
+## factor(hospital)26 3.3839841
+## factor(hospital)27 2.7710826
+## factor(hospital)28 3.8817323
+## factor(hospital)29 3.4182882
+## factor(hospital)30 3.0018149
+## factor(hospital)31 3.6818217
+## factor(hospital)32 2.8463913
+## factor(hospital)33 2.7157618
+## factor(hospital)34 3.1693246
+## factor(hospital)35 3.5238479
+## factor(hospital)36 5.3078794
+## factor(hospital)37 3.3101405
+## factor(hospital)38 3.0829310
+## factor(hospital)39 3.1462400
+## factor(hospital)40 4.2912700
+## factor(hospital)41 3.0200024
+## factor(hospital)42 4.0508739
+## factor(hospital)43 2.3973044
+## factor(hospital)44 3.2041490
+## factor(hospital)45 2.9559875
+## factor(hospital)46 3.2482284</code></pre>
+<p>L’effet de la nouvelle procédure, considérant tout ce qui différent entre individus/hôpitaux comme fixes, est une augmentation de 0,837981 (que l’on soit avant ou après le traitement, peu importe ici).</p>
+<p>Notons que les moyennes de <strong>satis</strong> des hôpitaux du groupe de contrôle (les hôpitaux 19 et plus) sont les mêmes que dans la configuration excluant <strong>procedure</strong>. Cela n’est pas surprenant, dans la mesure où ils ne reçoivent jamais le traitement.</p>
+<p>Voyons à quoi cela correspond en termes de moyennes pondérées. Pour cela, détaillons les choses en calculant pour chaque hôpital et pour chaque valeur de <strong>procedure</strong> la <strong>satis</strong> moyenne. Ajoutons la taille des groupes définis de la sorte.</p>
+<pre class="r"><code>dhp&lt;-dat %&gt;% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=c(&quot;hospital&quot;,&quot;procedure&quot;)) %&gt;% 
+  arrange(procedure) %&gt;% data.frame()
+dhp</code></pre>
+<pre><code>##    hospital procedure nombre  moyenne
+## 1         1         0     92 3.226986
+## 2         2         0     84 3.515882
+## 3         3         0     76 3.679972
+## 4         4         0    100 3.538318
+## 5         5         0    100 2.952918
+## 6         6         0    100 3.595590
+## 7         7         0    116 4.562027
+## 8         8         0     88 3.274219
+## 9         9         0     80 1.675684
+## 10       10         0     84 4.799900
+## 11       11         0     88 3.389233
+## 12       12         0     80 3.153249
+## 13       13         0     92 3.689795
+## 14       14         0     76 3.368146
+## 15       15         0     76 2.926883
+## 16       16         0     84 4.603729
+## 17       17         0     72 3.594985
+## 18       18         0     44 3.449757
+## 19       19         0    152 2.424435
+## 20       20         0    168 3.217124
+## 21       21         0    136 4.364074
+## 22       22         0    144 3.969052
+## 23       23         0    152 3.871457
+## 24       24         0    120 2.861611
+## 25       25         0     96 3.816211
+## 26       26         0    168 3.383984
+## 27       27         0    192 2.771083
+## 28       28         0    136 3.881732
+## 29       29         0    160 3.418288
+## 30       30         0     88 3.001815
+## 31       31         0    168 3.681822
+## 32       32         0    160 2.846391
+## 33       33         0    168 2.715762
+## 34       34         0    216 3.169325
+## 35       35         0    192 3.523848
+## 36       36         0    184 5.307879
+## 37       37         0     96 3.310141
+## 38       38         0    176 3.082931
+## 39       39         0    144 3.146240
+## 40       40         0    176 4.291270
+## 41       41         0    192 3.020002
+## 42       42         0    128 4.050874
+## 43       43         0    152 2.397304
+## 44       44         0    104 3.204149
+## 45       45         0    192 2.955987
+## 46       46         0    144 3.248228
+## 47        1         1     92 3.960476
+## 48        2         1     84 4.488712
+## 49        3         1     76 4.574739
+## 50        4         1    100 4.104165
+## 51        5         1    100 3.943838
+## 52        6         1    100 4.487599
+## 53        7         1    116 5.434268
+## 54        8         1     88 4.056994
+## 55        9         1     80 2.474748
+## 56       10         1     84 5.753251
+## 57       11         1     88 4.240159
+## 58       12         1     80 3.843606
+## 59       13         1     92 4.488853
+## 60       14         1     76 4.285401
+## 61       15         1     76 3.971592
+## 62       16         1     84 5.412269
+## 63       17         1     72 4.439562
+## 64       18         1     44 4.044257</code></pre>
+<p>On a, cette fois, 64 moyennes (et plus 46). Certains hôpitaux ont deux valeurs de procédure (1 ou 0). Il s’agit des 18 premiers (les numéros 1 à 18, les traités). On a donc 46 plus 18 moyennes, soit 64.</p>
+<p>Comme toujours, leur moyenne pondérée nous redonne la moyenne globale.</p>
+<pre class="r"><code>weighted.mean(dhp$moyenne,dhp$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Concentrons-nous sur les hôpitaux qui adoptent à un moment ou un autre la nouvelle procédure, ceux pour lesquels nous avons deux moyennes (les traités, dans l’analyse 2x2 <em>diff-in-diff</em>, ceux qui sont repérés par la variable <strong>Traite</strong> égale à 1).</p>
+<p>Calculons les moyennes pondérées sur ce sous-échantillon (les traités, hôpitaux de 1 à 18) pour les cas où la procédure n’a pas encore été mise en plus place, puis ceux où elle l’a été. Enfin, établissons la différence entre ces deux moyennes.</p>
+<pre class="r"><code>data.frame(procedure_0=dhp %&gt;% 
+                filter(procedure==0&amp;hospital&lt;=18) %&gt;% 
+                summarise(weighted.mean(moyenne,nombre)) %&gt;%
+                unlist() %&gt;% unname(),
+           procedure_1=dhp %&gt;% 
+                filter(procedure==1&amp;hospital&lt;=18) %&gt;% 
+                summarise(weighted.mean(moyenne,nombre)) %&gt;%
+                unlist() %&gt;% unname()) %&gt;% 
+  mutate(diff=procedure_1-procedure_0)</code></pre>
+<pre><code>##   procedure_0 procedure_1      diff
+## 1    3.525383    4.363351 0.8379681</code></pre>
+<p>Cette différence correspond bien au coefficient pour <strong>procedure</strong> issu de la régression à effets fixes individuels.</p>
+<p>Notons également que le sous-échantillon des traités correspond à la variable <strong>Traite</strong> utilisée dans l’estimation de la 2x2 <em>diff-in-diff</em>. D’ailleurs, on peut retrouver cette différence à partir de cette estimation en faisant la somme du coefficient de la variable <strong>Post</strong> et de celui associé à la double différence (l’interaction <strong>Traite</strong> <strong>Post</strong>).</p>
+<pre class="r"><code>data.frame(Post=coef(reg_)[3],
+           DID=coef(reg_)[4],
+           somme=coef(reg_)[3]+coef(reg_)[4]) %&gt;%
+  remove_rownames()</code></pre>
+<pre><code>##         Post       DID     somme
+## 1 -0.0100198 0.8479879 0.8379681</code></pre>
+<p>Cela correspond simplement à la différence entre les <strong>satis</strong> moyennes des traités avant et après le traitement. On trouve la même différence en faisant la différence entre les deux items de la seconde colonne de la table des moyennes.</p>
+<pre class="r"><code>tab_moy %&gt;%
+  select(Traite) %&gt;% 
+  rownames_to_column( var = &quot;name&quot;) %&gt;% 
+  pivot_wider(names_from = name, values_from = Traite) %&gt;% 
+  mutate(diff=aprés-avant,t=&quot;Traité&quot;) %&gt;% 
+  column_to_rownames(var=&quot;t&quot;)</code></pre>
+<pre><code>##           avant    aprés      diff
+## Traité 3.525383 4.363351 0.8379681</code></pre>
+<p>Voyons ce que les résultats de la régression nous permettent de mettre en avant quand aux moyennes pour chaque hôpital avant et après la mise en place du traitement (pour les traités).</p>
+<pre class="r"><code>data.frame(avant=coef(reg_hp)[2:47],
+           aprés=c(coef(reg_hp)[2:19]+rep(coef(reg_hp)[1],18),
+                  coef(reg_hp)[20:47])) %&gt;% 
+mutate(diff=aprés-avant)</code></pre>
+<pre><code>##                       avant    aprés      diff
+## factor(hospital)1  3.174747 4.012715 0.8379681
+## factor(hospital)2  3.583313 4.421281 0.8379681
+## factor(hospital)3  3.708372 4.546340 0.8379681
+## factor(hospital)4  3.402257 4.240225 0.8379681
+## factor(hospital)5  3.029394 3.867362 0.8379681
+## factor(hospital)6  3.622610 4.460578 0.8379681
+## factor(hospital)7  4.579163 5.417131 0.8379681
+## factor(hospital)8  3.246623 4.084591 0.8379681
+## factor(hospital)9  1.656232 2.494200 0.8379681
+## factor(hospital)10 4.857592 5.695560 0.8379681
+## factor(hospital)11 3.395712 4.233680 0.8379681
+## factor(hospital)12 3.079443 3.917412 0.8379681
+## factor(hospital)13 3.670340 4.508308 0.8379681
+## factor(hospital)14 3.407789 4.245758 0.8379681
+## factor(hospital)15 3.030253 3.868221 0.8379681
+## factor(hospital)16 4.589015 5.426983 0.8379681
+## factor(hospital)17 3.598290 4.436258 0.8379681
+## factor(hospital)18 3.328023 4.165991 0.8379681
+## factor(hospital)19 2.424435 2.424435 0.0000000
+## factor(hospital)20 3.217124 3.217124 0.0000000
+## factor(hospital)21 4.364074 4.364074 0.0000000
+## factor(hospital)22 3.969052 3.969052 0.0000000
+## factor(hospital)23 3.871457 3.871457 0.0000000
+## factor(hospital)24 2.861611 2.861611 0.0000000
+## factor(hospital)25 3.816211 3.816211 0.0000000
+## factor(hospital)26 3.383984 3.383984 0.0000000
+## factor(hospital)27 2.771083 2.771083 0.0000000
+## factor(hospital)28 3.881732 3.881732 0.0000000
+## factor(hospital)29 3.418288 3.418288 0.0000000
+## factor(hospital)30 3.001815 3.001815 0.0000000
+## factor(hospital)31 3.681822 3.681822 0.0000000
+## factor(hospital)32 2.846391 2.846391 0.0000000
+## factor(hospital)33 2.715762 2.715762 0.0000000
+## factor(hospital)34 3.169325 3.169325 0.0000000
+## factor(hospital)35 3.523848 3.523848 0.0000000
+## factor(hospital)36 5.307879 5.307879 0.0000000
+## factor(hospital)37 3.310141 3.310141 0.0000000
+## factor(hospital)38 3.082931 3.082931 0.0000000
+## factor(hospital)39 3.146240 3.146240 0.0000000
+## factor(hospital)40 4.291270 4.291270 0.0000000
+## factor(hospital)41 3.020002 3.020002 0.0000000
+## factor(hospital)42 4.050874 4.050874 0.0000000
+## factor(hospital)43 2.397304 2.397304 0.0000000
+## factor(hospital)44 3.204149 3.204149 0.0000000
+## factor(hospital)45 2.955987 2.955987 0.0000000
+## factor(hospital)46 3.248228 3.248228 0.0000000</code></pre>
+</div>
+</div>
+<div id="laction-conjointe-des-deux-effets-fixes" class="section level1">
+<h1><strong>L’action conjointe des deux effets fixes</strong></h1>
+<div id="les-effets-fixes-seuls" class="section level2">
+<h2><strong>Les effets fixes seuls</strong></h2>
+<p>Voyons maintenant ce qu’il en est de la combinaison des deux types d’effets fixes (temporels et individuels). Commençons par examiner la situation sans <strong>procedure</strong>. Cette fois tout d’abord à partir des moyennes définies à partir des variables <strong>hospital</strong> et <strong>month</strong> (nos effets fixes individuels et temporels).</p>
+<pre class="r"><code>dhm&lt;-dat %&gt;% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=c(&quot;hospital&quot;,&quot;month&quot;)) %&gt;% 
+  arrange(hospital,month) %&gt;% data.frame()
+dhm</code></pre>
+<pre><code>##     hospital month nombre  moyenne
+## 1          1     1     46 3.294767
+## 2          1     2     23 3.162184
+## 3          1     3     23 3.156225
+## 4          1     4     23 3.835845
+## 5          1     5     23 4.103837
+## 6          1     6     23 3.935414
+## 7          1     7     23 3.966808
+## 8          2     1     42 3.528171
+## 9          2     2     21 3.499205
+## 10         2     3     21 3.507982
+## 11         2     4     21 4.396861
+## 12         2     5     21 4.657443
+## 13         2     6     21 4.364859
+## 14         2     7     21 4.535687
+## 15         3     1     38 3.675410
+## 16         3     2     19 3.604969
+## 17         3     3     19 3.764100
+## 18         3     4     19 4.488301
+## 19         3     5     19 4.742431
+## 20         3     6     19 4.480782
+## 21         3     7     19 4.587443
+## 22         4     1     50 3.559696
+## 23         4     2     25 3.521826
+## 24         4     3     25 3.512053
+## 25         4     4     25 4.050345
+## 26         4     5     25 4.134170
+## 27         4     6     25 4.128784
+## 28         4     7     25 4.103359
+## 29         5     1     50 2.890192
+## 30         5     2     25 3.005734
+## 31         5     3     25 3.025554
+## 32         5     4     25 3.936718
+## 33         5     5     25 3.798510
+## 34         5     6     25 4.145755
+## 35         5     7     25 3.894369
+## 36         6     1     50 3.572328
+## 37         6     2     25 3.657448
+## 38         6     3     25 3.580258
+## 39         6     4     25 4.722814
+## 40         6     5     25 4.405616
+## 41         6     6     25 4.378953
+## 42         6     7     25 4.443012
+## 43         7     1     58 4.570614
+## 44         7     2     29 4.496797
+## 45         7     3     29 4.610082
+## 46         7     4     29 5.409216
+## 47         7     5     29 5.351612
+## 48         7     6     29 5.525931
+## 49         7     7     29 5.450312
+## 50         8     1     44 3.215010
+## 51         8     2     22 3.307042
+## 52         8     3     22 3.359812
+## 53         8     4     22 4.105187
+## 54         8     5     22 4.099177
+## 55         8     6     22 3.859924
+## 56         8     7     22 4.163690
+## 57         9     1     40 1.712429
+## 58         9     2     20 1.666825
+## 59         9     3     20 1.611052
+## 60         9     4     20 2.496835
+## 61         9     5     20 2.597356
+## 62         9     6     20 2.344122
+## 63         9     7     20 2.460679
+## 64        10     1     42 4.830663
+## 65        10     2     21 4.839029
+## 66        10     3     21 4.699245
+## 67        10     4     21 5.652775
+## 68        10     5     21 5.635432
+## 69        10     6     21 5.940653
+## 70        10     7     21 5.784146
+## 71        11     1     44 3.414440
+## 72        11     2     22 3.348725
+## 73        11     3     22 3.379328
+## 74        11     4     22 4.212406
+## 75        11     5     22 4.124701
+## 76        11     6     22 4.310504
+## 77        11     7     22 4.313027
+## 78        12     1     40 3.104288
+## 79        12     2     20 3.088168
+## 80        12     3     20 3.316253
+## 81        12     4     20 3.786197
+## 82        12     5     20 4.015355
+## 83        12     6     20 3.713185
+## 84        12     7     20 3.859686
+## 85        13     1     46 3.652576
+## 86        13     2     23 3.834354
+## 87        13     3     23 3.619674
+## 88        13     4     23 4.227201
+## 89        13     5     23 4.551923
+## 90        13     6     23 4.639089
+## 91        13     7     23 4.537201
+## 92        14     1     38 3.300598
+## 93        14     2     19 3.419073
+## 94        14     3     19 3.452313
+## 95        14     4     19 4.283745
+## 96        14     5     19 4.304460
+## 97        14     6     19 4.328520
+## 98        14     7     19 4.224881
+## 99        15     1     38 2.963817
+## 100       15     2     19 2.968847
+## 101       15     3     19 2.811053
+## 102       15     4     19 3.865600
+## 103       15     5     19 3.927470
+## 104       15     6     19 4.009936
+## 105       15     7     19 4.083361
+## 106       16     1     42 4.626985
+## 107       16     2     21 4.571348
+## 108       16     3     21 4.589599
+## 109       16     4     21 5.437380
+## 110       16     5     21 5.484893
+## 111       16     6     21 5.314686
+## 112       16     7     21 5.412115
+## 113       17     1     36 3.656979
+## 114       17     2     18 3.447304
+## 115       17     3     18 3.618679
+## 116       17     4     18 4.665748
+## 117       17     5     18 4.336597
+## 118       17     6     18 4.349978
+## 119       17     7     18 4.405925
+## 120       18     1     22 3.498598
+## 121       18     2     11 3.217040
+## 122       18     3     11 3.584794
+## 123       18     4     11 4.050350
+## 124       18     5     11 4.236538
+## 125       18     6     11 3.881244
+## 126       18     7     11 4.008895
+## 127       19     1     38 2.468924
+## 128       19     2     19 2.378622
+## 129       19     3     19 2.566871
+## 130       19     4     19 2.509180
+## 131       19     5     19 2.305888
+## 132       19     6     19 2.336998
+## 133       19     7     19 2.360074
+## 134       20     1     42 3.143998
+## 135       20     2     21 3.376456
+## 136       20     3     21 3.169398
+## 137       20     4     21 3.288617
+## 138       20     5     21 3.149036
+## 139       20     6     21 3.267287
+## 140       20     7     21 3.198206
+## 141       21     1     34 4.414964
+## 142       21     2     17 4.354336
+## 143       21     3     17 4.393880
+## 144       21     4     17 4.445820
+## 145       21     5     17 4.307574
+## 146       21     6     17 4.348000
+## 147       21     7     17 4.233054
+## 148       22     1     36 3.865758
+## 149       22     2     18 3.983424
+## 150       22     3     18 4.169397
+## 151       22     4     18 4.164165
+## 152       22     5     18 3.755407
+## 153       22     6     18 3.932387
+## 154       22     7     18 4.016123
+## 155       23     1     38 4.045333
+## 156       23     2     19 3.637942
+## 157       23     3     19 3.888473
+## 158       23     4     19 3.864377
+## 159       23     5     19 3.778621
+## 160       23     6     19 3.977279
+## 161       23     7     19 3.734300
+## 162       24     1     30 2.988274
+## 163       24     2     15 2.819690
+## 164       24     3     15 2.611717
+## 165       24     4     15 2.831395
+## 166       24     5     15 2.829884
+## 167       24     6     15 2.847449
+## 168       24     7     15 2.976204
+## 169       25     1     24 3.880890
+## 170       25     2     12 3.789121
+## 171       25     3     12 3.755747
+## 172       25     4     12 3.727311
+## 173       25     5     12 3.768996
+## 174       25     6     12 3.800797
+## 175       25     7     12 3.925934
+## 176       26     1     42 3.346577
+## 177       26     2     21 3.364710
+## 178       26     3     21 3.277267
+## 179       26     4     21 3.378074
+## 180       26     5     21 3.502661
+## 181       26     6     21 3.501680
+## 182       26     7     21 3.354325
+## 183       27     1     48 2.837780
+## 184       27     2     24 2.698411
+## 185       27     3     24 2.779935
+## 186       27     4     24 2.796322
+## 187       27     5     24 2.711391
+## 188       27     6     24 2.888480
+## 189       27     7     24 2.618562
+## 190       28     1     34 3.769191
+## 191       28     2     17 3.910716
+## 192       28     3     17 4.192575
+## 193       28     4     17 3.886515
+## 194       28     5     17 3.890808
+## 195       28     6     17 3.797246
+## 196       28     7     17 3.837616
+## 197       29     1     40 3.457700
+## 198       29     2     20 3.405889
+## 199       29     3     20 3.376643
+## 200       29     4     20 3.516957
+## 201       29     5     20 3.353748
+## 202       29     6     20 3.360550
+## 203       29     7     20 3.417118
+## 204       30     1     22 3.050413
+## 205       30     2     11 3.127054
+## 206       30     3     11 3.087344
+## 207       30     4     11 2.914344
+## 208       30     5     11 3.117240
+## 209       30     6     11 2.882277
+## 210       30     7     11 2.785435
+## 211       31     1     42 3.727927
+## 212       31     2     21 3.653830
+## 213       31     3     21 3.715516
+## 214       31     4     21 3.584733
+## 215       31     5     21 3.663619
+## 216       31     6     21 3.806281
+## 217       31     7     21 3.574742
+## 218       32     1     40 2.715991
+## 219       32     2     20 2.888964
+## 220       32     3     20 2.700003
+## 221       32     4     20 2.826214
+## 222       32     5     20 3.023582
+## 223       32     6     20 2.791900
+## 224       32     7     20 3.108485
+## 225       33     1     42 2.717112
+## 226       33     2     21 2.716592
+## 227       33     3     21 2.758113
+## 228       33     4     21 2.680135
+## 229       33     5     21 2.738722
+## 230       33     6     21 2.678698
+## 231       33     7     21 2.719610
+## 232       34     1     54 3.178651
+## 233       34     2     27 3.140779
+## 234       34     3     27 3.263976
+## 235       34     4     27 3.095312
+## 236       34     5     27 3.059489
+## 237       34     6     27 3.139628
+## 238       34     7     27 3.298111
+## 239       35     1     48 3.552450
+## 240       35     2     24 3.559196
+## 241       35     3     24 3.639077
+## 242       35     4     24 3.443879
+## 243       35     5     24 3.481260
+## 244       35     6     24 3.664960
+## 245       35     7     24 3.297512
+## 246       36     1     46 5.397538
+## 247       36     2     23 5.337811
+## 248       36     3     23 5.299218
+## 249       36     4     23 5.235846
+## 250       36     5     23 5.201012
+## 251       36     6     23 5.404254
+## 252       36     7     23 5.189819
+## 253       37     1     24 3.241063
+## 254       37     2     12 3.354873
+## 255       37     3     12 3.403870
+## 256       37     4     12 3.204738
+## 257       37     5     12 3.450010
+## 258       37     6     12 3.291440
+## 259       37     7     12 3.294065
+## 260       38     1     44 3.045142
+## 261       38     2     22 3.063140
+## 262       38     3     22 3.143804
+## 263       38     4     22 3.122797
+## 264       38     5     22 3.195531
+## 265       38     6     22 2.984886
+## 266       38     7     22 3.063006
+## 267       39     1     36 3.035507
+## 268       39     2     18 3.246045
+## 269       39     3     18 3.216173
+## 270       39     4     18 3.303915
+## 271       39     5     18 3.033606
+## 272       39     6     18 3.111916
+## 273       39     7     18 3.187250
+## 274       40     1     44 4.244511
+## 275       40     2     22 4.336463
+## 276       40     3     22 4.242600
+## 277       40     4     22 4.336869
+## 278       40     5     22 4.385475
+## 279       40     6     22 4.197547
+## 280       40     7     22 4.342186
+## 281       41     1     48 3.059235
+## 282       41     2     24 2.902013
+## 283       41     3     24 3.034514
+## 284       41     4     24 3.006928
+## 285       41     5     24 3.001968
+## 286       41     6     24 3.019362
+## 287       41     7     24 3.076763
+## 288       42     1     32 4.042918
+## 289       42     2     16 4.049629
+## 290       42     3     16 3.972737
+## 291       42     4     16 4.080789
+## 292       42     5     16 4.027572
+## 293       42     6     16 4.108867
+## 294       42     7     16 4.081561
+## 295       43     1     38 2.321974
+## 296       43     2     19 2.557013
+## 297       43     3     19 2.484999
+## 298       43     4     19 2.583634
+## 299       43     5     19 2.121508
+## 300       43     6     19 2.419765
+## 301       43     7     19 2.367568
+## 302       44     1     26 3.212882
+## 303       44     2     13 3.169327
+## 304       44     3     13 3.336223
+## 305       44     4     13 3.367477
+## 306       44     5     13 3.132786
+## 307       44     6     13 3.231733
+## 308       44     7     13 2.969883
+## 309       45     1     48 2.902479
+## 310       45     2     24 2.831378
+## 311       45     3     24 3.002851
+## 312       45     4     24 3.024972
+## 313       45     5     24 3.012634
+## 314       45     6     24 3.084945
+## 315       45     7     24 2.886161
+## 316       46     1     36 3.230923
+## 317       46     2     18 3.137551
+## 318       46     3     18 3.365402
+## 319       46     4     18 3.199823
+## 320       46     5     18 3.364048
+## 321       46     6     18 3.098263
+## 322       46     7     18 3.358894</code></pre>
+<p>On obtient 322 différentes moyennes constituées à partir des groupes définis (46 hôpitaux fois 7 mois). L’ensemble est plus fastidieux à gérer, mais l’on peut vérifier que la moyenne pondérée des résultats obtenus nous renvoie bien la moyenne globale.</p>
+<pre class="r"><code>weighted.mean(dhm$moyenne,dhm$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Les mêmes moyennes peuvent être obtenues <em>via</em> la régression linéaire des variables définissant les effets fixes et de leurs interactions.</p>
+<pre class="r"><code>reg_hm&lt;-lm(satis~factor(hospital)*factor(month)-1,data=dat)
+cbind(coef(reg_hm))</code></pre>
+<pre><code>##                                           [,1]
+## factor(hospital)1                  3.294766628
+## factor(hospital)2                  3.528171244
+## factor(hospital)3                  3.675409725
+## factor(hospital)4                  3.559695964
+## factor(hospital)5                  2.890191872
+## factor(hospital)6                  3.572327750
+## factor(hospital)7                  4.570614235
+## factor(hospital)8                  3.215010437
+## factor(hospital)9                  1.712429498
+## factor(hospital)10                 4.830662566
+## factor(hospital)11                 3.414439884
+## factor(hospital)12                 3.104288137
+## factor(hospital)13                 3.652575550
+## factor(hospital)14                 3.300598101
+## factor(hospital)15                 2.963816737
+## factor(hospital)16                 4.626984534
+## factor(hospital)17                 3.656979356
+## factor(hospital)18                 3.498597535
+## factor(hospital)19                 2.468923795
+## factor(hospital)20                 3.143997647
+## factor(hospital)21                 4.414964430
+## factor(hospital)22                 3.865757611
+## factor(hospital)23                 4.045333216
+## factor(hospital)24                 2.988274185
+## factor(hospital)25                 3.880889704
+## factor(hospital)26                 3.346577343
+## factor(hospital)27                 2.837779887
+## factor(hospital)28                 3.769191097
+## factor(hospital)29                 3.457699859
+## factor(hospital)30                 3.050412590
+## factor(hospital)31                 3.727926618
+## factor(hospital)32                 2.715991035
+## factor(hospital)33                 2.717112010
+## factor(hospital)34                 3.178651041
+## factor(hospital)35                 3.552450111
+## factor(hospital)36                 5.397537812
+## factor(hospital)37                 3.241063491
+## factor(hospital)38                 3.045142247
+## factor(hospital)39                 3.035507470
+## factor(hospital)40                 4.244510526
+## factor(hospital)41                 3.059235111
+## factor(hospital)42                 4.042917840
+## factor(hospital)43                 2.321974356
+## factor(hospital)44                 3.212881561
+## factor(hospital)45                 2.902479008
+## factor(hospital)46                 3.230923043
+## factor(month)2                    -0.132582836
+## factor(month)3                    -0.138541356
+## factor(month)4                     0.541078417
+## factor(month)5                     0.809070541
+## factor(month)6                     0.640647800
+## factor(month)7                     0.672041515
+## factor(hospital)2:factor(month)2   0.103616170
+## factor(hospital)3:factor(month)2   0.062142411
+## factor(hospital)4:factor(month)2   0.094712481
+## factor(hospital)5:factor(month)2   0.248125169
+## factor(hospital)6:factor(month)2   0.217702700
+## factor(hospital)7:factor(month)2   0.058765365
+## factor(hospital)8:factor(month)2   0.224614553
+## factor(hospital)9:factor(month)2   0.086978107
+## factor(hospital)10:factor(month)2  0.140949378
+## factor(hospital)11:factor(month)2  0.066867761
+## factor(hospital)12:factor(month)2  0.116462938
+## factor(hospital)13:factor(month)2  0.314360888
+## factor(hospital)14:factor(month)2  0.251057608
+## factor(hospital)15:factor(month)2  0.137612746
+## factor(hospital)16:factor(month)2  0.076946469
+## factor(hospital)17:factor(month)2 -0.077092523
+## factor(hospital)18:factor(month)2 -0.148975180
+## factor(hospital)19:factor(month)2  0.042281504
+## factor(hospital)20:factor(month)2  0.365040939
+## factor(hospital)21:factor(month)2  0.071953980
+## factor(hospital)22:factor(month)2  0.250248987
+## factor(hospital)23:factor(month)2 -0.274808581
+## factor(hospital)24:factor(month)2 -0.036001305
+## factor(hospital)25:factor(month)2  0.040813985
+## factor(hospital)26:factor(month)2  0.150715800
+## factor(hospital)27:factor(month)2 -0.006786208
+## factor(hospital)28:factor(month)2  0.274108006
+## factor(hospital)29:factor(month)2  0.080771617
+## factor(hospital)30:factor(month)2  0.209224352
+## factor(hospital)31:factor(month)2  0.058485741
+## factor(hospital)32:factor(month)2  0.305555649
+## factor(hospital)33:factor(month)2  0.132063092
+## factor(hospital)34:factor(month)2  0.094710671
+## factor(hospital)35:factor(month)2  0.139328353
+## factor(hospital)36:factor(month)2  0.072856017
+## factor(hospital)37:factor(month)2  0.246392724
+## factor(hospital)38:factor(month)2  0.150580146
+## factor(hospital)39:factor(month)2  0.343120623
+## factor(hospital)40:factor(month)2  0.224535143
+## factor(hospital)41:factor(month)2 -0.024639490
+## factor(hospital)42:factor(month)2  0.139293924
+## factor(hospital)43:factor(month)2  0.367621496
+## factor(hospital)44:factor(month)2  0.089027892
+## factor(hospital)45:factor(month)2  0.061481776
+## factor(hospital)46:factor(month)2  0.039211219
+## factor(hospital)2:factor(month)3   0.118352241
+## factor(hospital)3:factor(month)3   0.227231317
+## factor(hospital)4:factor(month)3   0.090898014
+## factor(hospital)5:factor(month)3   0.273903607
+## factor(hospital)6:factor(month)3   0.146471108
+## factor(hospital)7:factor(month)3   0.178008909
+## factor(hospital)8:factor(month)3   0.283343309
+## factor(hospital)9:factor(month)3   0.037164199
+## factor(hospital)10:factor(month)3  0.007123335
+## factor(hospital)11:factor(month)3  0.103429815
+## factor(hospital)12:factor(month)3  0.350505785
+## factor(hospital)13:factor(month)3  0.105639463
+## factor(hospital)14:factor(month)3  0.290256491
+## factor(hospital)15:factor(month)3 -0.014222826
+## factor(hospital)16:factor(month)3  0.101156125
+## factor(hospital)17:factor(month)3  0.100240994
+## factor(hospital)18:factor(month)3  0.224737952
+## factor(hospital)19:factor(month)3  0.236488860
+## factor(hospital)20:factor(month)3  0.163941683
+## factor(hospital)21:factor(month)3  0.117456858
+## factor(hospital)22:factor(month)3  0.442180464
+## factor(hospital)23:factor(month)3 -0.018319177
+## factor(hospital)24:factor(month)3 -0.238016002
+## factor(hospital)25:factor(month)3  0.013398852
+## factor(hospital)26:factor(month)3  0.069231480
+## factor(hospital)27:factor(month)3  0.080696079
+## factor(hospital)28:factor(month)3  0.561925237
+## factor(hospital)29:factor(month)3  0.057484750
+## factor(hospital)30:factor(month)3  0.175473175
+## factor(hospital)31:factor(month)3  0.126131136
+## factor(hospital)32:factor(month)3  0.122553069
+## factor(hospital)33:factor(month)3  0.179541981
+## factor(hospital)34:factor(month)3  0.223866160
+## factor(hospital)35:factor(month)3  0.225167747
+## factor(hospital)36:factor(month)3  0.040221349
+## factor(hospital)37:factor(month)3  0.301348230
+## factor(hospital)38:factor(month)3  0.237203307
+## factor(hospital)39:factor(month)3  0.319207177
+## factor(hospital)40:factor(month)3  0.136630437
+## factor(hospital)41:factor(month)3  0.113820603
+## factor(hospital)42:factor(month)3  0.068360769
+## factor(hospital)43:factor(month)3  0.301565961
+## factor(hospital)44:factor(month)3  0.261882976
+## factor(hospital)45:factor(month)3  0.238913696
+## factor(hospital)46:factor(month)3  0.273020376
+## factor(hospital)2:factor(month)4   0.327610893
+## factor(hospital)3:factor(month)4   0.271812897
+## factor(hospital)4:factor(month)4  -0.050429199
+## factor(hospital)5:factor(month)4   0.505447373
+## factor(hospital)6:factor(month)4   0.609407487
+## factor(hospital)7:factor(month)4   0.297523628
+## factor(hospital)8:factor(month)4   0.349097955
+## factor(hospital)9:factor(month)4   0.243327150
+## factor(hospital)10:factor(month)4  0.281033749
+## factor(hospital)11:factor(month)4  0.256887510
+## factor(hospital)12:factor(month)4  0.140830047
+## factor(hospital)13:factor(month)4  0.033546883
+## factor(hospital)14:factor(month)4  0.442068721
+## factor(hospital)15:factor(month)4  0.360704804
+## factor(hospital)16:factor(month)4  0.269317068
+## factor(hospital)17:factor(month)4  0.467690532
+## factor(hospital)18:factor(month)4  0.010674280
+## factor(hospital)19:factor(month)4 -0.500822394
+## factor(hospital)20:factor(month)4 -0.396459554
+## factor(hospital)21:factor(month)4 -0.510222839
+## factor(hospital)22:factor(month)4 -0.242671141
+## factor(hospital)23:factor(month)4 -0.722034160
+## factor(hospital)24:factor(month)4 -0.697957723
+## factor(hospital)25:factor(month)4 -0.694657583
+## factor(hospital)26:factor(month)4 -0.509581381
+## factor(hospital)27:factor(month)4 -0.582536187
+## factor(hospital)28:factor(month)4 -0.423754156
+## factor(hospital)29:factor(month)4 -0.481821041
+## factor(hospital)30:factor(month)4 -0.677147412
+## factor(hospital)31:factor(month)4 -0.684271901
+## factor(hospital)32:factor(month)4 -0.430855485
+## factor(hospital)33:factor(month)4 -0.578055819
+## factor(hospital)34:factor(month)4 -0.624417919
+## factor(hospital)35:factor(month)4 -0.649649793
+## factor(hospital)36:factor(month)4 -0.702770010
+## factor(hospital)37:factor(month)4 -0.577403529
+## factor(hospital)38:factor(month)4 -0.463423619
+## factor(hospital)39:factor(month)4 -0.272670413
+## factor(hospital)40:factor(month)4 -0.448720039
+## factor(hospital)41:factor(month)4 -0.593385819
+## factor(hospital)42:factor(month)4 -0.503207272
+## factor(hospital)43:factor(month)4 -0.279419175
+## factor(hospital)44:factor(month)4 -0.386483386
+## factor(hospital)45:factor(month)4 -0.418585180
+## factor(hospital)46:factor(month)4 -0.572178863
+## factor(hospital)2:factor(month)5   0.320201364
+## factor(hospital)3:factor(month)5   0.257951099
+## factor(hospital)4:factor(month)5  -0.234596506
+## factor(hospital)5:factor(month)5   0.099247824
+## factor(hospital)6:factor(month)5   0.024217345
+## factor(hospital)7:factor(month)5  -0.028072446
+## factor(hospital)8:factor(month)5   0.075096383
+## factor(hospital)9:factor(month)5   0.075855673
+## factor(hospital)10:factor(month)5 -0.004301533
+## factor(hospital)11:factor(month)5 -0.098809553
+## factor(hospital)12:factor(month)5  0.101996445
+## factor(hospital)13:factor(month)5  0.090276604
+## factor(hospital)14:factor(month)5  0.194790868
+## factor(hospital)15:factor(month)5  0.154582290
+## factor(hospital)16:factor(month)5  0.048838236
+## factor(hospital)17:factor(month)5 -0.129453367
+## factor(hospital)18:factor(month)5 -0.071130251
+## factor(hospital)19:factor(month)5 -0.972106121
+## factor(hospital)20:factor(month)5 -0.804031967
+## factor(hospital)21:factor(month)5 -0.916461414
+## factor(hospital)22:factor(month)5 -0.919421083
+## factor(hospital)23:factor(month)5 -1.075783037
+## factor(hospital)24:factor(month)5 -0.967460530
+## factor(hospital)25:factor(month)5 -0.920964522
+## factor(hospital)26:factor(month)5 -0.652986826
+## factor(hospital)27:factor(month)5 -0.935459649
+## factor(hospital)28:factor(month)5 -0.687453434
+## factor(hospital)29:factor(month)5 -0.913022454
+## factor(hospital)30:factor(month)5 -0.742243200
+## factor(hospital)31:factor(month)5 -0.873378457
+## factor(hospital)32:factor(month)5 -0.501479272
+## factor(hospital)33:factor(month)5 -0.787460056
+## factor(hospital)34:factor(month)5 -0.928232491
+## factor(hospital)35:factor(month)5 -0.880260997
+## factor(hospital)36:factor(month)5 -1.005596633
+## factor(hospital)37:factor(month)5 -0.600123741
+## factor(hospital)38:factor(month)5 -0.658681571
+## factor(hospital)39:factor(month)5 -0.810972164
+## factor(hospital)40:factor(month)5 -0.668106347
+## factor(hospital)41:factor(month)5 -0.866337168
+## factor(hospital)42:factor(month)5 -0.824416233
+## factor(hospital)43:factor(month)5 -1.009536982
+## factor(hospital)44:factor(month)5 -0.889166038
+## factor(hospital)45:factor(month)5 -0.698915559
+## factor(hospital)46:factor(month)5 -0.675945129
+## factor(hospital)2:factor(month)6   0.196040105
+## factor(hospital)3:factor(month)6   0.164724708
+## factor(hospital)4:factor(month)6  -0.071559298
+## factor(hospital)5:factor(month)6   0.614915209
+## factor(hospital)6:factor(month)6   0.165977497
+## factor(hospital)7:factor(month)6   0.314668468
+## factor(hospital)8:factor(month)6   0.004265548
+## factor(hospital)9:factor(month)6  -0.008955490
+## factor(hospital)10:factor(month)6  0.469342334
+## factor(hospital)11:factor(month)6  0.255415929
+## factor(hospital)12:factor(month)6 -0.031751306
+## factor(hospital)13:factor(month)6  0.345865187
+## factor(hospital)14:factor(month)6  0.387274209
+## factor(hospital)15:factor(month)6  0.405471570
+## factor(hospital)16:factor(month)6  0.047053976
+## factor(hospital)17:factor(month)6  0.052351331
+## factor(hospital)18:factor(month)6 -0.258001586
+## factor(hospital)19:factor(month)6 -0.772573496
+## factor(hospital)20:factor(month)6 -0.517358294
+## factor(hospital)21:factor(month)6 -0.707612349
+## factor(hospital)22:factor(month)6 -0.574017953
+## factor(hospital)23:factor(month)6 -0.708702507
+## factor(hospital)24:factor(month)6 -0.781473350
+## factor(hospital)25:factor(month)6 -0.720740339
+## factor(hospital)26:factor(month)6 -0.485545417
+## factor(hospital)27:factor(month)6 -0.589947848
+## factor(hospital)28:factor(month)6 -0.612593296
+## factor(hospital)29:factor(month)6 -0.737797411
+## factor(hospital)30:factor(month)6 -0.808783053
+## factor(hospital)31:factor(month)6 -0.562293691
+## factor(hospital)32:factor(month)6 -0.564738445
+## factor(hospital)33:factor(month)6 -0.679061844
+## factor(hospital)34:factor(month)6 -0.679670652
+## factor(hospital)35:factor(month)6 -0.528137626
+## factor(hospital)36:factor(month)6 -0.633931248
+## factor(hospital)37:factor(month)6 -0.590271539
+## factor(hospital)38:factor(month)6 -0.700904219
+## factor(hospital)39:factor(month)6 -0.564239709
+## factor(hospital)40:factor(month)6 -0.687611031
+## factor(hospital)41:factor(month)6 -0.680520769
+## factor(hospital)42:factor(month)6 -0.574698815
+## factor(hospital)43:factor(month)6 -0.542857135
+## factor(hospital)44:factor(month)6 -0.621795873
+## factor(hospital)45:factor(month)6 -0.458181899
+## factor(hospital)46:factor(month)6 -0.773308123
+## factor(hospital)2:factor(month)7   0.335473763
+## factor(hospital)3:factor(month)7   0.239991309
+## factor(hospital)4:factor(month)7  -0.128378695
+## factor(hospital)5:factor(month)7   0.332135500
+## factor(hospital)6:factor(month)7   0.198642411
+## factor(hospital)7:factor(month)7   0.207656158
+## factor(hospital)8:factor(month)7   0.276637933
+## factor(hospital)9:factor(month)7   0.076207761
+## factor(hospital)10:factor(month)7  0.281442388
+## factor(hospital)11:factor(month)7  0.226545279
+## factor(hospital)12:factor(month)7  0.083356699
+## factor(hospital)13:factor(month)7  0.212584392
+## factor(hospital)14:factor(month)7  0.252241457
+## factor(hospital)15:factor(month)7  0.447502496
+## factor(hospital)16:factor(month)7  0.113088606
+## factor(hospital)17:factor(month)7  0.076904457
+## factor(hospital)18:factor(month)7 -0.161744064
+## factor(hospital)19:factor(month)7 -0.780891119
+## factor(hospital)20:factor(month)7 -0.617833179
+## factor(hospital)21:factor(month)7 -0.853951854
+## factor(hospital)22:factor(month)7 -0.521676043
+## factor(hospital)23:factor(month)7 -0.983074983
+## factor(hospital)24:factor(month)7 -0.684111304
+## factor(hospital)25:factor(month)7 -0.626997341
+## factor(hospital)26:factor(month)7 -0.664293916
+## factor(hospital)27:factor(month)7 -0.891258962
+## factor(hospital)28:factor(month)7 -0.603616841
+## factor(hospital)29:factor(month)7 -0.712623039
+## factor(hospital)30:factor(month)7 -0.937019208
+## factor(hospital)31:factor(month)7 -0.825226048
+## factor(hospital)32:factor(month)7 -0.279547238
+## factor(hospital)33:factor(month)7 -0.669543129
+## factor(hospital)34:factor(month)7 -0.552581320
+## factor(hospital)35:factor(month)7 -0.926979382
+## factor(hospital)36:factor(month)7 -0.879760685
+## factor(hospital)37:factor(month)7 -0.619039867
+## factor(hospital)38:factor(month)7 -0.654178103
+## factor(hospital)39:factor(month)7 -0.520299060
+## factor(hospital)40:factor(month)7 -0.574366251
+## factor(hospital)41:factor(month)7 -0.654513333
+## factor(hospital)42:factor(month)7 -0.633398043
+## factor(hospital)43:factor(month)7 -0.626447723
+## factor(hospital)44:factor(month)7 -0.915040385
+## factor(hospital)45:factor(month)7 -0.688359111
+## factor(hospital)46:factor(month)7 -0.544070581</code></pre>
+<p>On a 322 coefficients estimés que l’on peut combiner pour retrouver nos moyennes.</p>
+<pre class="r"><code>data.frame(mois_1=coef(reg_hm)[1:46] %&gt;% round(digits = 4),
+           mois_2=coef(reg_hm)[1:46]+c(coef(reg_hm)[47],
+                                       coef(reg_hm)[47]+coef(reg_hm)[53:97])%&gt;%
+             round(digits = 4),
+           mois_3=coef(reg_hm)[1:46]+c(coef(reg_hm)[48],
+                                       coef(reg_hm)[48]+coef(reg_hm)[98:142])%&gt;%
+             round(digits = 4),
+           mois_4=coef(reg_hm)[1:46]+c(coef(reg_hm)[49],
+                                       coef(reg_hm)[49]+coef(reg_hm)[143:187])%&gt;%
+             round(digits = 4),
+           mois_5=coef(reg_hm)[1:46]+c(coef(reg_hm)[50],
+                                       coef(reg_hm)[50]+coef(reg_hm)[188:232])%&gt;%
+             round(digits = 4),
+           mois_6=coef(reg_hm)[1:46]+c(coef(reg_hm)[51],
+                                       coef(reg_hm)[51]+coef(reg_hm)[233:277])%&gt;%
+             round(digits = 4),
+           mois_7=coef(reg_hm)[1:46]+c(coef(reg_hm)[52],
+                                       coef(reg_hm)[52]+coef(reg_hm)[278:322])%&gt;%
+             round(digits = 4))</code></pre>
+<pre><code>##                    mois_1   mois_2   mois_3   mois_4   mois_5   mois_6   mois_7
+## factor(hospital)1  3.2948 3.162167 3.156267 3.835867 4.103867 3.935367 3.966767
+## factor(hospital)2  3.5282 3.499171 3.507971 4.396871 4.657471 4.364871 4.535671
+## factor(hospital)3  3.6754 3.605010 3.764110 4.488310 4.742410 4.480810 4.587410
+## factor(hospital)4  3.5597 3.521796 3.512096 4.050296 4.134196 4.128796 4.103396
+## factor(hospital)5  2.8902 3.005692 3.025592 3.936692 3.798492 4.145792 3.894392
+## factor(hospital)6  3.5723 3.657428 3.580228 4.722828 4.405628 4.378928 4.443028
+## factor(hospital)7  4.5706 4.496814 4.610114 5.409214 5.351614 5.525914 5.450314
+## factor(hospital)8  3.2150 3.307010 3.359810 4.105210 4.099210 3.859910 4.163710
+## factor(hospital)9  1.7124 1.666829 1.611029 2.496829 2.597329 2.344129 2.460629
+## factor(hospital)10 4.8307 4.839063 4.699263 5.652763 5.635463 5.940663 5.784163
+## factor(hospital)11 3.4144 3.348740 3.379340 4.212440 4.124740 4.310540 4.313040
+## factor(hospital)12 3.1043 3.088188 3.316288 3.786188 4.015388 3.713188 3.859688
+## factor(hospital)13 3.6526 3.834376 3.619676 4.227176 4.551876 4.639076 4.537176
+## factor(hospital)14 3.3006 3.419098 3.452298 4.283698 4.304498 4.328498 4.224898
+## factor(hospital)15 2.9638 2.968817 2.811017 3.865617 3.927517 4.009917 4.083317
+## factor(hospital)16 4.6270 4.571385 4.589585 5.437385 5.484885 5.314685 5.412085
+## factor(hospital)17 3.6570 3.447279 3.618679 4.665779 4.336579 4.349979 4.405879
+## factor(hospital)18 3.4986 3.216998 3.584798 4.050398 4.236498 3.881198 4.008898
+## factor(hospital)19 2.4689 2.378624 2.566824 2.509224 2.305924 2.337024 2.360124
+## factor(hospital)20 3.1440 3.376498 3.169398 3.288598 3.148998 3.267298 3.198198
+## factor(hospital)21 4.4150 4.354364 4.393864 4.445864 4.307564 4.347964 4.233064
+## factor(hospital)22 3.8658 3.983458 4.169358 4.164158 3.755358 3.932358 4.016158
+## factor(hospital)23 4.0453 3.637933 3.888433 3.864333 3.778633 3.977233 3.734333
+## factor(hospital)24 2.9883 2.819674 2.611674 2.831374 2.829874 2.847474 2.976174
+## factor(hospital)25 3.8809 3.789090 3.755790 3.727290 3.768990 3.800790 3.925890
+## factor(hospital)26 3.3466 3.364677 3.277277 3.378077 3.502677 3.501677 3.354277
+## factor(hospital)27 2.8378 2.698380 2.779980 2.796280 2.711380 2.888480 2.618580
+## factor(hospital)28 3.7692 3.910691 4.192591 3.886491 3.890791 3.797291 3.837591
+## factor(hospital)29 3.4577 3.405900 3.376600 3.517000 3.353700 3.360600 3.417100
+## factor(hospital)30 3.0504 3.127013 3.087313 2.914313 3.117213 2.882313 2.785413
+## factor(hospital)31 3.7279 3.653827 3.715527 3.584727 3.663627 3.806327 3.574727
+## factor(hospital)32 2.7160 2.888991 2.699991 2.826191 3.023591 2.791891 3.108491
+## factor(hospital)33 2.7171 2.716612 2.758112 2.680112 2.738712 2.678712 2.719612
+## factor(hospital)34 3.1787 3.140751 3.263951 3.095351 3.059451 3.139651 3.298151
+## factor(hospital)35 3.5525 3.559150 3.639050 3.443850 3.481250 3.664950 3.297550
+## factor(hospital)36 5.3975 5.337838 5.299238 5.235838 5.201038 5.404238 5.189838
+## factor(hospital)37 3.2411 3.354863 3.403863 3.204763 3.449963 3.291463 3.294063
+## factor(hospital)38 3.0451 3.063142 3.143842 3.122842 3.195542 2.984842 3.063042
+## factor(hospital)39 3.0355 3.246007 3.216207 3.303907 3.033607 3.111907 3.187207
+## factor(hospital)40 4.2445 4.336511 4.242611 4.336911 4.385511 4.197511 4.342211
+## factor(hospital)41 3.0592 2.902035 3.034535 3.006935 3.001935 3.019335 3.076735
+## factor(hospital)42 4.0429 4.049618 3.972718 4.080818 4.027618 4.108818 4.081518
+## factor(hospital)43 2.3220 2.556974 2.484974 2.583674 2.121474 2.419774 2.367574
+## factor(hospital)44 3.2129 3.169282 3.336182 3.367482 3.132782 3.231782 2.969882
+## factor(hospital)45 2.9025 2.831379 3.002879 3.024979 3.012679 3.084979 2.886179
+## factor(hospital)46 3.2309 3.137523 3.365423 3.199823 3.364023 3.098223 3.358923</code></pre>
+<p>Si l’on veut travailler à partir de la régression sans interactions, les choses sont plus compliquées.</p>
+<pre class="r"><code>reg_rr&lt;-lm(satis~factor(hospital)+factor(month)-1,data=dat)
+cbind(coef(reg_rr))</code></pre>
+<pre><code>##                            [,1]
+## factor(hospital)1   3.419331694
+## factor(hospital)2   3.827898127
+## factor(hospital)3   3.952956508
+## factor(hospital)4   3.646841879
+## factor(hospital)5   3.273978773
+## factor(hospital)6   3.867195134
+## factor(hospital)7   4.823748061
+## factor(hospital)8   3.491207463
+## factor(hospital)9   1.900816739
+## factor(hospital)10  5.102176337
+## factor(hospital)11  3.640297042
+## factor(hospital)12  3.324028278
+## factor(hospital)13  3.914924793
+## factor(hospital)14  3.652374335
+## factor(hospital)15  3.274838187
+## factor(hospital)16  4.833599659
+## factor(hospital)17  3.842874599
+## factor(hospital)18  3.572607745
+## factor(hospital)19  2.250036014
+## factor(hospital)20  3.042725165
+## factor(hospital)21  4.189674794
+## factor(hospital)22  3.794653081
+## factor(hospital)23  3.697057976
+## factor(hospital)24  2.687211724
+## factor(hospital)25  3.641811401
+## factor(hospital)26  3.209584877
+## factor(hospital)27  2.596683356
+## factor(hospital)28  3.707333102
+## factor(hospital)29  3.243888978
+## factor(hospital)30  2.827415737
+## factor(hospital)31  3.507422531
+## factor(hospital)32  2.671992135
+## factor(hospital)33  2.541362604
+## factor(hospital)34  2.994925413
+## factor(hospital)35  3.349448714
+## factor(hospital)36  5.133480226
+## factor(hospital)37  3.135741341
+## factor(hospital)38  2.908531805
+## factor(hospital)39  2.971840843
+## factor(hospital)40  4.116870831
+## factor(hospital)41  2.845603179
+## factor(hospital)42  3.876474697
+## factor(hospital)43  2.222905227
+## factor(hospital)44  3.029749774
+## factor(hospital)45  2.781588289
+## factor(hospital)46  3.073829221
+## factor(month)2     -0.009607659
+## factor(month)3      0.021968578
+## factor(month)4      0.349353860
+## factor(month)5      0.343234996
+## factor(month)6      0.348800194
+## factor(month)7      0.341443586</code></pre>
+<p>Les moyennes reconstituées ne sont pas les mêmes et ne correspondent pas à celles définies par les groupes croisés. Comme l’on peut le constater dans la table suivante:</p>
+<pre class="r"><code>data.frame(
+  mois_1=coef(reg_rr)[1:46] %&gt;% round(digits = 4),
+  mois_2=coef(reg_rr)[1:46]+coef(reg_rr)[47] %&gt;% round(digits = 4),
+  mois_3=coef(reg_rr)[1:46]+coef(reg_rr)[48] %&gt;% round(digits = 4),
+  mois_4=coef(reg_rr)[1:46]+coef(reg_rr)[49] %&gt;% round(digits = 4),
+  mois_5=coef(reg_rr)[1:46]+coef(reg_rr)[50] %&gt;% round(digits = 4),
+  mois_6=coef(reg_rr)[1:46]+coef(reg_rr)[51] %&gt;% round(digits = 4),
+  mois_7=coef(reg_rr)[1:46]+coef(reg_rr)[52] %&gt;% round(digits = 4)
+)</code></pre>
+<pre><code>##                    mois_1   mois_2   mois_3   mois_4   mois_5   mois_6   mois_7
+## factor(hospital)1  3.4193 3.409732 3.441332 3.768732 3.762532 3.768132 3.760732
+## factor(hospital)2  3.8279 3.818298 3.849898 4.177298 4.171098 4.176698 4.169298
+## factor(hospital)3  3.9530 3.943357 3.974957 4.302357 4.296157 4.301757 4.294357
+## factor(hospital)4  3.6468 3.637242 3.668842 3.996242 3.990042 3.995642 3.988242
+## factor(hospital)5  3.2740 3.264379 3.295979 3.623379 3.617179 3.622779 3.615379
+## factor(hospital)6  3.8672 3.857595 3.889195 4.216595 4.210395 4.215995 4.208595
+## factor(hospital)7  4.8237 4.814148 4.845748 5.173148 5.166948 5.172548 5.165148
+## factor(hospital)8  3.4912 3.481607 3.513207 3.840607 3.834407 3.840007 3.832607
+## factor(hospital)9  1.9008 1.891217 1.922817 2.250217 2.244017 2.249617 2.242217
+## factor(hospital)10 5.1022 5.092576 5.124176 5.451576 5.445376 5.450976 5.443576
+## factor(hospital)11 3.6403 3.630697 3.662297 3.989697 3.983497 3.989097 3.981697
+## factor(hospital)12 3.3240 3.314428 3.346028 3.673428 3.667228 3.672828 3.665428
+## factor(hospital)13 3.9149 3.905325 3.936925 4.264325 4.258125 4.263725 4.256325
+## factor(hospital)14 3.6524 3.642774 3.674374 4.001774 3.995574 4.001174 3.993774
+## factor(hospital)15 3.2748 3.265238 3.296838 3.624238 3.618038 3.623638 3.616238
+## factor(hospital)16 4.8336 4.824000 4.855600 5.183000 5.176800 5.182400 5.175000
+## factor(hospital)17 3.8429 3.833275 3.864875 4.192275 4.186075 4.191675 4.184275
+## factor(hospital)18 3.5726 3.563008 3.594608 3.922008 3.915808 3.921408 3.914008
+## factor(hospital)19 2.2500 2.240436 2.272036 2.599436 2.593236 2.598836 2.591436
+## factor(hospital)20 3.0427 3.033125 3.064725 3.392125 3.385925 3.391525 3.384125
+## factor(hospital)21 4.1897 4.180075 4.211675 4.539075 4.532875 4.538475 4.531075
+## factor(hospital)22 3.7947 3.785053 3.816653 4.144053 4.137853 4.143453 4.136053
+## factor(hospital)23 3.6971 3.687458 3.719058 4.046458 4.040258 4.045858 4.038458
+## factor(hospital)24 2.6872 2.677612 2.709212 3.036612 3.030412 3.036012 3.028612
+## factor(hospital)25 3.6418 3.632211 3.663811 3.991211 3.985011 3.990611 3.983211
+## factor(hospital)26 3.2096 3.199985 3.231585 3.558985 3.552785 3.558385 3.550985
+## factor(hospital)27 2.5967 2.587083 2.618683 2.946083 2.939883 2.945483 2.938083
+## factor(hospital)28 3.7073 3.697733 3.729333 4.056733 4.050533 4.056133 4.048733
+## factor(hospital)29 3.2439 3.234289 3.265889 3.593289 3.587089 3.592689 3.585289
+## factor(hospital)30 2.8274 2.817816 2.849416 3.176816 3.170616 3.176216 3.168816
+## factor(hospital)31 3.5074 3.497823 3.529423 3.856823 3.850623 3.856223 3.848823
+## factor(hospital)32 2.6720 2.662392 2.693992 3.021392 3.015192 3.020792 3.013392
+## factor(hospital)33 2.5414 2.531763 2.563363 2.890763 2.884563 2.890163 2.882763
+## factor(hospital)34 2.9949 2.985325 3.016925 3.344325 3.338125 3.343725 3.336325
+## factor(hospital)35 3.3494 3.339849 3.371449 3.698849 3.692649 3.698249 3.690849
+## factor(hospital)36 5.1335 5.123880 5.155480 5.482880 5.476680 5.482280 5.474880
+## factor(hospital)37 3.1357 3.126141 3.157741 3.485141 3.478941 3.484541 3.477141
+## factor(hospital)38 2.9085 2.898932 2.930532 3.257932 3.251732 3.257332 3.249932
+## factor(hospital)39 2.9718 2.962241 2.993841 3.321241 3.315041 3.320641 3.313241
+## factor(hospital)40 4.1169 4.107271 4.138871 4.466271 4.460071 4.465671 4.458271
+## factor(hospital)41 2.8456 2.836003 2.867603 3.195003 3.188803 3.194403 3.187003
+## factor(hospital)42 3.8765 3.866875 3.898475 4.225875 4.219675 4.225275 4.217875
+## factor(hospital)43 2.2229 2.213305 2.244905 2.572305 2.566105 2.571705 2.564305
+## factor(hospital)44 3.0297 3.020150 3.051750 3.379150 3.372950 3.378550 3.371150
+## factor(hospital)45 2.7816 2.771988 2.803588 3.130988 3.124788 3.130388 3.122988
+## factor(hospital)46 3.0738 3.064229 3.095829 3.423229 3.417029 3.422629 3.415229</code></pre>
+<p>Pour retrouver les informations concernant les moyennes, il faut pondérer les coefficients. Faisons-le pour les mois. La moyenne du mois 1, qui est la référence pour la suite, est moyenne pondérée des coefficients de <strong>hospital</strong> retenant comme poids le nombre d’observations effectués sur le mois 1 sur chaque hôpital.</p>
+<p><span class="math display">\[
+mois_1=\frac{\sum^{46}_{i=1}coef.hosp_i\times nb.hosp.m1_i}{\sum^{46}_{i=1}nb.hosp.m1_i}=\frac{6345.091}{1842}=3.444675
+\]</span></p>
+<p>Pour obtenir les moyennes des autres mois, il suffit de lui ajouter le coefficient du mois. On a alors:</p>
+<pre class="r"><code>rbind(
+      mois1=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)]),
+      mois2=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[47],
+      mois3=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[48],
+      mois4=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[49],
+      mois5=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[50],
+      mois6=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[51],
+      mois7=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[52]) %&gt;% 
+  as.data.frame() %&gt;% 
+  rename(moyenne=`factor(month)2`)</code></pre>
+<pre><code>##        moyenne
+## mois1 3.444675
+## mois2 3.435067
+## mois3 3.466644
+## mois4 3.794029
+## mois5 3.787910
+## mois6 3.793475
+## mois7 3.786119</code></pre>
+<p>On peut réaliser la même chose avec les hôpitaux. Mais, cette fois, il s’agit de calculer la moyenne pondérée par la nombre d’observations par mois des coefficients relevés pour chaque hôpital chaque mois. On a ainsi pour l’hôpital 1 :</p>
+<p><span class="math display">\[
+hosp_1=\frac{\sum^7_{t=1}coef.hosp_1\times nb.mois_t}{\sum^7_{t=1}nb.mois_t}=\frac{3.419332\times 1842+3.409724\times921+...+3.760775\times921}{7368}=3.593731
+\]</span></p>
+<p>Procédons pour tous les hôpitaux un à un.</p>
+<pre class="r"><code>th&lt;-c()
+for(i in 1:46){
+      h&lt;-c(hopital=paste0(&quot;hopital&quot;,i),
+           moyenne=weighted.mean(c(coef(reg_rr)[i],
+                         coef(reg_rr)[i]+c(0,coef(reg_rr))[48:53]),
+                       dm$nombre))
+      th&lt;-rbind(th,h)
+}
+th %&gt;% 
+  as.data.frame() %&gt;% 
+  remove_rownames() %&gt;% 
+  mutate(moyenne=round(as.numeric(moyenne),digits = 6))</code></pre>
+<pre><code>##      hopital  moyenne
+## 1   hopital1 3.593731
+## 2   hopital2 4.002297
+## 3   hopital3 4.127356
+## 4   hopital4 3.821241
+## 5   hopital5 3.448378
+## 6   hopital6 4.041594
+## 7   hopital7 4.998147
+## 8   hopital8 3.665607
+## 9   hopital9 2.075216
+## 10 hopital10 5.276576
+## 11 hopital11 3.814696
+## 12 hopital12 3.498427
+## 13 hopital13 4.089324
+## 14 hopital14 3.826774
+## 15 hopital15 3.449237
+## 16 hopital16 5.007999
+## 17 hopital17 4.017274
+## 18 hopital18 3.747007
+## 19 hopital19 2.424435
+## 20 hopital20 3.217124
+## 21 hopital21 4.364074
+## 22 hopital22 3.969052
+## 23 hopital23 3.871457
+## 24 hopital24 2.861611
+## 25 hopital25 3.816211
+## 26 hopital26 3.383984
+## 27 hopital27 2.771083
+## 28 hopital28 3.881732
+## 29 hopital29 3.418288
+## 30 hopital30 3.001815
+## 31 hopital31 3.681822
+## 32 hopital32 2.846391
+## 33 hopital33 2.715762
+## 34 hopital34 3.169325
+## 35 hopital35 3.523848
+## 36 hopital36 5.307879
+## 37 hopital37 3.310141
+## 38 hopital38 3.082931
+## 39 hopital39 3.146240
+## 40 hopital40 4.291270
+## 41 hopital41 3.020002
+## 42 hopital42 4.050874
+## 43 hopital43 2.397304
+## 44 hopital44 3.204149
+## 45 hopital45 2.955987
+## 46 hopital46 3.248228</code></pre>
+</div>
+<div id="les-two-way-fixed-effects" class="section level2">
+<h2><strong>Les Two Way Fixed effects</strong></h2>
+<p>Venons en à ce qui nous intéresse depuis le début. L’équivalence entre les TWFE et l’estimation en 2x2 <em>diff-in-diff</em>. Commençons, comme à chaque fois, par établir les moyennes et le nombre d’observation pour chaque groupe ici défini par les valeurs de <strong>procedure</strong>, <strong>month</strong> et <strong>hospital</strong>.</p>
+<pre class="r"><code>dpmh&lt;-dat %&gt;% 
+  summarise(nombre=n(),moyenne=mean(satis),
+            .by=c(&quot;procedure&quot;,&quot;month&quot;,&quot;hospital&quot;)) %&gt;% 
+  arrange(procedure,month,hospital) %&gt;% data.frame()
+dpmh</code></pre>
+<pre><code>##     procedure month hospital nombre  moyenne
+## 1           0     1        1     46 3.294767
+## 2           0     1        2     42 3.528171
+## 3           0     1        3     38 3.675410
+## 4           0     1        4     50 3.559696
+## 5           0     1        5     50 2.890192
+## 6           0     1        6     50 3.572328
+## 7           0     1        7     58 4.570614
+## 8           0     1        8     44 3.215010
+## 9           0     1        9     40 1.712429
+## 10          0     1       10     42 4.830663
+## 11          0     1       11     44 3.414440
+## 12          0     1       12     40 3.104288
+## 13          0     1       13     46 3.652576
+## 14          0     1       14     38 3.300598
+## 15          0     1       15     38 2.963817
+## 16          0     1       16     42 4.626985
+## 17          0     1       17     36 3.656979
+## 18          0     1       18     22 3.498598
+## 19          0     1       19     38 2.468924
+## 20          0     1       20     42 3.143998
+## 21          0     1       21     34 4.414964
+## 22          0     1       22     36 3.865758
+## 23          0     1       23     38 4.045333
+## 24          0     1       24     30 2.988274
+## 25          0     1       25     24 3.880890
+## 26          0     1       26     42 3.346577
+## 27          0     1       27     48 2.837780
+## 28          0     1       28     34 3.769191
+## 29          0     1       29     40 3.457700
+## 30          0     1       30     22 3.050413
+## 31          0     1       31     42 3.727927
+## 32          0     1       32     40 2.715991
+## 33          0     1       33     42 2.717112
+## 34          0     1       34     54 3.178651
+## 35          0     1       35     48 3.552450
+## 36          0     1       36     46 5.397538
+## 37          0     1       37     24 3.241063
+## 38          0     1       38     44 3.045142
+## 39          0     1       39     36 3.035507
+## 40          0     1       40     44 4.244511
+## 41          0     1       41     48 3.059235
+## 42          0     1       42     32 4.042918
+## 43          0     1       43     38 2.321974
+## 44          0     1       44     26 3.212882
+## 45          0     1       45     48 2.902479
+## 46          0     1       46     36 3.230923
+## 47          0     2        1     23 3.162184
+## 48          0     2        2     21 3.499205
+## 49          0     2        3     19 3.604969
+## 50          0     2        4     25 3.521826
+## 51          0     2        5     25 3.005734
+## 52          0     2        6     25 3.657448
+## 53          0     2        7     29 4.496797
+## 54          0     2        8     22 3.307042
+## 55          0     2        9     20 1.666825
+## 56          0     2       10     21 4.839029
+## 57          0     2       11     22 3.348725
+## 58          0     2       12     20 3.088168
+## 59          0     2       13     23 3.834354
+## 60          0     2       14     19 3.419073
+## 61          0     2       15     19 2.968847
+## 62          0     2       16     21 4.571348
+## 63          0     2       17     18 3.447304
+## 64          0     2       18     11 3.217040
+## 65          0     2       19     19 2.378622
+## 66          0     2       20     21 3.376456
+## 67          0     2       21     17 4.354336
+## 68          0     2       22     18 3.983424
+## 69          0     2       23     19 3.637942
+## 70          0     2       24     15 2.819690
+## 71          0     2       25     12 3.789121
+## 72          0     2       26     21 3.364710
+## 73          0     2       27     24 2.698411
+## 74          0     2       28     17 3.910716
+## 75          0     2       29     20 3.405889
+## 76          0     2       30     11 3.127054
+## 77          0     2       31     21 3.653830
+## 78          0     2       32     20 2.888964
+## 79          0     2       33     21 2.716592
+## 80          0     2       34     27 3.140779
+## 81          0     2       35     24 3.559196
+## 82          0     2       36     23 5.337811
+## 83          0     2       37     12 3.354873
+## 84          0     2       38     22 3.063140
+## 85          0     2       39     18 3.246045
+## 86          0     2       40     22 4.336463
+## 87          0     2       41     24 2.902013
+## 88          0     2       42     16 4.049629
+## 89          0     2       43     19 2.557013
+## 90          0     2       44     13 3.169327
+## 91          0     2       45     24 2.831378
+## 92          0     2       46     18 3.137551
+## 93          0     3        1     23 3.156225
+## 94          0     3        2     21 3.507982
+## 95          0     3        3     19 3.764100
+## 96          0     3        4     25 3.512053
+## 97          0     3        5     25 3.025554
+## 98          0     3        6     25 3.580258
+## 99          0     3        7     29 4.610082
+## 100         0     3        8     22 3.359812
+## 101         0     3        9     20 1.611052
+## 102         0     3       10     21 4.699245
+## 103         0     3       11     22 3.379328
+## 104         0     3       12     20 3.316253
+## 105         0     3       13     23 3.619674
+## 106         0     3       14     19 3.452313
+## 107         0     3       15     19 2.811053
+## 108         0     3       16     21 4.589599
+## 109         0     3       17     18 3.618679
+## 110         0     3       18     11 3.584794
+## 111         0     3       19     19 2.566871
+## 112         0     3       20     21 3.169398
+## 113         0     3       21     17 4.393880
+## 114         0     3       22     18 4.169397
+## 115         0     3       23     19 3.888473
+## 116         0     3       24     15 2.611717
+## 117         0     3       25     12 3.755747
+## 118         0     3       26     21 3.277267
+## 119         0     3       27     24 2.779935
+## 120         0     3       28     17 4.192575
+## 121         0     3       29     20 3.376643
+## 122         0     3       30     11 3.087344
+## 123         0     3       31     21 3.715516
+## 124         0     3       32     20 2.700003
+## 125         0     3       33     21 2.758113
+## 126         0     3       34     27 3.263976
+## 127         0     3       35     24 3.639077
+## 128         0     3       36     23 5.299218
+## 129         0     3       37     12 3.403870
+## 130         0     3       38     22 3.143804
+## 131         0     3       39     18 3.216173
+## 132         0     3       40     22 4.242600
+## 133         0     3       41     24 3.034514
+## 134         0     3       42     16 3.972737
+## 135         0     3       43     19 2.484999
+## 136         0     3       44     13 3.336223
+## 137         0     3       45     24 3.002851
+## 138         0     3       46     18 3.365402
+## 139         0     4       19     19 2.509180
+## 140         0     4       20     21 3.288617
+## 141         0     4       21     17 4.445820
+## 142         0     4       22     18 4.164165
+## 143         0     4       23     19 3.864377
+## 144         0     4       24     15 2.831395
+## 145         0     4       25     12 3.727311
+## 146         0     4       26     21 3.378074
+## 147         0     4       27     24 2.796322
+## 148         0     4       28     17 3.886515
+## 149         0     4       29     20 3.516957
+## 150         0     4       30     11 2.914344
+## 151         0     4       31     21 3.584733
+## 152         0     4       32     20 2.826214
+## 153         0     4       33     21 2.680135
+## 154         0     4       34     27 3.095312
+## 155         0     4       35     24 3.443879
+## 156         0     4       36     23 5.235846
+## 157         0     4       37     12 3.204738
+## 158         0     4       38     22 3.122797
+## 159         0     4       39     18 3.303915
+## 160         0     4       40     22 4.336869
+## 161         0     4       41     24 3.006928
+## 162         0     4       42     16 4.080789
+## 163         0     4       43     19 2.583634
+## 164         0     4       44     13 3.367477
+## 165         0     4       45     24 3.024972
+## 166         0     4       46     18 3.199823
+## 167         0     5       19     19 2.305888
+## 168         0     5       20     21 3.149036
+## 169         0     5       21     17 4.307574
+## 170         0     5       22     18 3.755407
+## 171         0     5       23     19 3.778621
+## 172         0     5       24     15 2.829884
+## 173         0     5       25     12 3.768996
+## 174         0     5       26     21 3.502661
+## 175         0     5       27     24 2.711391
+## 176         0     5       28     17 3.890808
+## 177         0     5       29     20 3.353748
+## 178         0     5       30     11 3.117240
+## 179         0     5       31     21 3.663619
+## 180         0     5       32     20 3.023582
+## 181         0     5       33     21 2.738722
+## 182         0     5       34     27 3.059489
+## 183         0     5       35     24 3.481260
+## 184         0     5       36     23 5.201012
+## 185         0     5       37     12 3.450010
+## 186         0     5       38     22 3.195531
+## 187         0     5       39     18 3.033606
+## 188         0     5       40     22 4.385475
+## 189         0     5       41     24 3.001968
+## 190         0     5       42     16 4.027572
+## 191         0     5       43     19 2.121508
+## 192         0     5       44     13 3.132786
+## 193         0     5       45     24 3.012634
+## 194         0     5       46     18 3.364048
+## 195         0     6       19     19 2.336998
+## 196         0     6       20     21 3.267287
+## 197         0     6       21     17 4.348000
+## 198         0     6       22     18 3.932387
+## 199         0     6       23     19 3.977279
+## 200         0     6       24     15 2.847449
+## 201         0     6       25     12 3.800797
+## 202         0     6       26     21 3.501680
+## 203         0     6       27     24 2.888480
+## 204         0     6       28     17 3.797246
+## 205         0     6       29     20 3.360550
+## 206         0     6       30     11 2.882277
+## 207         0     6       31     21 3.806281
+## 208         0     6       32     20 2.791900
+## 209         0     6       33     21 2.678698
+## 210         0     6       34     27 3.139628
+## 211         0     6       35     24 3.664960
+## 212         0     6       36     23 5.404254
+## 213         0     6       37     12 3.291440
+## 214         0     6       38     22 2.984886
+## 215         0     6       39     18 3.111916
+## 216         0     6       40     22 4.197547
+## 217         0     6       41     24 3.019362
+## 218         0     6       42     16 4.108867
+## 219         0     6       43     19 2.419765
+## 220         0     6       44     13 3.231733
+## 221         0     6       45     24 3.084945
+## 222         0     6       46     18 3.098263
+## 223         0     7       19     19 2.360074
+## 224         0     7       20     21 3.198206
+## 225         0     7       21     17 4.233054
+## 226         0     7       22     18 4.016123
+## 227         0     7       23     19 3.734300
+## 228         0     7       24     15 2.976204
+## 229         0     7       25     12 3.925934
+## 230         0     7       26     21 3.354325
+## 231         0     7       27     24 2.618562
+## 232         0     7       28     17 3.837616
+## 233         0     7       29     20 3.417118
+## 234         0     7       30     11 2.785435
+## 235         0     7       31     21 3.574742
+## 236         0     7       32     20 3.108485
+## 237         0     7       33     21 2.719610
+## 238         0     7       34     27 3.298111
+## 239         0     7       35     24 3.297512
+## 240         0     7       36     23 5.189819
+## 241         0     7       37     12 3.294065
+## 242         0     7       38     22 3.063006
+## 243         0     7       39     18 3.187250
+## 244         0     7       40     22 4.342186
+## 245         0     7       41     24 3.076763
+## 246         0     7       42     16 4.081561
+## 247         0     7       43     19 2.367568
+## 248         0     7       44     13 2.969883
+## 249         0     7       45     24 2.886161
+## 250         0     7       46     18 3.358894
+## 251         1     4        1     23 3.835845
+## 252         1     4        2     21 4.396861
+## 253         1     4        3     19 4.488301
+## 254         1     4        4     25 4.050345
+## 255         1     4        5     25 3.936718
+## 256         1     4        6     25 4.722814
+## 257         1     4        7     29 5.409216
+## 258         1     4        8     22 4.105187
+## 259         1     4        9     20 2.496835
+## 260         1     4       10     21 5.652775
+## 261         1     4       11     22 4.212406
+## 262         1     4       12     20 3.786197
+## 263         1     4       13     23 4.227201
+## 264         1     4       14     19 4.283745
+## 265         1     4       15     19 3.865600
+## 266         1     4       16     21 5.437380
+## 267         1     4       17     18 4.665748
+## 268         1     4       18     11 4.050350
+## 269         1     5        1     23 4.103837
+## 270         1     5        2     21 4.657443
+## 271         1     5        3     19 4.742431
+## 272         1     5        4     25 4.134170
+## 273         1     5        5     25 3.798510
+## 274         1     5        6     25 4.405616
+## 275         1     5        7     29 5.351612
+## 276         1     5        8     22 4.099177
+## 277         1     5        9     20 2.597356
+## 278         1     5       10     21 5.635432
+## 279         1     5       11     22 4.124701
+## 280         1     5       12     20 4.015355
+## 281         1     5       13     23 4.551923
+## 282         1     5       14     19 4.304460
+## 283         1     5       15     19 3.927470
+## 284         1     5       16     21 5.484893
+## 285         1     5       17     18 4.336597
+## 286         1     5       18     11 4.236538
+## 287         1     6        1     23 3.935414
+## 288         1     6        2     21 4.364859
+## 289         1     6        3     19 4.480782
+## 290         1     6        4     25 4.128784
+## 291         1     6        5     25 4.145755
+## 292         1     6        6     25 4.378953
+## 293         1     6        7     29 5.525931
+## 294         1     6        8     22 3.859924
+## 295         1     6        9     20 2.344122
+## 296         1     6       10     21 5.940653
+## 297         1     6       11     22 4.310504
+## 298         1     6       12     20 3.713185
+## 299         1     6       13     23 4.639089
+## 300         1     6       14     19 4.328520
+## 301         1     6       15     19 4.009936
+## 302         1     6       16     21 5.314686
+## 303         1     6       17     18 4.349978
+## 304         1     6       18     11 3.881244
+## 305         1     7        1     23 3.966808
+## 306         1     7        2     21 4.535687
+## 307         1     7        3     19 4.587443
+## 308         1     7        4     25 4.103359
+## 309         1     7        5     25 3.894369
+## 310         1     7        6     25 4.443012
+## 311         1     7        7     29 5.450312
+## 312         1     7        8     22 4.163690
+## 313         1     7        9     20 2.460679
+## 314         1     7       10     21 5.784146
+## 315         1     7       11     22 4.313027
+## 316         1     7       12     20 3.859686
+## 317         1     7       13     23 4.537201
+## 318         1     7       14     19 4.224881
+## 319         1     7       15     19 4.083361
+## 320         1     7       16     21 5.412115
+## 321         1     7       17     18 4.405925
+## 322         1     7       18     11 4.008895</code></pre>
+<p>La moyenne pondérée de l’ensemble nous donne la moyenne globale.</p>
+<pre class="r"><code>weighted.mean(dpmh$moyenne,dpmh$nombre)</code></pre>
+<pre><code>## [1] 3.619074</code></pre>
+<p>Codons les variables dont l’interaction permet de construire <strong>procedure</strong> : <strong>traite</strong> et <strong>post</strong>.</p>
+<pre class="r"><code>dpmh&lt;-dpmh %&gt;% 
+  mutate(traite=hospital%in%1:18,
+         post=month&gt;3,
+         t_p=traite*post)
+dpmh</code></pre>
+<pre><code>##     procedure month hospital nombre  moyenne traite  post t_p
+## 1           0     1        1     46 3.294767   TRUE FALSE   0
+## 2           0     1        2     42 3.528171   TRUE FALSE   0
+## 3           0     1        3     38 3.675410   TRUE FALSE   0
+## 4           0     1        4     50 3.559696   TRUE FALSE   0
+## 5           0     1        5     50 2.890192   TRUE FALSE   0
+## 6           0     1        6     50 3.572328   TRUE FALSE   0
+## 7           0     1        7     58 4.570614   TRUE FALSE   0
+## 8           0     1        8     44 3.215010   TRUE FALSE   0
+## 9           0     1        9     40 1.712429   TRUE FALSE   0
+## 10          0     1       10     42 4.830663   TRUE FALSE   0
+## 11          0     1       11     44 3.414440   TRUE FALSE   0
+## 12          0     1       12     40 3.104288   TRUE FALSE   0
+## 13          0     1       13     46 3.652576   TRUE FALSE   0
+## 14          0     1       14     38 3.300598   TRUE FALSE   0
+## 15          0     1       15     38 2.963817   TRUE FALSE   0
+## 16          0     1       16     42 4.626985   TRUE FALSE   0
+## 17          0     1       17     36 3.656979   TRUE FALSE   0
+## 18          0     1       18     22 3.498598   TRUE FALSE   0
+## 19          0     1       19     38 2.468924  FALSE FALSE   0
+## 20          0     1       20     42 3.143998  FALSE FALSE   0
+## 21          0     1       21     34 4.414964  FALSE FALSE   0
+## 22          0     1       22     36 3.865758  FALSE FALSE   0
+## 23          0     1       23     38 4.045333  FALSE FALSE   0
+## 24          0     1       24     30 2.988274  FALSE FALSE   0
+## 25          0     1       25     24 3.880890  FALSE FALSE   0
+## 26          0     1       26     42 3.346577  FALSE FALSE   0
+## 27          0     1       27     48 2.837780  FALSE FALSE   0
+## 28          0     1       28     34 3.769191  FALSE FALSE   0
+## 29          0     1       29     40 3.457700  FALSE FALSE   0
+## 30          0     1       30     22 3.050413  FALSE FALSE   0
+## 31          0     1       31     42 3.727927  FALSE FALSE   0
+## 32          0     1       32     40 2.715991  FALSE FALSE   0
+## 33          0     1       33     42 2.717112  FALSE FALSE   0
+## 34          0     1       34     54 3.178651  FALSE FALSE   0
+## 35          0     1       35     48 3.552450  FALSE FALSE   0
+## 36          0     1       36     46 5.397538  FALSE FALSE   0
+## 37          0     1       37     24 3.241063  FALSE FALSE   0
+## 38          0     1       38     44 3.045142  FALSE FALSE   0
+## 39          0     1       39     36 3.035507  FALSE FALSE   0
+## 40          0     1       40     44 4.244511  FALSE FALSE   0
+## 41          0     1       41     48 3.059235  FALSE FALSE   0
+## 42          0     1       42     32 4.042918  FALSE FALSE   0
+## 43          0     1       43     38 2.321974  FALSE FALSE   0
+## 44          0     1       44     26 3.212882  FALSE FALSE   0
+## 45          0     1       45     48 2.902479  FALSE FALSE   0
+## 46          0     1       46     36 3.230923  FALSE FALSE   0
+## 47          0     2        1     23 3.162184   TRUE FALSE   0
+## 48          0     2        2     21 3.499205   TRUE FALSE   0
+## 49          0     2        3     19 3.604969   TRUE FALSE   0
+## 50          0     2        4     25 3.521826   TRUE FALSE   0
+## 51          0     2        5     25 3.005734   TRUE FALSE   0
+## 52          0     2        6     25 3.657448   TRUE FALSE   0
+## 53          0     2        7     29 4.496797   TRUE FALSE   0
+## 54          0     2        8     22 3.307042   TRUE FALSE   0
+## 55          0     2        9     20 1.666825   TRUE FALSE   0
+## 56          0     2       10     21 4.839029   TRUE FALSE   0
+## 57          0     2       11     22 3.348725   TRUE FALSE   0
+## 58          0     2       12     20 3.088168   TRUE FALSE   0
+## 59          0     2       13     23 3.834354   TRUE FALSE   0
+## 60          0     2       14     19 3.419073   TRUE FALSE   0
+## 61          0     2       15     19 2.968847   TRUE FALSE   0
+## 62          0     2       16     21 4.571348   TRUE FALSE   0
+## 63          0     2       17     18 3.447304   TRUE FALSE   0
+## 64          0     2       18     11 3.217040   TRUE FALSE   0
+## 65          0     2       19     19 2.378622  FALSE FALSE   0
+## 66          0     2       20     21 3.376456  FALSE FALSE   0
+## 67          0     2       21     17 4.354336  FALSE FALSE   0
+## 68          0     2       22     18 3.983424  FALSE FALSE   0
+## 69          0     2       23     19 3.637942  FALSE FALSE   0
+## 70          0     2       24     15 2.819690  FALSE FALSE   0
+## 71          0     2       25     12 3.789121  FALSE FALSE   0
+## 72          0     2       26     21 3.364710  FALSE FALSE   0
+## 73          0     2       27     24 2.698411  FALSE FALSE   0
+## 74          0     2       28     17 3.910716  FALSE FALSE   0
+## 75          0     2       29     20 3.405889  FALSE FALSE   0
+## 76          0     2       30     11 3.127054  FALSE FALSE   0
+## 77          0     2       31     21 3.653830  FALSE FALSE   0
+## 78          0     2       32     20 2.888964  FALSE FALSE   0
+## 79          0     2       33     21 2.716592  FALSE FALSE   0
+## 80          0     2       34     27 3.140779  FALSE FALSE   0
+## 81          0     2       35     24 3.559196  FALSE FALSE   0
+## 82          0     2       36     23 5.337811  FALSE FALSE   0
+## 83          0     2       37     12 3.354873  FALSE FALSE   0
+## 84          0     2       38     22 3.063140  FALSE FALSE   0
+## 85          0     2       39     18 3.246045  FALSE FALSE   0
+## 86          0     2       40     22 4.336463  FALSE FALSE   0
+## 87          0     2       41     24 2.902013  FALSE FALSE   0
+## 88          0     2       42     16 4.049629  FALSE FALSE   0
+## 89          0     2       43     19 2.557013  FALSE FALSE   0
+## 90          0     2       44     13 3.169327  FALSE FALSE   0
+## 91          0     2       45     24 2.831378  FALSE FALSE   0
+## 92          0     2       46     18 3.137551  FALSE FALSE   0
+## 93          0     3        1     23 3.156225   TRUE FALSE   0
+## 94          0     3        2     21 3.507982   TRUE FALSE   0
+## 95          0     3        3     19 3.764100   TRUE FALSE   0
+## 96          0     3        4     25 3.512053   TRUE FALSE   0
+## 97          0     3        5     25 3.025554   TRUE FALSE   0
+## 98          0     3        6     25 3.580258   TRUE FALSE   0
+## 99          0     3        7     29 4.610082   TRUE FALSE   0
+## 100         0     3        8     22 3.359812   TRUE FALSE   0
+## 101         0     3        9     20 1.611052   TRUE FALSE   0
+## 102         0     3       10     21 4.699245   TRUE FALSE   0
+## 103         0     3       11     22 3.379328   TRUE FALSE   0
+## 104         0     3       12     20 3.316253   TRUE FALSE   0
+## 105         0     3       13     23 3.619674   TRUE FALSE   0
+## 106         0     3       14     19 3.452313   TRUE FALSE   0
+## 107         0     3       15     19 2.811053   TRUE FALSE   0
+## 108         0     3       16     21 4.589599   TRUE FALSE   0
+## 109         0     3       17     18 3.618679   TRUE FALSE   0
+## 110         0     3       18     11 3.584794   TRUE FALSE   0
+## 111         0     3       19     19 2.566871  FALSE FALSE   0
+## 112         0     3       20     21 3.169398  FALSE FALSE   0
+## 113         0     3       21     17 4.393880  FALSE FALSE   0
+## 114         0     3       22     18 4.169397  FALSE FALSE   0
+## 115         0     3       23     19 3.888473  FALSE FALSE   0
+## 116         0     3       24     15 2.611717  FALSE FALSE   0
+## 117         0     3       25     12 3.755747  FALSE FALSE   0
+## 118         0     3       26     21 3.277267  FALSE FALSE   0
+## 119         0     3       27     24 2.779935  FALSE FALSE   0
+## 120         0     3       28     17 4.192575  FALSE FALSE   0
+## 121         0     3       29     20 3.376643  FALSE FALSE   0
+## 122         0     3       30     11 3.087344  FALSE FALSE   0
+## 123         0     3       31     21 3.715516  FALSE FALSE   0
+## 124         0     3       32     20 2.700003  FALSE FALSE   0
+## 125         0     3       33     21 2.758113  FALSE FALSE   0
+## 126         0     3       34     27 3.263976  FALSE FALSE   0
+## 127         0     3       35     24 3.639077  FALSE FALSE   0
+## 128         0     3       36     23 5.299218  FALSE FALSE   0
+## 129         0     3       37     12 3.403870  FALSE FALSE   0
+## 130         0     3       38     22 3.143804  FALSE FALSE   0
+## 131         0     3       39     18 3.216173  FALSE FALSE   0
+## 132         0     3       40     22 4.242600  FALSE FALSE   0
+## 133         0     3       41     24 3.034514  FALSE FALSE   0
+## 134         0     3       42     16 3.972737  FALSE FALSE   0
+## 135         0     3       43     19 2.484999  FALSE FALSE   0
+## 136         0     3       44     13 3.336223  FALSE FALSE   0
+## 137         0     3       45     24 3.002851  FALSE FALSE   0
+## 138         0     3       46     18 3.365402  FALSE FALSE   0
+## 139         0     4       19     19 2.509180  FALSE  TRUE   0
+## 140         0     4       20     21 3.288617  FALSE  TRUE   0
+## 141         0     4       21     17 4.445820  FALSE  TRUE   0
+## 142         0     4       22     18 4.164165  FALSE  TRUE   0
+## 143         0     4       23     19 3.864377  FALSE  TRUE   0
+## 144         0     4       24     15 2.831395  FALSE  TRUE   0
+## 145         0     4       25     12 3.727311  FALSE  TRUE   0
+## 146         0     4       26     21 3.378074  FALSE  TRUE   0
+## 147         0     4       27     24 2.796322  FALSE  TRUE   0
+## 148         0     4       28     17 3.886515  FALSE  TRUE   0
+## 149         0     4       29     20 3.516957  FALSE  TRUE   0
+## 150         0     4       30     11 2.914344  FALSE  TRUE   0
+## 151         0     4       31     21 3.584733  FALSE  TRUE   0
+## 152         0     4       32     20 2.826214  FALSE  TRUE   0
+## 153         0     4       33     21 2.680135  FALSE  TRUE   0
+## 154         0     4       34     27 3.095312  FALSE  TRUE   0
+## 155         0     4       35     24 3.443879  FALSE  TRUE   0
+## 156         0     4       36     23 5.235846  FALSE  TRUE   0
+## 157         0     4       37     12 3.204738  FALSE  TRUE   0
+## 158         0     4       38     22 3.122797  FALSE  TRUE   0
+## 159         0     4       39     18 3.303915  FALSE  TRUE   0
+## 160         0     4       40     22 4.336869  FALSE  TRUE   0
+## 161         0     4       41     24 3.006928  FALSE  TRUE   0
+## 162         0     4       42     16 4.080789  FALSE  TRUE   0
+## 163         0     4       43     19 2.583634  FALSE  TRUE   0
+## 164         0     4       44     13 3.367477  FALSE  TRUE   0
+## 165         0     4       45     24 3.024972  FALSE  TRUE   0
+## 166         0     4       46     18 3.199823  FALSE  TRUE   0
+## 167         0     5       19     19 2.305888  FALSE  TRUE   0
+## 168         0     5       20     21 3.149036  FALSE  TRUE   0
+## 169         0     5       21     17 4.307574  FALSE  TRUE   0
+## 170         0     5       22     18 3.755407  FALSE  TRUE   0
+## 171         0     5       23     19 3.778621  FALSE  TRUE   0
+## 172         0     5       24     15 2.829884  FALSE  TRUE   0
+## 173         0     5       25     12 3.768996  FALSE  TRUE   0
+## 174         0     5       26     21 3.502661  FALSE  TRUE   0
+## 175         0     5       27     24 2.711391  FALSE  TRUE   0
+## 176         0     5       28     17 3.890808  FALSE  TRUE   0
+## 177         0     5       29     20 3.353748  FALSE  TRUE   0
+## 178         0     5       30     11 3.117240  FALSE  TRUE   0
+## 179         0     5       31     21 3.663619  FALSE  TRUE   0
+## 180         0     5       32     20 3.023582  FALSE  TRUE   0
+## 181         0     5       33     21 2.738722  FALSE  TRUE   0
+## 182         0     5       34     27 3.059489  FALSE  TRUE   0
+## 183         0     5       35     24 3.481260  FALSE  TRUE   0
+## 184         0     5       36     23 5.201012  FALSE  TRUE   0
+## 185         0     5       37     12 3.450010  FALSE  TRUE   0
+## 186         0     5       38     22 3.195531  FALSE  TRUE   0
+## 187         0     5       39     18 3.033606  FALSE  TRUE   0
+## 188         0     5       40     22 4.385475  FALSE  TRUE   0
+## 189         0     5       41     24 3.001968  FALSE  TRUE   0
+## 190         0     5       42     16 4.027572  FALSE  TRUE   0
+## 191         0     5       43     19 2.121508  FALSE  TRUE   0
+## 192         0     5       44     13 3.132786  FALSE  TRUE   0
+## 193         0     5       45     24 3.012634  FALSE  TRUE   0
+## 194         0     5       46     18 3.364048  FALSE  TRUE   0
+## 195         0     6       19     19 2.336998  FALSE  TRUE   0
+## 196         0     6       20     21 3.267287  FALSE  TRUE   0
+## 197         0     6       21     17 4.348000  FALSE  TRUE   0
+## 198         0     6       22     18 3.932387  FALSE  TRUE   0
+## 199         0     6       23     19 3.977279  FALSE  TRUE   0
+## 200         0     6       24     15 2.847449  FALSE  TRUE   0
+## 201         0     6       25     12 3.800797  FALSE  TRUE   0
+## 202         0     6       26     21 3.501680  FALSE  TRUE   0
+## 203         0     6       27     24 2.888480  FALSE  TRUE   0
+## 204         0     6       28     17 3.797246  FALSE  TRUE   0
+## 205         0     6       29     20 3.360550  FALSE  TRUE   0
+## 206         0     6       30     11 2.882277  FALSE  TRUE   0
+## 207         0     6       31     21 3.806281  FALSE  TRUE   0
+## 208         0     6       32     20 2.791900  FALSE  TRUE   0
+## 209         0     6       33     21 2.678698  FALSE  TRUE   0
+## 210         0     6       34     27 3.139628  FALSE  TRUE   0
+## 211         0     6       35     24 3.664960  FALSE  TRUE   0
+## 212         0     6       36     23 5.404254  FALSE  TRUE   0
+## 213         0     6       37     12 3.291440  FALSE  TRUE   0
+## 214         0     6       38     22 2.984886  FALSE  TRUE   0
+## 215         0     6       39     18 3.111916  FALSE  TRUE   0
+## 216         0     6       40     22 4.197547  FALSE  TRUE   0
+## 217         0     6       41     24 3.019362  FALSE  TRUE   0
+## 218         0     6       42     16 4.108867  FALSE  TRUE   0
+## 219         0     6       43     19 2.419765  FALSE  TRUE   0
+## 220         0     6       44     13 3.231733  FALSE  TRUE   0
+## 221         0     6       45     24 3.084945  FALSE  TRUE   0
+## 222         0     6       46     18 3.098263  FALSE  TRUE   0
+## 223         0     7       19     19 2.360074  FALSE  TRUE   0
+## 224         0     7       20     21 3.198206  FALSE  TRUE   0
+## 225         0     7       21     17 4.233054  FALSE  TRUE   0
+## 226         0     7       22     18 4.016123  FALSE  TRUE   0
+## 227         0     7       23     19 3.734300  FALSE  TRUE   0
+## 228         0     7       24     15 2.976204  FALSE  TRUE   0
+## 229         0     7       25     12 3.925934  FALSE  TRUE   0
+## 230         0     7       26     21 3.354325  FALSE  TRUE   0
+## 231         0     7       27     24 2.618562  FALSE  TRUE   0
+## 232         0     7       28     17 3.837616  FALSE  TRUE   0
+## 233         0     7       29     20 3.417118  FALSE  TRUE   0
+## 234         0     7       30     11 2.785435  FALSE  TRUE   0
+## 235         0     7       31     21 3.574742  FALSE  TRUE   0
+## 236         0     7       32     20 3.108485  FALSE  TRUE   0
+## 237         0     7       33     21 2.719610  FALSE  TRUE   0
+## 238         0     7       34     27 3.298111  FALSE  TRUE   0
+## 239         0     7       35     24 3.297512  FALSE  TRUE   0
+## 240         0     7       36     23 5.189819  FALSE  TRUE   0
+## 241         0     7       37     12 3.294065  FALSE  TRUE   0
+## 242         0     7       38     22 3.063006  FALSE  TRUE   0
+## 243         0     7       39     18 3.187250  FALSE  TRUE   0
+## 244         0     7       40     22 4.342186  FALSE  TRUE   0
+## 245         0     7       41     24 3.076763  FALSE  TRUE   0
+## 246         0     7       42     16 4.081561  FALSE  TRUE   0
+## 247         0     7       43     19 2.367568  FALSE  TRUE   0
+## 248         0     7       44     13 2.969883  FALSE  TRUE   0
+## 249         0     7       45     24 2.886161  FALSE  TRUE   0
+## 250         0     7       46     18 3.358894  FALSE  TRUE   0
+## 251         1     4        1     23 3.835845   TRUE  TRUE   1
+## 252         1     4        2     21 4.396861   TRUE  TRUE   1
+## 253         1     4        3     19 4.488301   TRUE  TRUE   1
+## 254         1     4        4     25 4.050345   TRUE  TRUE   1
+## 255         1     4        5     25 3.936718   TRUE  TRUE   1
+## 256         1     4        6     25 4.722814   TRUE  TRUE   1
+## 257         1     4        7     29 5.409216   TRUE  TRUE   1
+## 258         1     4        8     22 4.105187   TRUE  TRUE   1
+## 259         1     4        9     20 2.496835   TRUE  TRUE   1
+## 260         1     4       10     21 5.652775   TRUE  TRUE   1
+## 261         1     4       11     22 4.212406   TRUE  TRUE   1
+## 262         1     4       12     20 3.786197   TRUE  TRUE   1
+## 263         1     4       13     23 4.227201   TRUE  TRUE   1
+## 264         1     4       14     19 4.283745   TRUE  TRUE   1
+## 265         1     4       15     19 3.865600   TRUE  TRUE   1
+## 266         1     4       16     21 5.437380   TRUE  TRUE   1
+## 267         1     4       17     18 4.665748   TRUE  TRUE   1
+## 268         1     4       18     11 4.050350   TRUE  TRUE   1
+## 269         1     5        1     23 4.103837   TRUE  TRUE   1
+## 270         1     5        2     21 4.657443   TRUE  TRUE   1
+## 271         1     5        3     19 4.742431   TRUE  TRUE   1
+## 272         1     5        4     25 4.134170   TRUE  TRUE   1
+## 273         1     5        5     25 3.798510   TRUE  TRUE   1
+## 274         1     5        6     25 4.405616   TRUE  TRUE   1
+## 275         1     5        7     29 5.351612   TRUE  TRUE   1
+## 276         1     5        8     22 4.099177   TRUE  TRUE   1
+## 277         1     5        9     20 2.597356   TRUE  TRUE   1
+## 278         1     5       10     21 5.635432   TRUE  TRUE   1
+## 279         1     5       11     22 4.124701   TRUE  TRUE   1
+## 280         1     5       12     20 4.015355   TRUE  TRUE   1
+## 281         1     5       13     23 4.551923   TRUE  TRUE   1
+## 282         1     5       14     19 4.304460   TRUE  TRUE   1
+## 283         1     5       15     19 3.927470   TRUE  TRUE   1
+## 284         1     5       16     21 5.484893   TRUE  TRUE   1
+## 285         1     5       17     18 4.336597   TRUE  TRUE   1
+## 286         1     5       18     11 4.236538   TRUE  TRUE   1
+## 287         1     6        1     23 3.935414   TRUE  TRUE   1
+## 288         1     6        2     21 4.364859   TRUE  TRUE   1
+## 289         1     6        3     19 4.480782   TRUE  TRUE   1
+## 290         1     6        4     25 4.128784   TRUE  TRUE   1
+## 291         1     6        5     25 4.145755   TRUE  TRUE   1
+## 292         1     6        6     25 4.378953   TRUE  TRUE   1
+## 293         1     6        7     29 5.525931   TRUE  TRUE   1
+## 294         1     6        8     22 3.859924   TRUE  TRUE   1
+## 295         1     6        9     20 2.344122   TRUE  TRUE   1
+## 296         1     6       10     21 5.940653   TRUE  TRUE   1
+## 297         1     6       11     22 4.310504   TRUE  TRUE   1
+## 298         1     6       12     20 3.713185   TRUE  TRUE   1
+## 299         1     6       13     23 4.639089   TRUE  TRUE   1
+## 300         1     6       14     19 4.328520   TRUE  TRUE   1
+## 301         1     6       15     19 4.009936   TRUE  TRUE   1
+## 302         1     6       16     21 5.314686   TRUE  TRUE   1
+## 303         1     6       17     18 4.349978   TRUE  TRUE   1
+## 304         1     6       18     11 3.881244   TRUE  TRUE   1
+## 305         1     7        1     23 3.966808   TRUE  TRUE   1
+## 306         1     7        2     21 4.535687   TRUE  TRUE   1
+## 307         1     7        3     19 4.587443   TRUE  TRUE   1
+## 308         1     7        4     25 4.103359   TRUE  TRUE   1
+## 309         1     7        5     25 3.894369   TRUE  TRUE   1
+## 310         1     7        6     25 4.443012   TRUE  TRUE   1
+## 311         1     7        7     29 5.450312   TRUE  TRUE   1
+## 312         1     7        8     22 4.163690   TRUE  TRUE   1
+## 313         1     7        9     20 2.460679   TRUE  TRUE   1
+## 314         1     7       10     21 5.784146   TRUE  TRUE   1
+## 315         1     7       11     22 4.313027   TRUE  TRUE   1
+## 316         1     7       12     20 3.859686   TRUE  TRUE   1
+## 317         1     7       13     23 4.537201   TRUE  TRUE   1
+## 318         1     7       14     19 4.224881   TRUE  TRUE   1
+## 319         1     7       15     19 4.083361   TRUE  TRUE   1
+## 320         1     7       16     21 5.412115   TRUE  TRUE   1
+## 321         1     7       17     18 4.405925   TRUE  TRUE   1
+## 322         1     7       18     11 4.008895   TRUE  TRUE   1</code></pre>
+<p>On peut, sur la base de ces variables, reconstituer la matrice des moyennes que nous avions établie à partir de la régression en 2x2 <em>diff-in-diff</em>.</p>
+<pre class="r"><code>mat_m&lt;-dpmh %&gt;% 
+  summarise(moy=weighted.mean(moyenne,nombre),.by=c(&quot;traite&quot;,&quot;post&quot;))
+mat_m&lt;-rbind(mat_m %&gt;% filter(post==FALSE) %&gt;% arrange(traite) %&gt;%
+        select(moy) %&gt;% unlist(),
+             mat_m %&gt;% filter(post==TRUE) %&gt;% arrange(traite) %&gt;%
+        select(moy) %&gt;% unlist())
+colnames(mat_m)&lt;-c(&quot;Avant&quot;,&quot;Après&quot;)
+rownames(mat_m)&lt;-c(&quot;Contrôles&quot;,&quot;Traités&quot;)
+mat_m</code></pre>
+<pre><code>##              Avant    Après
+## Contrôles 3.392509 3.525383
+## Traités   3.382490 4.363351</code></pre>
+<p>Notons que les moyennes obtenues à partir de la régression à effets fixes <strong>month</strong> <strong>procedure</strong> nous donne la dernier colonne de la matrice (3,38249 et 4,363351); et que les moyennes obtenues à partir de la régression à effets fixes <strong>hospital</strong> <strong>procedure</strong>, nous donne la ligne du bas (3,525383 et 4,363351). Pour reconstituer la matrice des moyennes à partir de ces éléments, il nous faut en plus calculer la moyenne pour le groupe de contrôle avant le traitement.</p>
+<pre class="r"><code>dpmh %&gt;% 
+  filter(traite==0&amp;post==0) %&gt;% 
+  summarise(moy=weighted.mean(moyenne,nombre))</code></pre>
+<pre><code>##        moy
+## 1 3.392509</code></pre>
+<p>On peut, à partir de là, calculer la double différence de manière classique.</p>
+<pre class="r"><code>(3.392509-3.525383)-(3.382490-4.363351)</code></pre>
+<pre><code>## [1] 0.847987</code></pre>
+<p>On retrouve bien notre ATET : 0,847987.</p>
+<p>Voyons une autre manière de procéder. Concentrons nous sur la variable <strong>procedure</strong>. Calculons les moyennes pondérées sur les groupes définies par cette variable et établissons la différence.</p>
+<pre class="r"><code>dpmh %&gt;% 
+  filter(post==TRUE) %&gt;% 
+  summarise(moy=weighted.mean(moyenne,nombre),.by=procedure)%&gt;% 
+  mutate(diff=moy-lag(moy))</code></pre>
+<pre><code>##   procedure      moy      diff
+## 1         0 3.382490        NA
+## 2         1 4.363351 0.9808618</code></pre>
+<p>On est loin de l’ATET, dans la mesure où le groupe pour lequel <strong>procedure</strong> est égale à 0 inclus à la fois des futurs traités et des jamais traités (le groupe de contrôle). Notez que l’on retrouve le coefficient de <strong>procedure</strong> pour le modèle à effet fixe temporel (<strong>month</strong>). Pour passer à l’ATET, il faut la corriger cette différences des différences entre le groupe traité et le groupe de contrôle avant le traitement (le biais de sélection).</p>
+<pre class="r"><code>dpmh %&gt;% 
+  filter(post==FALSE) %&gt;% 
+  summarise(moy=weighted.mean(moyenne,nombre),.by=traite)%&gt;%
+  arrange(traite) %&gt;% 
+  mutate(diff=moy-lag(moy))</code></pre>
+<pre><code>##   traite      moy      diff
+## 1  FALSE 3.392509        NA
+## 2   TRUE 3.525383 0.1328739</code></pre>
+<p>Avant le traitement, les traités présentent une satisfaction moyenne plus grande de 0.1328739 par rapport au non traités. Pour retrouver l’ATET, il suffit de soustraire cette valeur à la précédente. On retrouve alors bien le coefficient pour <strong>procedure</strong> dans l’estimation en TWFE.</p>
+<pre class="r"><code>0.9808618-0.1328739</code></pre>
+<pre><code>## [1] 0.8479879</code></pre>
+<p>Le même résultat peut être obtenu en une fois comme suit:</p>
+<pre class="r"><code>dpmh %&gt;% 
+  summarise(moy=weighted.mean(moyenne,nombre),
+            .by=c(&quot;procedure&quot;,&quot;post&quot;,&quot;traite&quot;)) %&gt;% 
+  arrange(procedure,post,traite) %&gt;% 
+  cbind(diff=c(NA,.$moy[c(2)]-.$moy[c(1)],
+               NA,.$moy[c(4)]-.$moy[c(3)])) %&gt;% 
+  cbind(ATET=c(.$diff[4]-.$diff[2],NA,NA,NA))</code></pre>
+<pre><code>##   procedure  post traite      moy      diff      ATET
+## 1         0 FALSE  FALSE 3.392509        NA 0.8479879
+## 2         0 FALSE   TRUE 3.525383 0.1328739        NA
+## 3         0  TRUE  FALSE 3.382490        NA        NA
+## 4         1  TRUE   TRUE 4.363351 0.9808618        NA</code></pre>
+<p>La même analyse peut être faite en prenant comme distinction primaire non plus <strong>post</strong> mais <strong>traite</strong>. On a alors:</p>
+<pre class="r"><code>dpmh %&gt;% filter(traite==TRUE) %&gt;% 
+      summarise(moy=weighted.mean(moyenne,nombre),.by=procedure)%&gt;% 
+      mutate(diff=moy-lag(moy))</code></pre>
+<pre><code>##   procedure      moy      diff
+## 1         0 3.525383        NA
+## 2         1 4.363351 0.8379681</code></pre>
+<p>Notez que l’on retrouve le coefficient de <strong>procedure</strong> pour le modèle à effets fixes individuels (<strong>hospital</strong>). La différence de satisfaction moyenne des usagés enquêtés des hôpitaux traités avant et après la mis en place de la procédure (<strong>procedure</strong> pourrait être remplacée par <strong>post</strong> sans rien changé ici). Pour arriver à l’ATET, l’effet causal, il faut corriger cette valeur de la différence de satisfaction moyenne du groupe de contrôle avant et après l’attribution du traitement aux traités.</p>
+<pre class="r"><code>dpmh %&gt;% filter(traite==FALSE) %&gt;% 
+      summarise(moy=weighted.mean(moyenne,nombre),.by=post) %&gt;% 
+      arrange(post) %&gt;% 
+      mutate(diff=moy-lag(moy))</code></pre>
+<pre><code>##    post      moy       diff
+## 1 FALSE 3.392509         NA
+## 2  TRUE 3.382490 -0.0100198</code></pre>
+<p>Cela permet bien de revenir à notre effet causal identifié par la méthode <em>diff-in-diff</em> (sous l’hypothèse de <em>parallel trend</em>).</p>
+<pre class="r"><code>0.8379681 - -0.0100198</code></pre>
+<pre><code>## [1] 0.8479879</code></pre>
+<p>Comme précédemment on peut réaliser l’opération en une fois. On a alors:</p>
+<pre class="r"><code>dpmh %&gt;% 
+  summarise(moy=weighted.mean(moyenne,nombre),
+            .by=c(&quot;procedure&quot;,&quot;traite&quot;,&quot;post&quot;)) %&gt;% 
+  arrange(procedure,traite,post) %&gt;% 
+  cbind(diff=c(NA,.$moy[c(2)]-.$moy[c(1)],
+               NA,.$moy[c(4)]-.$moy[c(3)])) %&gt;% 
+  cbind(ATET=c(.$diff[4]-.$diff[2],NA,NA,NA))</code></pre>
+<pre><code>##   procedure traite  post      moy       diff      ATET
+## 1         0  FALSE FALSE 3.392509         NA 0.8479879
+## 2         0  FALSE  TRUE 3.382490 -0.0100198        NA
+## 3         0   TRUE FALSE 3.525383         NA        NA
+## 4         1   TRUE  TRUE 4.363351  0.8379681        NA</code></pre>
+<p>Les TWFE sont équivalents aux classiques 2x2 <em>diff-in-diff</em>. Ils reposent sur la mise en évidence des mêmes moyennes pondérées. Dans tous les cas, il peut être utile de revenir à la matrice des moyennes d’une manière ou d’une autre pour compléter l’analyse ou simplement pour vérifier la justesse des évaluations.</p>
+</div>
+</div>

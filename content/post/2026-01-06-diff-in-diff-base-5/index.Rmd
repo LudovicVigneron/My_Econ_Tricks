@@ -1,0 +1,607 @@
+---
+title: Diff in Diff - base 5
+author: Ludovic Vigneron
+date: '2026-01-06'
+slug: []
+categories:
+  - DID
+  - R
+  - Inf_causale
+tags:
+  - DiD
+  - Inf_causale
+---
+
+**Après une pause bien trop longue, revenons sur la question de l’estimation des modèles *diff-in-diff*. Nous intéressons à l'équivalence entre les *2x2 diff-in-diff* et les *two-way fixed effects* (TWFE). Essayons de mieux la comprendre en explicitant le lien entre ces deux spécifications qui permettent l’estimation de l’effet moyen du traitement sur les traités (ATET). Pour ce faire, nous revenons aux moyennes estimées sur les différents sous-échantillons mis en évidence et jouons sur l’interprétation des régressions de l’*outcome* sur une série de variables binaires comme des moyennes pondérées.**
+
+Cela est réalisée en revenant sur un exemple que nous avons déjà traité (le cas 2 du post [Diff-in-diff base 3](https://myecontricks.netlify.app/post/2025-01-11-diff-in-diff-bases-3/)), celui portant sur l’effet sur la satisfaction des patients (l’*outcome*: **satis**) de la mise en place d’une nouvelle procédure d’admission automatisée dans les hôpitaux à une date donnée. Le traitement est donc “la mise en place de la procédure”. Le groupe de contrôle est constitué d’hôpitaux qui, sur la période d’étude, n’ont pas mis en place la procédure. Les observations sont réalisées sur 7 mois (3 mois avant le traitement et 4 mois après).
+
+Mais avant d’aller plus loin chargeons les packages que nous mobiliserons par la suite.
+
+```{r}
+#| message: false
+
+# packages de gestion des données
+library(tidyverse)
+library(haven)
+library(labelled)
+
+# packages de regression et tests
+library(fixest)
+library(lmtest)
+library(sandwich)
+library(car)
+```
+
+Ceci fait. Chargeons les données de l’étude via **read_dta()** du package *haven* dans la mesure où l’ensemble est issu de stata.
+
+```{r}
+dat<-read_dta("https://www.stata-press.com/data/r17/hospdd.dta")
+```
+
+# **Posons le contexte**
+
+Laissons de côté la description du panel pour en venir directement à l’estimation du modèle *diff-in-diff* que nous allons décortiquer. Utilisons les TWFE. Pour cela, mobilisons directement la fonction **feols()** du package *fixest* ainsi que **coeftest()** du package *lmtest* et **vcovCL()** de *sandwich* pour réaliser le test sur le coefficient d’intérêt (celui donnant la double différence).
+
+Il s’agit d’estimer **satis** en retenant comme variables expliquées **procedure** (1 pour les traités après la mise en place du traitement et 0 dans les cas contraires) puis **hospital** et **month** qui marquent respectivement les effets fixes individuels et temporels.
+
+```{r}
+reg_f<-feols(satis~procedure| 
+                 hospital + month,
+                 data = dat)
+
+coeftest(reg_f,vcov.=vcovCL(reg_f,cluster=dat$hospital)) %>%
+     round(digits = 7)
+```
+
+L’effet du traitement sur les traités (ATET) est de 0,847988. Autrement-dit, les hôpitaux traités ont connu une augmentation de 0,847988 en moyenne de la satisfaction suite à la mise en place de la nouvelle procédure au regard de ce qu’ils auraient connu s’ils ne l’avaient pas adopté (sous l’hypothèse de *parallel trend* …).
+
+Le même résultat peut être obtenu via la régression au format *2x2 diff-in-diff*. Celle-ci nous permet en plus de retrouver, au travers des coefficients estimés, les moyennes pour les différents groupes définis par les variables binaires **Traite** (1 si l’hôpital a mis en place la nouvelle procédure, 0 sinon) et **Post** (1 si la mesure de satisfaction a été relevée après le mois 3 et donc après la mise en place du traitement chez les traités). Rappelons que **procedure** est le produit des variables binaires **Traite** et **Post**. On a:
+
+```{r}
+dat_<-dat %>% 
+  mutate(Traite=hospital%in%1:18,
+         Post=month>3)
+ reg_<-lm(satis~Traite+Post+Traite*Post,data=dat_)
+ coef(reg_)
+```
+
+Cela se réécrit facilement pour obtenir la table des moyennes associées à notre double différence.
+
+```{r}
+avant<-c(Controle=coef(reg_)[1],Traite=sum(coef(reg_)[1:2]))
+aprés<-c(Controle=sum(coef(reg_)[c(1,3)]),Traite=sum(coef(reg_)))
+tab_moy<-rbind(avant,aprés) %>% data.frame() %>% 
+  rename(Controle=`Controle..Intercept.`)
+tab_moy
+```
+
+Voyons comment on passe de l’un à l’autre.
+
+# **L’effet du traitement sans contrôle**
+
+Commençons par calculer la moyenne de **satis** sur l’ensemble de la base. Celle nous servira de référence. En effet, elle peut mécaniquement être retrouvée à partir de la moyenne pondérée des moyennes établies pour les différents groupes isolés.
+
+```{r}
+mean(dat$satis)
+```
+
+Sur l’ensemble de la période d’étude, tous hôpitaux confondus, la satisfaction moyenne est de 3,61974. Cette valeur nous servira de référence.
+
+Venons en à l’effet de la mise en place de la procédure sur la satisfaction. Pour ce faire, nous utilisons la variable **procedure**.
+
+Comptons les observations pour les différentes valeurs de **procedure** ainsi que la moyenne de **satis** sur les groupes ainsi délimités.
+
+```{r}
+dp<-dat %>%
+  summarise(nombre=n(),moyenne=mean(satis),.by="procedure") %>% 
+  data.frame()
+dp
+```
+
+On peut retrouver la moyenne générale de **satis** simplement en faisant la moyenne pondérée par le nombre d’observations des moyennes calculées sur chaque groupe. On a donc ici:
+
+```{r}
+(5836/7368)*3.423695+(1532/7368)*4.363351
+```
+
+On retrouve bien la moyenne globale de **satis**. Le même calcul peut être réalisé encore plus rapidement à partir de la fonction **weighted.mean()**.
+
+```{r}
+weighted.mean(dp$moyenne,dp$nombre)
+```
+
+Venons-en à l’effet moyen du traitement (ATE en anglais). Celui-ci correspond la différence de **satis** moyenne entre les traités et le groupe de contrôle. Soit ici:
+
+```{r}
+4.363351-3.423695
+```
+
+Sur l’ensemble de la période, il y a en moyenne une différence entre les traités et les non traités de 0,939656.
+
+La même valeur est obtenue directement en régressant **satis** par **procedure**.
+
+```{r}
+reg_p<-lm(satis~procedure, data=dat)
+summary(reg_p)
+```
+
+Le coefficient associé à **procedure** nous donne l’effet moyen du traitement (ATE).
+
+L’ensemble des valeurs moyennes pour les différents groupes peut être obtenu en utilisant les différents éléments donnés par la régression.
+
+```{r}
+data.frame(procedure_0=reg_p$coefficients[1],
+           procedure_1=reg_p$coefficients[1]+reg_p$coefficients[2],
+           diff=reg_p$coefficients[2]) %>% remove_rownames
+```
+
+Mais ce n’est pas l’ATE qui nous intéresse mais l’ATET (*Average Treatement Effect on Treated*, l’effet moyen du traitement sur les traités) et nous pouvons l’obtenir en incluant les effets fixes temporels et individuels. Voyons cela progressivement.
+
+# **Introduction effet fixes temporels (les mois)**
+
+## **les mois seuls**
+
+Commençons par les mois seuls. Calculons la moyenne de **satis** sur chaque mois et dénombrons les observations.
+
+```{r}
+dm<-dat %>% 
+  group_by(month) %>%
+  summarise(nombre=n(),moyen=mean(satis)) %>% 
+  data.frame()
+dm
+```
+
+Si on fait la moyenne pondérée de l’ensemble, on retrouve bien notre moyenne globale.
+
+```{r}
+weighted.mean(dm$moyen,dm$nombre)
+```
+
+Les moyennes sur les mois peuvent aussi être obtenues à partir d’une régression (ignorons la constante pour faciliter la lecture). C’est ce que font les effets fixes temps. Ils fixent la moyenne de la variable expliquée pour chaque période.
+
+```{r}
+reg_m<-lm(satis~factor(month)-1,data=dat)
+cbind(coef(reg_m))
+```
+
+## **Mois et procédure**
+
+Ceci étant posé. Introduisons la variable **procedure** pour avoir l’effet du traitement en contrôlant pour les facteurs variant uniquement dans le temps (les effets fixes temporels). La régression prend alors la forme suivante (sans la constante).
+
+```{r}
+reg_mp<-lm(satis~procedure+factor(month)-1,data=dat)
+cbind(coef(reg_mp))
+```
+
+L’effet de la nouvelle procédure, considérant tous ce qui bouge avec le temps comme fixe, est une augmentation moyenne de 0,9808618 (que l’on soit traité ou non).
+
+Notons que les moyennes de **satis** des trois premiers mois sont les mêmes que dans la configuration excluant **procedure**. Cela n’est pas surprenant dans la mesure où le traitement n’a pas encore été administré sur cette période (**procedure** est égal à 0 pour toutes les observations sur cette période).
+
+Voyons à quoi cela correspond en termes de moyennes pondérées. Pour cela, détaillons les choses en calculant pour chaque mois et pour chaque valeur de **procedure** la **satis** moyenne de même que la taille des groupes.
+
+```{r}
+dmp<-dat %>% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=c("procedure","month")) %>% 
+  arrange(procedure,month) %>% data.frame()
+dmp
+```
+
+A partir de là, on peut sans difficulté recalculer la moyenne pondérée de ces éléments pour retrouver la moyenne globale.
+
+```{r}
+weighted.mean(dmp$moyenne,dmp$nombre)
+```
+
+Mais ce n’est pas ce qui nous intéresse en générale. Ce que l’on veut c’est la différence entre les traités et les non traités après le traitement. Isolons donc les données issues de la période **post** traitement (après le mois 3). On a ainsi:
+
+```{r}
+post<-dmp %>% 
+  filter(month>3)
+post
+```
+
+Pour retrouver la différence moyenne entre les traités et les non traités sur la période post-traitement, on peut établir les moyennes pondérées des différents mois considérés sur les groupes correspondant. On a alors:
+
+```{r}
+data.frame(procedure_0=post %>% 
+              filter(procedure==0) %>% 
+              summarise(weighted.mean(moyenne,nombre)) %>%
+              unlist() %>% unname(),
+           procedure_1=post %>% 
+              filter(procedure==1) %>% 
+              summarise(weighted.mean(moyenne,nombre)) %>%
+              unlist() %>% unname()) %>% 
+  mutate(diff=procedure_1-procedure_0)
+```
+
+Cette différence correspond bien au coefficient pour **procedure** issue de la régression à effets fixes temps. Notons également que la période post-traitement correspond à la variable **Post** utilisée dans l’estimation de la 2x2 *diff-in-diff*. D’ailleurs, on peut retrouver cette différence à partir de cette estimation en faisant la somme du coefficient de la variable **Traite** et de celui associé à la double différence (l’interaction **Traite** **Post**).
+
+```{r}
+data.frame(Traite=coef(reg_)[2],
+           DID=coef(reg_)[4],
+           somme=coef(reg_)[2]+coef(reg_)[4]) %>% 
+  remove_rownames()
+```
+
+Cela correspond simplement à la différence entre les **satis** moyennes des traités et du groupe de contrôle sur la période post traitement.
+
+```{r}
+tab_moy %>% 
+  slice(2) %>% 
+  mutate(diff=Traite-Controle)
+```
+
+Avant de passer à l’examen des effets fixes individuels, voyons ce que les résultats de la régression nous permettent de mettre en avant quant aux moyennes pour chaque mois pour les traités et le groupe de contrôle.
+
+```{r}
+data.frame(control=coef(reg_mp)[2:8],
+           traite=coef(reg_mp)[2:8]+c(0,0,0,rep(coef(reg_mp)[1],4))) %>% 
+mutate(diff=traite-control)
+```
+
+# **Introduction effet fixes individuels (les hôpitaux)**
+
+## **Les hôpitaux seuls**
+
+Passons à l’examen des effets fixes individuels. Commençons par leur prise en compte seuls (sans introduction de la variable **procedure**). Calculons la satisfaction moyenne par hôpitaux et incluons leur dénombrement.
+
+```{r}
+dh<-dat %>% 
+  summarise(nombre=n(),moyenne=mean(satis),.by="hospital") %>% 
+  data.frame()
+dh
+```
+
+Dans la mesure où il y a 46 hôpitaux, le tableau est un peu long. La moyenne pondérée des éléments du tableau nous donne, sans surprise, la moyenne sur l’ensemble des observations.
+
+```{r}
+weighted.mean(dh$moyenne,dh$nombre)
+```
+
+Les différentes moyennes par hôpital s’obtient également *via* la régression (nous ignorons la constante).
+
+```{r}
+reg_h<-lm(satis~factor(hospital)-1,data=dat)
+cbind(coef(reg_h))
+```
+
+On retrouve bien les 46 mêmes moyennes.
+
+## **Hôpitaux et procédure**
+
+Introduisons la variable **procedure** dans l’analyse pour avoir l’effet du traitement en contrôlant pour les facteurs ne variant pas dans temps mais uniquement d’un individu/hôpital à l’autre (les effets fixes individuels). La régression prend alors la forme suivante (sans la constante).
+
+```{r}
+reg_hp<-lm(satis~procedure+factor(hospital)-1,
+          data=dat)
+cbind(coef(reg_hp))
+```
+
+L’effet de la nouvelle procédure, considérant tout ce qui différent entre individus/hôpitaux comme fixes, est une augmentation de 0,837981 (que l’on soit avant ou après le traitement, peu importe ici).
+
+Notons que les moyennes de **satis** des hôpitaux du groupe de contrôle (les hôpitaux 19 et plus) sont les mêmes que dans la configuration excluant **procedure**. Cela n’est pas surprenant, dans la mesure où ils ne reçoivent jamais le traitement.
+
+Voyons à quoi cela correspond en termes de moyennes pondérées. Pour cela, détaillons les choses en calculant pour chaque hôpital et pour chaque valeur de **procedure** la **satis** moyenne. Ajoutons la taille des groupes définis de la sorte.
+
+```{r}
+dhp<-dat %>% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=c("hospital","procedure")) %>% 
+  arrange(procedure) %>% data.frame()
+dhp
+```
+
+On a, cette fois, 64 moyennes (et plus 46). Certains hôpitaux ont deux valeurs de procédure (1 ou 0). Il s’agit des 18 premiers (les numéros 1 à 18, les traités). On a donc 46 plus 18 moyennes, soit 64.
+
+Comme toujours, leur moyenne pondérée nous redonne la moyenne globale.
+
+```{r}
+weighted.mean(dhp$moyenne,dhp$nombre)
+```
+
+Concentrons-nous sur les hôpitaux qui adoptent à un moment ou un autre la nouvelle procédure, ceux pour lesquels nous avons deux moyennes (les traités, dans l’analyse 2x2 *diff-in-diff*, ceux qui sont repérés par la variable **Traite** égale à 1).
+
+Calculons les moyennes pondérées sur ce sous-échantillon (les traités, hôpitaux de 1 à 18) pour les cas où la procédure n’a pas encore été mise en plus place, puis ceux où elle l’a été. Enfin, établissons la différence entre ces deux moyennes.
+
+```{r}
+data.frame(procedure_0=dhp %>% 
+                filter(procedure==0&hospital<=18) %>% 
+                summarise(weighted.mean(moyenne,nombre)) %>%
+                unlist() %>% unname(),
+           procedure_1=dhp %>% 
+                filter(procedure==1&hospital<=18) %>% 
+                summarise(weighted.mean(moyenne,nombre)) %>%
+                unlist() %>% unname()) %>% 
+  mutate(diff=procedure_1-procedure_0)
+```
+
+Cette différence correspond bien au coefficient pour **procedure** issu de la régression à effets fixes individuels.
+
+Notons également que le sous-échantillon des traités correspond à la variable **Traite** utilisée dans l’estimation de la 2x2 *diff-in-diff*. D’ailleurs, on peut retrouver cette différence à partir de cette estimation en faisant la somme du coefficient de la variable **Post** et de celui associé à la double différence (l’interaction **Traite** **Post**).
+
+```{r}
+data.frame(Post=coef(reg_)[3],
+           DID=coef(reg_)[4],
+           somme=coef(reg_)[3]+coef(reg_)[4]) %>%
+  remove_rownames()
+```
+
+Cela correspond simplement à la différence entre les **satis** moyennes des traités avant et après le traitement. On trouve la même différence en faisant la différence entre les deux items de la seconde colonne de la table des moyennes.
+
+```{r}
+tab_moy %>%
+  select(Traite) %>% 
+  rownames_to_column( var = "name") %>% 
+  pivot_wider(names_from = name, values_from = Traite) %>% 
+  mutate(diff=aprés-avant,t="Traité") %>% 
+  column_to_rownames(var="t")
+```
+
+Voyons ce que les résultats de la régression nous permettent de mettre en avant quand aux moyennes pour chaque hôpital avant et après la mise en place du traitement (pour les traités).
+
+```{r}
+data.frame(avant=coef(reg_hp)[2:47],
+           aprés=c(coef(reg_hp)[2:19]+rep(coef(reg_hp)[1],18),
+                  coef(reg_hp)[20:47])) %>% 
+mutate(diff=aprés-avant)
+```
+
+# **L’action conjointe des deux effets fixes**
+
+## **Les effets fixes seuls**
+
+Voyons maintenant ce qu’il en est de la combinaison des deux types d’effets fixes (temporels et individuels). Commençons par examiner la situation sans **procedure**. Cette fois tout d’abord à partir des moyennes définies à partir des variables **hospital** et **month** (nos effets fixes individuels et temporels).
+
+```{r}
+dhm<-dat %>% 
+  summarise(nombre=n(),moyenne=mean(satis),.by=c("hospital","month")) %>% 
+  arrange(hospital,month) %>% data.frame()
+dhm
+```
+
+On obtient 322 différentes moyennes constituées à partir des groupes définis (46 hôpitaux fois 7 mois). L’ensemble est plus fastidieux à gérer, mais l’on peut vérifier que la moyenne pondérée des résultats obtenus nous renvoie bien la moyenne globale.
+
+```{r}
+weighted.mean(dhm$moyenne,dhm$nombre)
+```
+
+Les mêmes moyennes peuvent être obtenues *via* la régression linéaire des variables définissant les effets fixes et de leurs interactions.
+
+```{r}
+reg_hm<-lm(satis~factor(hospital)*factor(month)-1,data=dat)
+cbind(coef(reg_hm))
+```
+
+On a 322 coefficients estimés que l’on peut combiner pour retrouver nos moyennes.
+
+```{r}
+data.frame(mois_1=coef(reg_hm)[1:46] %>% round(digits = 4),
+           mois_2=coef(reg_hm)[1:46]+c(coef(reg_hm)[47],
+                                       coef(reg_hm)[47]+coef(reg_hm)[53:97])%>%
+             round(digits = 4),
+           mois_3=coef(reg_hm)[1:46]+c(coef(reg_hm)[48],
+                                       coef(reg_hm)[48]+coef(reg_hm)[98:142])%>%
+             round(digits = 4),
+           mois_4=coef(reg_hm)[1:46]+c(coef(reg_hm)[49],
+                                       coef(reg_hm)[49]+coef(reg_hm)[143:187])%>%
+             round(digits = 4),
+           mois_5=coef(reg_hm)[1:46]+c(coef(reg_hm)[50],
+                                       coef(reg_hm)[50]+coef(reg_hm)[188:232])%>%
+             round(digits = 4),
+           mois_6=coef(reg_hm)[1:46]+c(coef(reg_hm)[51],
+                                       coef(reg_hm)[51]+coef(reg_hm)[233:277])%>%
+             round(digits = 4),
+           mois_7=coef(reg_hm)[1:46]+c(coef(reg_hm)[52],
+                                       coef(reg_hm)[52]+coef(reg_hm)[278:322])%>%
+             round(digits = 4))
+```
+
+Si l’on veut travailler à partir de la régression sans interactions, les choses sont plus compliquées.
+
+```{r}
+reg_rr<-lm(satis~factor(hospital)+factor(month)-1,data=dat)
+cbind(coef(reg_rr))
+```
+
+Les moyennes reconstituées ne sont pas les mêmes et ne correspondent pas à celles définies par les groupes croisés. Comme l’on peut le constater dans la table suivante:
+
+```{r}
+data.frame(
+  mois_1=coef(reg_rr)[1:46] %>% round(digits = 4),
+  mois_2=coef(reg_rr)[1:46]+coef(reg_rr)[47] %>% round(digits = 4),
+  mois_3=coef(reg_rr)[1:46]+coef(reg_rr)[48] %>% round(digits = 4),
+  mois_4=coef(reg_rr)[1:46]+coef(reg_rr)[49] %>% round(digits = 4),
+  mois_5=coef(reg_rr)[1:46]+coef(reg_rr)[50] %>% round(digits = 4),
+  mois_6=coef(reg_rr)[1:46]+coef(reg_rr)[51] %>% round(digits = 4),
+  mois_7=coef(reg_rr)[1:46]+coef(reg_rr)[52] %>% round(digits = 4)
+)
+```
+
+Pour retrouver les informations concernant les moyennes, il faut pondérer les coefficients. Faisons-le pour les mois. La moyenne du mois 1, qui est la référence pour la suite, est moyenne pondérée des coefficients de **hospital** retenant comme poids le nombre d’observations effectués sur le mois 1 sur chaque hôpital.
+
+$$
+mois_1=\frac{\sum^{46}_{i=1}coef.hosp_i\times nb.hosp.m1_i}{\sum^{46}_{i=1}nb.hosp.m1_i}=\frac{6345.091}{1842}=3.444675
+$$
+
+Pour obtenir les moyennes des autres mois, il suffit de lui ajouter le coefficient du mois. On a alors:
+
+```{r}
+rbind(
+      mois1=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)]),
+      mois2=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[47],
+      mois3=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[48],
+      mois4=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[49],
+      mois5=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[50],
+      mois6=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[51],
+      mois7=weighted.mean(coef(reg_rr)[1:46],
+                               dhm$nombre[which(dhm$month==1)])+
+                               coef(reg_rr)[52]) %>% 
+  as.data.frame() %>% 
+  rename(moyenne=`factor(month)2`)
+```
+
+On peut réaliser la même chose avec les hôpitaux. Mais, cette fois, il s’agit de calculer la moyenne pondérée par la nombre d’observations par mois des coefficients relevés pour chaque hôpital chaque mois. On a ainsi pour l’hôpital 1 :
+
+$$
+hosp_1=\frac{\sum^7_{t=1}coef.hosp_1\times nb.mois_t}{\sum^7_{t=1}nb.mois_t}=\frac{3.419332\times 1842+3.409724\times921+...+3.760775\times921}{7368}=3.593731
+$$
+
+Procédons pour tous les hôpitaux un à un.
+
+```{r}
+th<-c()
+for(i in 1:46){
+      h<-c(hopital=paste0("hopital",i),
+           moyenne=weighted.mean(c(coef(reg_rr)[i],
+                         coef(reg_rr)[i]+c(0,coef(reg_rr))[48:53]),
+                       dm$nombre))
+      th<-rbind(th,h)
+}
+th %>% 
+  as.data.frame() %>% 
+  remove_rownames() %>% 
+  mutate(moyenne=round(as.numeric(moyenne),digits = 6))
+```
+
+## **Les Two Way Fixed effects**
+
+Venons en à ce qui nous intéresse depuis le début. L’équivalence entre les TWFE et l’estimation en 2x2 *diff-in-diff*. Commençons, comme à chaque fois, par établir les moyennes et le nombre d’observation pour chaque groupe ici défini par les valeurs de **procedure**, **month** et **hospital**.
+
+```{r}
+dpmh<-dat %>% 
+  summarise(nombre=n(),moyenne=mean(satis),
+            .by=c("procedure","month","hospital")) %>% 
+  arrange(procedure,month,hospital) %>% data.frame()
+dpmh
+```
+
+La moyenne pondérée de l’ensemble nous donne la moyenne globale.
+
+```{r}
+weighted.mean(dpmh$moyenne,dpmh$nombre)
+```
+
+Codons les variables dont l’interaction permet de construire **procedure** : **traite** et **post**.
+
+```{r}
+dpmh<-dpmh %>% 
+  mutate(traite=hospital%in%1:18,
+         post=month>3,
+         t_p=traite*post)
+dpmh
+```
+
+On peut, sur la base de ces variables, reconstituer la matrice des moyennes que nous avions établie à partir de la régression en 2x2 *diff-in-diff*.
+
+```{r}
+mat_m<-dpmh %>% 
+  summarise(moy=weighted.mean(moyenne,nombre),.by=c("traite","post"))
+mat_m<-rbind(mat_m %>% filter(post==FALSE) %>% arrange(traite) %>%
+        select(moy) %>% unlist(),
+             mat_m %>% filter(post==TRUE) %>% arrange(traite) %>%
+        select(moy) %>% unlist())
+colnames(mat_m)<-c("Avant","Après")
+rownames(mat_m)<-c("Contrôles","Traités")
+mat_m
+```
+
+Notons que les moyennes obtenues à partir de la régression à effets fixes **month** **procedure** nous donne la dernier colonne de la matrice (3,38249 et 4,363351); et que les moyennes obtenues à partir de la régression à effets fixes **hospital** **procedure**, nous donne la ligne du bas (3,525383 et 4,363351). Pour reconstituer la matrice des moyennes à partir de ces éléments, il nous faut en plus calculer la moyenne pour le groupe de contrôle avant le traitement.
+
+```{r}
+dpmh %>% 
+  filter(traite==0&post==0) %>% 
+  summarise(moy=weighted.mean(moyenne,nombre))
+```
+
+On peut, à partir de là, calculer la double différence de manière classique.
+
+```{r}
+(3.392509-3.525383)-(3.382490-4.363351)
+```
+
+On retrouve bien notre ATET : 0,847987.
+
+Voyons une autre manière de procéder. Concentrons nous sur la variable **procedure**. Calculons les moyennes pondérées sur les groupes définies par cette variable et établissons la différence.
+
+```{r}
+dpmh %>% 
+  filter(post==TRUE) %>% 
+  summarise(moy=weighted.mean(moyenne,nombre),.by=procedure)%>% 
+  mutate(diff=moy-lag(moy))
+```
+
+On est loin de l’ATET, dans la mesure où le groupe pour lequel **procedure** est égale à 0 inclus à la fois des futurs traités et des jamais traités (le groupe de contrôle). Notez que l’on retrouve le coefficient de **procedure** pour le modèle à effet fixe temporel (**month**). Pour passer à l’ATET, il faut la corriger cette différences des différences entre le groupe traité et le groupe de contrôle avant le traitement (le biais de sélection).
+
+```{r}
+dpmh %>% 
+  filter(post==FALSE) %>% 
+  summarise(moy=weighted.mean(moyenne,nombre),.by=traite)%>%
+  arrange(traite) %>% 
+  mutate(diff=moy-lag(moy))
+```
+
+Avant le traitement, les traités présentent une satisfaction moyenne plus grande de 0.1328739 par rapport au non traités. Pour retrouver l’ATET, il suffit de soustraire cette valeur à la précédente. On retrouve alors bien le coefficient pour **procedure** dans l’estimation en TWFE.
+
+```{r}
+0.9808618-0.1328739
+```
+
+Le même résultat peut être obtenu en une fois comme suit:
+
+```{r}
+dpmh %>% 
+  summarise(moy=weighted.mean(moyenne,nombre),
+            .by=c("procedure","post","traite")) %>% 
+  arrange(procedure,post,traite) %>% 
+  cbind(diff=c(NA,.$moy[c(2)]-.$moy[c(1)],
+               NA,.$moy[c(4)]-.$moy[c(3)])) %>% 
+  cbind(ATET=c(.$diff[4]-.$diff[2],NA,NA,NA))
+```
+
+La même analyse peut être faite en prenant comme distinction primaire non plus **post** mais **traite**. On a alors:
+
+```{r}
+dpmh %>% filter(traite==TRUE) %>% 
+      summarise(moy=weighted.mean(moyenne,nombre),.by=procedure)%>% 
+      mutate(diff=moy-lag(moy))
+```
+
+Notez que l’on retrouve le coefficient de **procedure** pour le modèle à effets fixes individuels (**hospital**). La différence de satisfaction moyenne des usagés enquêtés des hôpitaux traités avant et après la mis en place de la procédure (**procedure** pourrait être remplacée par **post** sans rien changé ici). Pour arriver à l’ATET, l’effet causal, il faut corriger cette valeur de la différence de satisfaction moyenne du groupe de contrôle avant et après l’attribution du traitement aux traités.
+
+```{r}
+dpmh %>% filter(traite==FALSE) %>% 
+      summarise(moy=weighted.mean(moyenne,nombre),.by=post) %>% 
+      arrange(post) %>% 
+      mutate(diff=moy-lag(moy))
+```
+
+Cela permet bien de revenir à notre effet causal identifié par la méthode *diff-in-diff* (sous l’hypothèse de *parallel trend*).
+
+```{r}
+0.8379681 - -0.0100198
+```
+
+Comme précédemment on peut réaliser l’opération en une fois. On a alors:
+
+```{r}
+dpmh %>% 
+  summarise(moy=weighted.mean(moyenne,nombre),
+            .by=c("procedure","traite","post")) %>% 
+  arrange(procedure,traite,post) %>% 
+  cbind(diff=c(NA,.$moy[c(2)]-.$moy[c(1)],
+               NA,.$moy[c(4)]-.$moy[c(3)])) %>% 
+  cbind(ATET=c(.$diff[4]-.$diff[2],NA,NA,NA))
+```
+
+Les TWFE sont équivalents aux classiques 2x2 *diff-in-diff*. Ils reposent sur la mise en évidence des mêmes moyennes pondérées. Dans tous les cas, il peut être utile de revenir à la matrice des moyennes d’une manière ou d’une autre pour compléter l’analyse ou simplement pour vérifier la justesse des évaluations.
