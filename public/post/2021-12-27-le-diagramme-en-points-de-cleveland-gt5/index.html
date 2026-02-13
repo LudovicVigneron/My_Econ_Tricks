@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Le diagramme en points GT5" />
+<meta property="og:description" content="Jusqu’à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l’exploitation d’un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison mais cet fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-12-27T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-12-27T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Le diagramme en points GT5"/>
+<meta name="twitter:description" content="Jusqu’à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l’exploitation d’un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison mais cet fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Le diagramme en points GT5 | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Jusqu’à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l’exploitation d’un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison mais cet fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot.">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Le diagramme en points GT5</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Dec 27, 2021&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/r/'>r</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-12-27-le-diagramme-en-points-de-cleveland-gt5%2f&text=Le%20diagramme%20en%20points%20GT5&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-12-27-le-diagramme-en-points-de-cleveland-gt5%2f&t=Le%20diagramme%20en%20points%20GT5" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-12-27-le-diagramme-en-points-de-cleveland-gt5%2f&title=Le%20diagramme%20en%20points%20GT5&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+<script src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p><strong>Jusqu’à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l’exploitation d’un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison mais cet fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot.</strong></p>
+<p>Le premier a avoir été utilisé est très proche du simple diagramme à bâtons. Il s’agit d’un empilement de points servant à matérialiser les effectifs des différentes valeurs d’une variable (discrète ou continue découpée en intervalles). Il permet d’avoir une image rapide et possiblement élégante de la distribution de cette dernière. Ce type de représentation doit néanmoins être réservé à des bases comprenant un nombre d’observation relativement réduite pour ne pas apparaître illisible.</p>
+<p>Pour illustrer, l’ensemble de ces considérations, prenant un ensemble de données portant sur le tabagisme dans les différents pays composant l’OCDE en 2019. Celles-ci sont téléchargeables à l’adresse suivante: <a href="https://doi.org/10.1787/888934015277" class="uri">https://doi.org/10.1787/888934015277</a>. Mais avant d’aller plus loin, chargeons les différents packages que nous utiliserons par la suite.</p>
+<pre class="r"><code>library(tidyverse)
+library(readxl)
+library(ggtext)
+library(showtext)</code></pre>
+<p>Ceci fait, Chargeons les données et pratiquons quelques opérations de mise en forme (traduisons en français le nom des pays et marquons ceux appartenant à l’OCDE). Puis, jetons un œil à l’ensemble.</p>
+<pre class="r"><code>dat&lt;- read_excel(&quot;ELS-2019-5047-EN-G049.XLSX&quot;, skip = 25, n_max = 45) %&gt;% 
+  rename(country=...1)
+pays&lt;-c(&#39;Costa Rica&#39;,&#39;Mexique&#39;,&#39;Islande&#39;,&#39;Brésil&#39;,&#39;Suède&#39;,&#39;Etats Unis&#39;,
+        &#39;Inde&#39;,&#39;Norvège&#39;,&#39;Canada&#39;,&#39;Australie&#39;,&#39;Colombie&#39;,&#39;Nouvelle-Zélande&#39;,
+        &#39;Finlande&#39;,&#39;Luxembourg&#39;,&#39;Portugal&#39;,&#39;Pays-Bas&#39;,&#39;Danemark&#39;,&#39;Israel&#39;,
+        &#39;Irlande&#39;,&#39;Royaume-Uni&#39;,&#39;Estonie&#39;,&#39;Corée du Sud&#39;,&#39;Japon&#39;,&#39;OCDE (36)&#39;,
+        &#39;République Tchéque&#39;,&#39;Allemagne&#39;,&#39;Belgique&#39;,&#39;Slovénie&#39;,&#39;Afrique du Sud&#39;,
+        &#39;Suisse&#39;,&#39;Italie&#39;,&#39;Lituanie&#39;,&#39;Espagne&#39;,&#39;Pologne&#39;,&#39;République Slovaque&#39;,
+        &#39;Lettonie&#39;,&#39;Autriche&#39;,&#39;Chili&#39;,&#39;Chine&#39;,&#39;France&#39;,&#39;Hongrie&#39;,&#39;Turquie&#39;,
+        &#39;Grèce&#39;,&#39;Russie&#39;,&#39;Indonésie&#39;)
+OCDE&lt;-c(1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,NA,1,1,1,1,0,1,1,1,1,1,1,1,1,1,
+        0,1,1,1,1,0,0)
+dat&lt;-data.frame(dat,pays,OCDE)
+head(dat)</code></pre>
+<pre><code>##         country ...2    Total     Men    Women       pays OCDE
+## 1    Costa Rica   NA  4.73297  6.1862  3.21346 Costa Rica    1
+## 2        Mexico   NA  7.60000 12.0000  3.60000    Mexique    1
+## 3       Iceland 2018  8.60000  8.1000  9.10000    Islande    1
+## 4        Brazil   NA 10.10000 13.2000  7.50000     Brésil    0
+## 5        Sweden   NA 10.40000 10.5000 10.30000      Suède    1
+## 6 United States   NA 10.50000 11.5000  9.50000 Etats Unis    1</code></pre>
+<p>Maintenant que nous avons des données, établissons un graphe en points pour décrire la distribution de la proportion de fumeur.ses dans les différents pays de la base (la variable Total). Pour cela, utilisons le <strong>geom_dotplot()</strong>.</p>
+<pre class="r"><code>ggplot(filter(dat,is.na(OCDE)==FALSE),aes(x = Total)) +
+  geom_dotplot()</code></pre>
+<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with `binwidth`.</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que les pays. La graphe obtenu est très proche d’un simple diagramme à bâtons. Il permet néanmoins de compter le nombre de pays (de points) regroupés dans les différentes catégories (regroupement en classe de ici le nombre de classe a été fixé arbitrairement à 30 cela peut être modifier par l’option binwidth).</p>
+<p>Essayons d’améliorer le résultat obtenu à l’aide de quelques mise en forme. Supprimons l’axe des ordonnées qui ne sert pas à grand chose. Remettons en forme celui des abscisses en en changeant le titre pour quelque chose de plus signifiant et en en revoyant la gradation. Choisissons un thème plus discret et effaçons le quadrillage à l’arrière. Ajoutons un caption pour indiquer l’origine des données.</p>
+<pre class="r"><code>ggplot(filter(dat,is.na(OCDE)==FALSE),
+       aes(x = Total)) +
+  geom_dotplot()+
+  labs(x=&#39;Pourcentage de fumeur.ses &lt;br&gt; sur un échantillon  de 44 pays &lt;br&gt; OCDE, Brésil, Inde, Afrique du Sud, Chine, Russie, Indonésie&#39;,
+       caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  scale_x_continuous(breaks=seq(5,40,5))+
+  theme_minimal()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.x = element_markdown(),
+        panel.grid = element_blank(),
+        plot.caption = element_text(face=&#39;italic&#39;))</code></pre>
+<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with `binwidth`.</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>On rendre l’ensemble plus informatif en jouant sur les couleurs par exemple de manière à mettre en relief un ou plusieurs groupes (de points). Ici, contentons-nous, sur les pays et distinguons ceux qui font ou non partie de l’OCDE. Mettons en vert (#E72689) les points correspondants à des pays de l’OCDE et en rose (#A5D57F) ceux qui n’en font pas partie. Profitons-en pour réarranger l’ensemble pour obtenir un résultat plus esthétique.</p>
+<pre class="r"><code>ggplot(filter(dat,is.na(OCDE)==FALSE),
+       aes(x = Total,fill = factor(OCDE))) +
+  geom_dotplot(color=&#39;dark grey&#39;)+
+  labs(title = &quot;Pourcentage de fumeur.ses &lt;br&gt; sur un échantillon de 44 pays &lt;br&gt; &lt;br&gt; &lt;span style=color:&#39;#E72689&#39;&gt;**OCDE**&lt;/span&gt; ,&lt;span style=color:&#39;#A5D57F&#39;&gt; **Brésil**&lt;/span&gt;,&lt;span style=color:&#39;#A5D57F&#39;&gt; **Inde**&lt;/span&gt;,&lt;span style=color:&#39;#A5D57F&#39;&gt; **Afrique du Sud**&lt;/span&gt;, &lt;span style=color:&#39;#A5D57F&#39;&gt; **Chine**&lt;/span&gt;, &lt;span style=color:&#39;#A5D57F&#39;&gt; **Russie**&lt;/span&gt;, &lt;span style=color:&#39;#A5D57F&#39;&gt; **Indonésie**&lt;/span&gt;&quot;,caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  scale_fill_manual(values=c(&#39;#E72689&#39;,&#39;#A5D57F&#39;),
+                    labels=c(&quot;pays hors OCDE&quot;,&quot;pays de l&#39;OCDE&quot;))+
+  scale_x_continuous(breaks=seq(5,40,5))+
+  theme_minimal()+
+  theme(axis.title.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(),
+        panel.grid = element_blank(),
+        plot.title = element_markdown(hjust=0.5),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        legend.position=&#39;none&#39;)</code></pre>
+<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with `binwidth`.</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Ces graphes permettant de présenter les distributions à l’aide de points sont souvent désigné comme des diagrammes de Wilkinson (Wilkison dot plot). Ils peuvent connaître de nombreuses déclinaisons sur lesquels nous reviendrons à l’occasion.</p>
+<p>Mais attardons-nous, sur une des plus populaires en ce moment : le diagramme en points de Cleveland (Cleveland dot plot). Il s’agit simplement d’une série de points dont la position correspond à l’extrémité des barres d’un diagramme à bâtons et dans lesquels sont indiqués les valeurs représentées.</p>
+<p>Prenons un exemple rapide pour illustrer ce nouveau graphe. Représentons la proportion de fumeur dans les pays de l’échantillon ne faisant pas partie de l’OCDE et ka proportion moyenne dans les pays de l’OCDE. Préparons les données.</p>
+<pre class="r"><code>red&lt;-filter(dat,is.na(OCDE)==FALSE) %&gt;%
+  mutate(de=ifelse(OCDE==1,&quot;OCDE&quot;,pays)) %&gt;% 
+  group_by(de) %&gt;% 
+  summarise(fum=mean(Total)) %&gt;% 
+  mutate(ocd=de==&#39;OCDE&#39;) </code></pre>
+<p>Commençons par établir le classique diagramme à bâtons (avec quelques mise en forme).</p>
+<pre class="r"><code>ggplot(red)+
+  aes(x=de,y=fum,fill=ocd)+
+  geom_bar(stat=&#39;identity&#39;,width=0.25)+
+  labs(y=&#39;%&#39;,
+       caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  coord_cartesian(ylim=c(0,50))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(angle=180,vjust=0.5),
+        panel.grid = element_blank(),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Comparons-le avec un diagramme de Cleveland construit à partir des mêmes données. Pour cela, utilisons cette fois le <strong>geom_point()</strong> couplé avec le <strong>geom_text()</strong>. Dimensionnons le points de manière à ce qu’ils puissent contenir un texte lisible. Jouons légèrement sur leur transparence (alpha) pour rendre les couleurs plus pastelles.</p>
+<pre class="r"><code>ggplot(red)+
+  aes(x=de,y=fum,color=ocd)+
+  geom_point(size=15,alpha=0.5)+
+  geom_text(aes(label=round(fum)),color=&#39;black&#39;)+
+  labs(y=&#39;%&#39;,
+       caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  coord_cartesian(ylim=c(0,50))+
+  theme_minimal()+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_text(angle=180,vjust=0.5),
+        panel.grid = element_blank(),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>On a notre diagramme de Cleveland. Mais, il peut encore être améliorer. Avec les valeurs étant indiquées dans les points, nous n’avons pas réellement besoin de l’axe des ordonnées. Supprimons-le. Profitons-en pour ajouter une ligne verticale pour chaque pays de manière à rendre la lecture plus facile.</p>
+<pre class="r"><code>ggplot(red)+
+  aes(x=de,y=fum,color=ocd)+
+  geom_point(size=15,alpha=0.5)+
+  geom_text(aes(label=round(fum)),color=&#39;black&#39;)+
+  labs(caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  coord_cartesian(ylim=c(0,50))+
+  theme_minimal()+
+  theme(axis.title = element_blank(),
+        axis.text.y = element_blank(),
+        panel.grid.minor.y = element_blank(),
+        panel.grid.major.y = element_blank(),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Ce type de graphe permet de comparer les valeurs des différentes modalités d’une variable de manière assez élégante. Les points peuvent également être mobilisés pour des graphes plus complexes permettant les comparaisons des valeurs des modalités d’une variables sur deux groupes à l’image du diagramme en bâtons divergents, empilés ou pairés.</p>
+<p>Établissons-en un permettant de positionner les différents pays en fonction de leur différence en terme de proportion de fumeur par rapport à la moyenne de l’OCDE. Pour bien voir la différence avec un diagramme à bâtons commençons par en réaliser un divergeant avant de travailler avec des points. Calculons donc cette différence et marquons les cas où elle est négative. Assurons-nous également que les pays soient présentés dans l’ordre décroissant de leur proportion de fumeurs (Total).</p>
+<pre class="r"><code>dat$dif&lt;-dat$Total-dat$Total[dat$pays==&#39;OCDE (36)&#39;]
+dat$psne&lt;-dat$dif&lt;0
+dat$pays_f&lt;-fct_rev(fct_reorder(factor(dat$pays),dat$Total))</code></pre>
+<p>Profitons-en pour trouver une police de caractère plus jolie dans les google fonts (grâce au package showtext).</p>
+<pre class="r"><code>font_add_google(&quot;Montserrat&quot;, &quot;Montserrat&quot;)
+showtext_auto()</code></pre>
+<p>Celle-ci fait allons-y pour le diagramme divergeant (avec quelque mise en forme quand même).</p>
+<pre class="r"><code>ggplot(dat)+aes(x=dif,y=pays_f,fill=psne)+
+  geom_bar(stat=&#39;identity&#39;)+
+  geom_richtext(aes(x=10,y=&#39;OCDE (36)&#39;),
+             label=&quot;la proportion moyenne de &lt;br&gt; fumeur.ses dans l&#39;OCDE est de 18%&quot;,
+             fill=&#39;white&#39;)+
+  labs(x=&quot;Différence en points de pourcentage par rapport à la moyenne de l&#39;OCDE&quot;,
+       y=&quot;pays&quot;,
+       caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  coord_cartesian(xlim=c(-22,22))+
+  theme_minimal()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        axis.title.y=element_text(angle=360,vjust = 1),
+        axis.text.y = element_text(hjust=0),
+        panel.grid = element_blank(),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Réalisons le même mais à partir de points et non de barres. Marquons la moyenne de l’OCDE par une droite verticale de couleur rouge et un texte rapide comme dans la diagramme précédent.</p>
+<pre class="r"><code>ggplot(dat)+aes(x=Total,y=pays_f,color=psne)+
+  geom_point()+
+  geom_vline(xintercept=dat$Total[pays==&#39;OCDE (36)&#39;],
+             col=&#39;red&#39;)+
+  geom_point(aes(x=Total[pays==&#39;OCDE (36)&#39;],
+                 y=&#39;OCDE (36)&#39;),col=&#39;red&#39;)+
+  geom_richtext(aes(x=30,y=&#39;OCDE (36)&#39;),
+             label=&quot;la proportion moyenne de &lt;br&gt; fumeur.ses dans l&#39;OCDE est de 18%&quot;,
+             fill=&#39;white&#39;,color=&#39;black&#39;)+
+  labs(x=&quot;Pourcentage de fumeur.ses dans les pays l&#39;OCDE&quot;,
+       y=&quot;Pays&quot;,
+       caption=&quot;Source: OCDE données de santé 2019&quot;)+
+  theme_minimal()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        axis.title.y=element_text(angle=360,vjust = 1),
+        panel.grid = element_blank(),
+        plot.caption = element_text(face=&#39;italic&#39;),
+        legend.position = &#39;none&#39;)</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>On obtient quelque chose de très comparable au graphe précédent, mais de beaucoup plus aéré. Par ailleurs, la modification d’échelle n’est pas ici nécessaire ce qui rend les choses plus simples (oui, nous aurions pu modifier l’axe des abscisses dans le diagramme à bâtons divergeant mais bon…).</p>
+<p>Une alternative efficace pour représenter des groupes plus marqués (non issue de la variable centrale) est d’utiliser un diagramme en points connectés (connected dots plot). Voyons ce qu’il en est à partir de la proportion de fumeurs hommes et la proportion de fumeurs femmes. Classons les pays représentés en fonction de la différence hommes/femmes (de la plus petite différence à la plus grande). Reproduisons un graphe proposé par Anne M. Dzikowska. Allons progressivement.Utilisons des points orange pour les femmes et noir pour les hommes.</p>
+<pre class="r"><code>dat$dif_h_f&lt;-dat$Men-dat$Women
+dat$pays_h_f&lt;-fct_rev(fct_reorder(factor(dat$pays),dat$dif_h_f))
+ggplot(dat)+aes(y=pays_h_f)+
+  geom_point(aes(x=Women),color=&#39;orange&#39;)+
+  geom_point(aes(x=Men),color=&#39;black&#39;)+
+  labs(x=&quot;Pourcentage de fumeur.ses dans les pays l&#39;OCDE&quot;,
+       y=&quot;Pays&quot;,
+       caption=&quot;*Source: OCDE données de santé 2019 &lt;br&gt;
+       Adapté d&#39;un graphe d&#39;Anne M. Dzikowska*&quot;)+
+  theme_minimal()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        plot.caption = element_markdown(),
+        axis.title.y=element_text(angle=360,vjust = 1),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Les points sont un peu gros et on a du mal à les relier entre eux par pays. Réduisons leur taille et relions-les deux à deux par pays avec par des segments gris foncés.</p>
+<pre class="r"><code>ggplot(dat)+aes(y=pays_h_f)+
+  geom_segment(aes(x=Men,xend=Women,y=pays_h_f,yend=pays_h_f),
+               size=0.5,color=&#39;dark grey&#39;)+
+  geom_point(aes(x=Women),color=&#39;orange&#39;,size=0.5)+
+  geom_point(aes(x=Men),color=&#39;black&#39;,size=0.5)+
+  labs(x=&quot;Pourcentage de fumeur.ses dans les pays l&#39;OCDE&quot;,
+       y=&quot;Pays&quot;,
+       caption=&quot;*Source: OCDE données de santé 2019 &lt;br&gt;
+       Adapté d&#39;un graphe d&#39;Anne M. Dzikowska*&quot;)+
+  theme_minimal()+
+  theme(text=element_text(family = &quot;Montserrat&quot;),
+        plot.caption = element_markdown(),
+        axis.title.y=element_text(angle=360,vjust = 1),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>L’ensemble est élégant mais il manque un élément de légende permettant de poser que les points oranges concernent les femmes et les points noirs les hommes. Intégrons cette information sous la forme d’un commentaire portant sur deux pays particulier l’Islande et la Suède où les femmes fument plus que les hommes (très légèrement pour la Suède). Passons le fond du graphe en gris claire pour faire ressortir les couleurs.</p>
+<pre class="r"><code>ggplot(dat)+aes(y=pays_h_f)+
+  geom_segment(aes(x=Men,xend=Women,y=pays_h_f,yend=pays_h_f),
+               size=0.5,color=&#39;dark grey&#39;)+
+  geom_point(aes(x=Women),color=&#39;orange&#39;,size=0.5)+
+  geom_point(aes(x=Men),color=&#39;black&#39;,size=0.5)+
+  labs(title=&quot;En Islande et en Suéde, il y a plus de &lt;span style=color:&#39;orange&#39;&gt;**femmes**&lt;/span&gt; de 15 ans et plus qui fument que d&#39;**hommes**&quot;,
+       caption=&quot;*Source: OCDE données de santé 2019 &lt;br&gt;
+        Adapté d&#39;un graphe d&#39;Anne M. Dzikowska*&quot;,
+       x=&quot;Pourcentage de fumeur.ses dans les pays l&#39;OCDE&quot;,
+       y=&quot;Pays&quot;)+
+  theme_minimal()+
+  theme(text=element_text(family = &quot;Montserrat&quot;,size=12),
+        plot.title = element_markdown(),
+        plot.caption = element_markdown(),
+        axis.title.y=element_text(angle=360,vjust = 1),
+        plot.background = element_rect(fill=&#39;#EBEAE5&#39;),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2021-12-27-le-diagramme-en-points-de-cleveland-gt5/index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p>Voilà. Les possibilités d’exploiter le points (reliés ou non) à la place des barres (ou bâtons, pairés, empilés ou divergeant) pour illustrer des comparaisons entre catégorie sont multiples. Ce post n’en donne qu’un aperçu. Ces graphes présentent généralement l’avantage d’être plus aérés ce qui autorise pas mal de choses avant de submerger le lecteur de détails.</p>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-12-27-le-diagramme-en-points-de-cleveland-gt5%2f&text=Le%20diagramme%20en%20points%20GT5&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-12-27-le-diagramme-en-points-de-cleveland-gt5%2f&t=Le%20diagramme%20en%20points%20GT5" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-12-27-le-diagramme-en-points-de-cleveland-gt5%2f&title=Le%20diagramme%20en%20points%20GT5&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>
