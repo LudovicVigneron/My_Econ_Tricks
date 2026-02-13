@@ -61,7 +61,7 @@ Nous travaillerons sur le lien entre les marchés d'actions et marchés
 d'obligations aux Etats-Unis. Pour cela, nous utiliserons deux
 indicateurs : les cours d'un *tracker* cherchant à répliquer le *S&P
 500*, et les prix des titres d’État à court terme. Vous pouvez trouver
-les données utilisées [ici](dat_1.xlsx). Chargeons-les dans R.
+les données utilisées [ici](/dat_1.xlsx). Chargeons-les dans R.
 
 ```{r}
 #| label: charg_data
