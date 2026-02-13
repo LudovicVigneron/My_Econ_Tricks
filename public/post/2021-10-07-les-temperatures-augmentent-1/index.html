@@ -1,0 +1,950 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+        <meta property="og:title" content="Les temperatures augmentent (1)" />
+<meta property="og:description" content="Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l’Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d’images, couleurs rappelant le chaud et le froid…)." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="/post/2021-10-07-les-temperatures-augmentent-1/" /><meta property="article:section" content="post" />
+<meta property="article:published_time" content="2021-10-07T00:00:00+00:00" />
+<meta property="article:modified_time" content="2021-10-07T00:00:00+00:00" />
+
+
+        <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Les temperatures augmentent (1)"/>
+<meta name="twitter:description" content="Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l’Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d’images, couleurs rappelant le chaud et le froid…)."/>
+<meta name="twitter:site" content="@VigneronLudovic"/>
+
+        
+        <title>
+  Les temperatures augmentent (1) | My Econ Tricks
+</title>
+
+        <link rel="icon" type="image/png" href='/images/favicon-16x16.png' sizes="16x16">
+        <link rel="icon" type="image/png" href='/images/favicon-32x32.png' sizes="32x32">  
+
+        <link href="https://fonts.googleapis.com/css?family=Oswald:400" rel="stylesheet">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">      
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+        
+        
+        
+        
+
+        <link rel="stylesheet" href="/css/bundle.min.3c1ab42be3f0635203d9e8bbe9cd3da817ca1d442ea586b8d8de6a4853e0d743.css" integrity="sha256-PBq0K&#43;PwY1ID2ei76c09qBfKHUQupYa42N5qSFPg10M="  />
+
+        
+    <link rel="me" type="text/html" href="https://twitter.com/VigneronLudovic"/> 
+<link rel="me" type="text/html" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"/> 
+<link rel="icon" type="image/png" href="/images/favicon-16x16.png" sizes="16x16">
+<link rel="icon" type="image/png" href="/images/favicon-32x32.png" sizes="32x32">
+
+<link rel="alternate" type="application/rss+xml" href='/index.xml' />
+
+<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<meta name="author" content="My Econ Tricks" />
+<meta name="copyright" content="© Ludovic Vigneroin 2021–2022. All rights reserved." />
+<meta name="google-site-verification" content="gvTIRAZF7KZCKm-syPBJcDj0JiQpJqR6f6uq6PCfZYs" />
+
+
+<meta name="description" content="Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l’Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d’images, couleurs rappelant le chaud et le froid…).">
+
+
+    
+        
+    </head>
+    <body>
+        <nav class="navbar fixed-top navbar-expand-md navbar-dark bg-dark py-1 top-nav">
+            <div class="container">
+                    <a class="navbar-brand pr-2" href="/">MY ECON TRICKS</a>
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="navbar-collapse collapse" id="navbarCollapse">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+    <a class="nav-link active" href="/about/">A propos</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/recherche/">Recherche</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/datavisualisation/">Datavisualisation</a>
+</li>
+<li class="nav-item">
+    <a class="nav-link active" href="/categories/r/">R</a>
+</li>
+
+                    </ul>
+                    <div class="social-icons d-none d-lg-block">
+                        <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        
+<header class="feature-image d-print-none">
+</header>
+
+        
+        <div class="main">
+            
+<div class="container mt-4 post">
+    <h1>Les temperatures augmentent (1)</h1>
+    <div class="mb-3">
+    <small>
+        <strong>By Ludovic Vigneron</strong>
+        | <i class="far fa-calendar-alt"></i>&nbsp;Oct 7, 2021&nbsp;
+        | <i class="fa fa-tags" title="Tags" aria-hidden="true"></i> <a href='/tags/dataviz/'>dataviz</a>, <a href='/tags/ggplot2/'>ggplot2</a>, <a href='/tags/climat/'>climat</a>
+    </small>
+</div>
+
+    <div class="share-icons d-flex justify-content-center d-print-none">
+        <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-10-07-les-temperatures-augmentent-1%2f&text=Les%20temperatures%20augmentent%20%281%29&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-10-07-les-temperatures-augmentent-1%2f&t=Les%20temperatures%20augmentent%20%281%29" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-10-07-les-temperatures-augmentent-1%2f&title=Les%20temperatures%20augmentent%20%281%29&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+    </div>
+
+    <div class="mt-4 mb-4 main-content">
+        
+<script src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Dans les posts précédents, nous avons travaillé sur un graphe reprenant dans un nuage de points les températures moyennes annuelles relevées au milieu de l’Angleterre entre 1772 et 2021. Une rapide analyse nous a permis de mettre à jours une tendance sensible à réchauffement à partir de 1900. Pour mettre en valeur ce résultat et rendre notre graphe plus parlant nous avons utilisé différents éléments visuels (droite des températures moyennes sur la période, courbe de tendance, mise en avant des années les plus chaudes et les plus froides au travers de choix graphiques - insertion d’images, couleurs rappelant le chaud et le froid…). Dans ce nouveau post, nous continuons ce travail en envisageant des modes alternatifs de présentation des données (autres que le nuage années/températures moyennes).</p>
+<p>Comme à chaque fois commençons par charger le tidyverse ainsi que les données nécessaires à l’analyse et réalisant quelques opérations de mise en forme. Pour cela, reprenons simplement le code utilisé dans les posts précédents.</p>
+<pre class="r"><code>library(tidyverse)
+dat&lt;-read.table(&quot;https://hadleyserver.metoffice.gov.uk/hadcet/cetdl1772on.dat&quot;)
+colnames(dat)&lt;-c(&#39;year&#39;,&#39;day&#39;,paste0(&#39;month_&#39;,1:12))
+dat&lt;-dat%&gt;%pivot_longer(cols=starts_with(&#39;month_&#39;),names_to=&quot;month&quot;,
+                         names_prefix=&#39;month_&#39;,values_to=&#39;d_t&#39;)%&gt;%
+            mutate(date=as.Date(paste0(day,&#39;/&#39;,month,&#39;/&#39;,year),
+                                format=&#39;%d/%m/%Y&#39;,origin=&#39;1/1/1990&#39;))%&gt;%
+            select(date,d_t)%&gt;%
+            arrange(date)%&gt;%
+            mutate(d_t=ifelse(d_t==-999,NA,d_t),
+                   degre_C=d_t/10)%&gt;%
+            filter(is.na(d_t)==FALSE)%&gt;%
+            select(-d_t)
+dat&lt;-dat%&gt;%mutate(annee=lubridate::year(date))%&gt;%
+            group_by(annee)%&gt;%
+            summarise(deg_C=round(mean(degre_C),digits=2))%&gt;% 
+            filter(annee!=2021)</code></pre>
+<p>On obtient une base nommée dat reprenant les années et leurs températures moyennes (249 observations pour 2 variables).</p>
+<div id="travailler-sur-la-distance-aux-extrèmes" class="section level1">
+<h1>travailler sur la distance aux extrèmes ?</h1>
+<p>Commençons par le minimum. Si on observe une tendance au réchauffement, il devrait y avoir de plus en plus d’observations qui s’éloignent du minimum. Établissons donc, comme base de travail, une mesure de la distance au minimum et voyons ce que l’on peut en faire. Prenons simplement la différence entre la température constatée et le minimum.</p>
+<pre class="r"><code>dat &lt;- dat %&gt;% mutate(min=min(deg_C),
+                      dist_min=deg_C-min)
+head(dat)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   annee deg_C   min dist_min
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
+## 1  1772  9.17  7.43     1.74
+## 2  1773  9.29  7.43     1.86
+## 3  1774  9.08  7.43     1.65
+## 4  1775 10.1   7.43     2.67
+## 5  1776  9.01  7.43     1.58
+## 6  1777  9.11  7.43     1.68</code></pre>
+<p>Voyons à quoi ressemble la variable au travers d’une série de statistiques descriptives.</p>
+<pre class="r"><code>dat %&gt;% summarise(Mim.=min(dist_min),
+                  prem_quart=quantile(dist_min,probs=.25),
+                  mediane=median(dist_min),
+                  trois_quart=quantile(dist_min,probs=.75),
+                  Max.=max(dist_min),
+                  moyenne=mean(dist_min),
+                  S.d.=sd(dist_min))</code></pre>
+<pre><code>## # A tibble: 1 x 7
+##    Mim. prem_quart mediane trois_quart  Max. moyenne  S.d.
+##   &lt;dbl&gt;      &lt;dbl&gt;   &lt;dbl&gt;       &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1     0       1.58     1.9        2.39  3.52    1.96 0.661</code></pre>
+<p>Produisons le nuage de points des distances au minimum sur les années d’observations. Pour marquer la valeur de référence (distance 0), traçons une ligne pointillée horizontale pour y=0 et une ligne verticale pleine bleu pour marquer l’année la plus froide (1879).</p>
+<pre class="r"><code>ggplot(dat)+
+  aes(annee,dist_min)+
+  geom_point()+
+  geom_hline(yintercept=0,linetype=&#39;dashed&#39;)+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color=&#39;blue&#39;)+
+  labs(y=&#39;écarts par rapport au minimum&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  theme_bw()+
+  theme(axis.title.x=element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>Sans surprise, le nuage a exactement la même forme que celui des températures. Il n’est donc pas plus informatif que celui que nous avons fait dans les posts précédents (celui avec la courbe de tendance). Pour l’améliorer, faisons varier la couleur des points en fonction de la distance au minimum. Une concentration de point de la couleur marquant la distance la plus élevée en fin de période d’observation (les années les plus récentes) indiquera la tendance au réchauffement.</p>
+<p>L’opération consiste à ajouter une variable esthétique pour la couleur dans (<strong>aes()</strong>).</p>
+<pre class="r"><code>ggplot(dat)+
+  aes(annee,dist_min,color=dist_min)+
+  geom_point()+
+  geom_hline(yintercept=0,linetype=&#39;dashed&#39;)+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color=&#39;blue&#39;)+
+  labs(y=&#39;écarts par rapport au minimum&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  theme_bw()+
+  theme(axis.title.x=element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>On voit bien une concentration de points plus clairs sur les dernières années marquant ainsi le réchauffement. Néanmoins, on pourrait reprocher au graphe le choix de la couleur bleu souvent assimilé à une gradation vers le froid (plus clair, plus froid). Hors, ici c’est loin d’être le cas. Choisissons une autre forme de dégradé plus parlante. Pour cela, chargeons le package viridis qui en propose de nombreux à associer ainsi que son propre complément d’échelle pour GGPLOT2 : le <strong>scale_fill_viridis()</strong>. Pour un aperçu des progressions proposées, vous pouvez consulter <a href="https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html">le site associé au package</a>. Un des avantages de ces dernières est d’être conçu pour que même une personne daltonienne puisse distinguer les nuances. Choisissons la progression appelée plasma qui va du violet sombre au jaune clair.</p>
+<pre class="r"><code>library(viridis)
+ggplot(dat)+
+  geom_point(aes(x=annee,y=dist_min,fill=dist_min),shape=21,colour=&#39;black&#39;,size=2)+
+  geom_hline(yintercept=0,linetype=&#39;dashed&#39;)+
+  geom_vline(xintercept = dat$annee[dat$dist_min==0], color=&#39;blue&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  labs(y=&#39;écarts par rapport au minimum&#39;)+
+  scale_fill_viridis(option=&quot;plasma&quot;)+
+  guides(fill=guide_colorbar(title=&quot;éloignement au minimum&quot;,
+                             title.position = &#39;top&#39;,title.hjust=0.5,
+                             barwidth=unit(20,&#39;lines&#39;),
+                             barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        axis.title.x = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>C’est mieux, mais toujours pas très différent de notre graphe d’origine. Faisons la même chose avec la température maximale. Calculons la distance associée en veillant à passer l’ensemble à la valeur absolue pour garantir que les distances soient toujours positives.</p>
+<pre class="r"><code>dat &lt;- dat %&gt;% mutate(max=max(deg_C),
+                      dist_max=abs(deg_C-max))
+head(dat)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##   annee deg_C   min dist_min   max dist_max
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
+## 1  1772  9.17  7.43     1.74  11.0     1.78
+## 2  1773  9.29  7.43     1.86  11.0     1.66
+## 3  1774  9.08  7.43     1.65  11.0     1.87
+## 4  1775 10.1   7.43     2.67  11.0     0.85
+## 5  1776  9.01  7.43     1.58  11.0     1.94
+## 6  1777  9.11  7.43     1.68  11.0     1.84</code></pre>
+<p>Pour réaliser le graphe, choisissons une progression de couleurs différentes. Disons celle nommée rocket.</p>
+<pre class="r"><code>ggplot(dat)+
+  geom_point(aes(x=annee,y=dist_max,fill=dist_max),shape=21,colour=&#39;black&#39;,size=2)+
+  geom_hline(yintercept=0,linetype=&#39;dashed&#39;)+
+  geom_vline(xintercept = dat$annee[dat$dist_max==0], color=&#39;red&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(-0.1,3.6),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(0,3.5,0.5))+
+  labs(y=&#39;écarts par rapport au maximum&#39;)+
+  scale_fill_viridis(option=&quot;rocket&quot;)+
+  guides(fill=guide_colorbar(title=&quot;éloignement au maximum&quot;,
+                             title.position = &#39;top&#39;,title.hjust=0.5,
+                             barwidth=unit(20,&#39;lines&#39;),
+                             barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        axis.title.x = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>On peut noter que la forme du nuage est renversé par rapport au graphe d’origine (et à celui de la distance au minimum), ce qui était attendu. Pour le reste, il a la même forme. On voit bien une concentration de points plus sombres, ici les années les plus proches, en bas à droite (proche du maximum) manquant ainsi le réchauffement.</p>
+<p>Encore une fois, on rien de très innovant dans la présentation. Essayons un nuage de points présentant les distances aux extrêmes en coordonné et l’année de mesure comme couleur pour les points. Compte tenu du nombre de ces derniers et pour bien marquer les différences, prenons une progressions intégrant deux couleurs. Choisissons celle nommée turbo.</p>
+<pre class="r"><code>ggplot(dat,aes(dist_min,dist_max,color=annee))+
+  geom_point()+
+  labs(x=&#39;distances au minimum&#39;,y=&#39;distances au maximum&#39;)+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.1,3.6),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_y_continuous(breaks=seq(0,3.5,0.25))+
+  scale_color_viridis(option=&quot;turbo&quot;)+
+  guides(color=guide_colorbar(title=&quot;année&quot;,
+                              title.position = &#39;top&#39;,
+                              title.hjust=0.5,
+                              barwidth=unit(20,&#39;lines&#39;),
+                              barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;)</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>Les points s’articulent sur une droite à 45° tombante avec les années les plus proches du maximum sont plus fréquemment marquées par des points plus rouges, elles sont donc plus récentes, et les plus proches du minimum par des points plus bleus, elles sont donc plus anciennes. On note que les couleurs associées aux années les plus récentes sont majoritairement située sur le bas et ce qui une nouvelle fois la marque du réchauffement.</p>
+<p>Vous me direz on pourrait faire la même chose en utilisant un seul axe. Faisons-le sur la distance au minimum.</p>
+<pre class="r"><code>ggplot(dat)+
+  geom_hline(yintercept = 0,linetype=&#39;dashed&#39;)+
+  geom_point(aes(x=dist_min,y=0,color=annee))+
+  labs(x=&#39;distances au minimum&#39;)+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_color_viridis(option=&quot;turbo&quot;)+
+  guides(color=guide_colorbar(title=&quot;année&quot;,
+                              title.position = &#39;top&#39;,
+                              title.hjust=0.5,
+                              barwidth=unit(20,&#39;lines&#39;),
+                              barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>On retrouve la concentration points rouges marquant les dernières années sur la droite de l’axe (au-dessus de la distance de 3). Néanmoins, on peut se demander si cela n’est pas un effet d’optique dû à la superposition des points sur l’axe. Les points foncés cachent les points clairs en cas de superposition. Pour éviter cette difficulté, on peut répartir les points aléatoirement au-dessus et en-dessous de l’axe pour limiter le chevauchement. Pour cela, dans l’option position du <strong>geom_point()</strong>, j’utilise la fonction <strong>position_jitter()</strong> qui va les répartir aléatoirement en précisant que la bande de fluctuation verticale est comprise entre -0.005 et +0.005 (l’option seed assure la reproductibilité du tirage aléatoire).</p>
+<pre class="r"><code>ggplot(dat)+
+  geom_hline(yintercept = 0,linetype=&#39;dashed&#39;)+
+  geom_point(aes(x=dist_min,y=0,fill=annee),
+             shape=21,
+             position = position_jitter(height = 0.005,
+                                        seed=5))+
+  labs(x=&#39;distances au minimum&#39;)+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_fill_viridis(option=&quot;turbo&quot;)+
+  guides(fill=guide_colorbar(title=&quot;année&quot;,
+                              title.position = &#39;top&#39;,
+                              title.hjust=0.5,
+                              barwidth=unit(20,&#39;lines&#39;),
+                              barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>C’est mieux! Il n’y a plus de problèmes de superpositions. Ajoutons un repaire pour isoler les années les température les plus élevés (les observations avec les distances au minimum les plus élevées). Traçons une ligne pointillée verticale à 2.75.</p>
+<pre class="r"><code>ggplot(dat)+
+  geom_hline(yintercept = 0,linetype=&#39;dashed&#39;)+
+  geom_point(aes(x=dist_min,y=0,fill=annee),
+             shape=21,
+             position = position_jitter(height = 0.005,
+                                        seed=5))+
+  geom_vline(xintercept = 2.75,linetype=&#39;dotted&#39;)+
+  labs(x=&#39;distances au minimum&#39;)+
+  coord_cartesian(xlim=c(-0.1,3.6),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,3.5,0.25))+
+  scale_fill_viridis(option=&quot;turbo&quot;)+
+  guides(fill=guide_colorbar(title=&quot;année&quot;,
+                              title.position = &#39;top&#39;,
+                              title.hjust=0.5,
+                              barwidth=unit(20,&#39;lines&#39;),
+                              barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>C’est plus clair. Mais, est-ce vraiment nécessaire de travailler avec des distances au minimum. Encore une fois, il apparaît que non. Réalisons le même graphe directement avec les températures en choisissant cette fois le 75ème percentile comme marqueur (9.82) des cas les années les plus chaudes.</p>
+<pre class="r"><code>ggplot(dat)+
+  geom_hline(yintercept = 0,linetype=&#39;dashed&#39;)+
+  geom_point(aes(x=deg_C,y=0,fill=annee),
+             shape=21,
+             position = position_jitter(height = 0.005,
+                                        seed=5))+
+  geom_vline(xintercept = 9.820,linetype=&#39;dotted&#39;)+
+  labs(x=&#39;°C&#39;)+
+  coord_cartesian(xlim=c(7.3,11),ylim=c(-0.01,0.01),expand=FALSE)+
+  scale_x_continuous(breaks=seq(7.25,11,0.25))+
+  scale_fill_viridis(option=&quot;turbo&quot;)+
+  guides(fill=guide_colorbar(title=&quot;année&quot;,
+                              title.position = &#39;top&#39;,
+                              title.hjust=0.5,
+                              barwidth=unit(20,&#39;lines&#39;),
+                              barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        panel.grid = element_blank(),
+        axis.text.y  = element_blank(),
+        axis.title.y = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<p>Le graphe est quasi identique au précédent. Bref la distance aux extrêmes, utilisez de la sorte ne donne pas grand chose de plus que les données brutes.</p>
+<p>Essayons d’envisager une transformation de cette information, un classement des observations en fonction de leurs distances aux extrêmes. Pour cela, attribuons leur un rang. Le rang 1 marque la position de l’extrême considéré, le rang deux celui des la température venant juste après…</p>
+<pre class="r"><code>dat$rk_min &lt;- rank(dat$dist_min)
+dat$rk_max &lt;- rank(dat$dist_max)
+head(dat)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##   annee deg_C   min dist_min   max dist_max rk_min rk_max
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1  1772  9.17  7.43     1.74  11.0     1.78   92.5   158.
+## 2  1773  9.29  7.43     1.86  11.0     1.66  116.    134.
+## 3  1774  9.08  7.43     1.65  11.0     1.87   74.5   176.
+## 4  1775 10.1   7.43     2.67  11.0     0.85  212      38 
+## 5  1776  9.01  7.43     1.58  11.0     1.94   62     188 
+## 6  1777  9.11  7.43     1.68  11.0     1.84   83     167</code></pre>
+<p>Notez que certaines observations ont des rangs qui ne sont pas des nombres entiers. C’est tout simplement que sur ces rangs, nous avons des observations présentant la même valeur de la variable de classement (des ex aequo).</p>
+<p>Représentons ces rangs au travers de deux courbes, un rouge pour le classement des années les plus chaudes et un bleu pour le classement des années les plus froides. L’abscisse sera le rang et l’ordonnée la distance à l’extrême. Les deux courbes seront bien sûr symétriques par rapport à point un point situé entre elles et se rejoindrons à leurs extrémités. L’année la plus froide a le rang 1 pour la distance au plus froid et le rang 249 pour la distance au plus chaud. L’année la plus chaude a le rang 1 pour la distance au plus chaud et le rang 249 pour la distance au plus froid.</p>
+<pre class="r"><code>ggplot(dat)+
+  geom_line(aes(x=rk_max,
+                  y=dist_max),color=&#39;red&#39;)+
+  geom_line(aes(x=rk_min,
+                  y=dist_min),color=&#39;blue&#39;)+
+  labs(x=&quot;rang&quot;,y=&quot;ditances&quot;)+
+  coord_cartesian(xlim=c(-1,251),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,250,25))+
+  scale_y_continuous(breaks=seq(0,3.5,.5))+
+  theme_bw()</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>La courbe classant les années des plus froides aux plus chaudes (la bleu) est au-dessus de la courbe classant les années des plus chaudes aux plus froides. Cela indique que la distance à la température la plus froide des années considérées est plus importante que la distance à la température la plus chaude. Autrement-dit, cela indique que l’année la plus froide est plus atypique que l’année la plus chaude.</p>
+<p>Pour illustrer ceci, prenons les cas des année de rang 50 en terme de distance à l’année la plus froide et de rang 50 en terme de distance à l’année la plus chaude. La première est 1.5° plus chaude que l’année la plus froide tandis que la seconde n’est que 1° plus froide que l’année la plus chaude. On retrouve ce type de hiérarchie sur l’ensemble des rangs des deux courbes à l’exception évidemment des extrémités.</p>
+<p>Ce représentation est intéressante néanmoins elle ne montre pas que les années les plus chaudes sont les plus récentes. Pour en rendre compte, ajoutant des points manquant les 60 dernières années. Si elles sont concentrées sur le haut de la courbe bleu et sur le bas de la courbe rouge, cela marque le réchauffement.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% mutate(r_max_50_20=ifelse(annee%in%1960:2020,rk_max,0),
+                    r_min_50_20=ifelse(annee%in%1960:2020,rk_min,0))
+ggplot(dat)+
+  geom_point(aes(r_max_50_20,dist_max))+
+  geom_point(aes(x=r_min_50_20,y=dist_min))+
+  geom_line(aes(x=rk_max,
+                  y=dist_max),color=&#39;red&#39;)+
+  geom_line(aes(x=rk_min,
+                  y=dist_min),color=&#39;blue&#39;)+
+
+  labs(x=&quot;rang&quot;,y=&quot;ditances&quot;)+
+  coord_cartesian(xlim=c(0,251),expand=FALSE)+
+  scale_x_continuous(breaks=seq(0,250,25))+
+  scale_y_continuous(breaks=seq(0,3.5,.5))+
+  theme_bw()</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+</div>
+<div id="travailler-à-partir-de-dénombrements" class="section level1">
+<h1>travailler à partir de dénombrements ?</h1>
+<p>Une autre stratégie pourrait consister à identifier les années les plus chaudes et à les positionner dans le temps. Pour cela, restructurons notre base. Commençons par identifier les années les plus chaudes. Disons celles pour qui la température moyenne est plus grande que celle représentant le troisième quartile de la distributions (9.82°C). Puis, marquons les décennies afin de dénombrer le nombre des années identifiées comme les plus chaudes intervenant après la décennie considérée. Le résultat est ramené en pourcentage. Par exemple, durant la décennie 1770-1780, on a deux années parmi les plus chaudes (1775 et 1779). Sur un total de 62, il en reste donc 60 au terme cette décennie soit 60/62 autrement-dit 96.8%.</p>
+<p>Ajoutons à cela une référence. Pour chaque décennie, établissons la proportion d’années de la période d’analyse restant à courir. Ainsi, par exemple, pour la première décennie 1770-1780, il reste 100% d’années à courir. Pour la seconde décennie 1780-1790, il reste 239/249 soit 96% d’année à courir…</p>
+<pre class="r"><code>an_chaud&lt;-unlist(dat %&gt;% filter(deg_C&gt;quantile(deg_C,probs=0.75)) %&gt;% select(annee))
+decennie&lt;-seq(1770,2020,10)
+pr_an_c&lt;-c()
+for(i in decennie){
+  x&lt;-length(an_chaud[an_chaud&gt;i])/length(an_chaud)
+  pr_an_c&lt;-c(pr_an_c,x)
+}
+rm(x)
+prop_an&lt;-c()
+for (i in decennie){
+  x&lt;-sum(dat$annee&gt;i)/249
+  prop_an&lt;-c(prop_an,x)
+}  
+rm(x)
+dat_&lt;-tibble(decennie,pr_an_c,prop_an)
+rm(decennie,pr_an_c,prop_an)
+head(dat_)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   decennie pr_an_c prop_an
+##      &lt;dbl&gt;   &lt;dbl&gt;   &lt;dbl&gt;
+## 1     1770   1       1    
+## 2     1780   0.968   0.964
+## 3     1790   0.952   0.924
+## 4     1800   0.935   0.884
+## 5     1810   0.919   0.843
+## 6     1820   0.903   0.803</code></pre>
+<p>Représentons ces éléments nouveaux sur un graphe. Choisissons une courbe pour les années restants à courir et des points rouges pour la proportion des années les plus chaudes survenant après ces différentes décennies.</p>
+<p>Optons pour un graphe épuré. Supprimons la titre des axes et faisons en sorte que les gradations soit parlante en elles-mêmes. Pour l’axe des abscisses, indiquons le première année de chaque décennie. Pour l’axe des ordonnées ajoutons à chaque incrément %. Pour cela, utilisons le package scales et indiquons dans l’option label de notre échelle y que l’on utilise la fonction percent.</p>
+<pre class="r"><code>ggplot(dat_)+aes(x=decennie)+
+  geom_point(aes(y=pr_an_c),color=&#39;red&#39;)+
+  geom_line(aes(y=prop_an))+
+  scale_y_continuous(breaks=seq(0,1,.1),labels=scales::percent)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  theme_bw()+
+  theme(axis.title= element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<p>Si les années chaudes se répartissaient uniformément sur la période d’étude (il n’y aurait alors pas de réchauffement), l’ensemble des points se situeraient sur la droite noire. Un point au-dessus d’elle correspond à un renvoi des années les plus chaudes aux décennies les plus récentes (un réchauffement). Un point en-dessus correspond à une période passé particulièrement chaude (un refroidissement).</p>
+<p>Ici, on voit bien que les points sont tous au-dessus de la droite (à l’exception des extrémités qui sont mécaniquement sur elle-à la fin de la décennie 2020 tout les années de la période d’observations sont passé chaudes ou non…). On est bien face à un réchauffement. Les points s’éloignent de la droit jusqu’au années 30 puis s’en rapprochent, marquant ainsi la présence plus fréquente des années parmi les plus chaudes. Le rapprochement est plus marqué à compter des années 1980.</p>
+<p>On peut par exemple lire sur le graphe qu’on a 54.84% des années les plus chaudes qui se trouvent après 1950 bien que ces années ne représentent que 28.11% de notre échantillon, 50% après 1960, 48.39% après 1970… Si on prend la décennie 2010, elle comprend 12% des années les plus chaudes alors qu’elle ne représente que 4% de l’échantillon. Autrement-dit, sur les 10 années de la décennie, 7 sont parmi les plus chaudes observées depuis 1772.</p>
+<p>La représentation utilisée, bien que élégante, présente le défaut d’être difficile à lire qu’en on rentre dans le détail. La différence de distance à la droite oblique entre deux points est difficile à identifier lorsqu’elle est relativement faible.</p>
+<p>Pour améliorer les choses, on peut envisager de ne représenter que la différence à la norme (l’equi-répartition des années chaudes sur la période). Faisons-le sur la base d’un nuage de points.</p>
+<pre class="r"><code>ggplot(dat_)+aes(x=decennie,y=pr_an_c-prop_an)+
+  geom_point()+
+  scale_y_continuous(breaks=seq(0,0.3,.05),labels=scales::percent)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  theme_bw()+
+  theme(axis.title= element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+<p>Voyons comment lire le résultat. Prenons, par exemple, la décennie 1810. La proportion d’années chaudes intervenant après 1810 est de 7.5 points de pourcentage supérieur à ce que donnerait une répartition homogène de ces années sur la période d’étude. Pour 1930, cela monte à 30 points ce qui apparaît être le maximum. A partir de là, sachant qu’après 1930, il reste 90 années d’observations, soit 36% du total, on observe que 36+30=66% des années les plus chaudes se sont produit après 1930.</p>
+<p>Réalisez le calcul pour positionner l’année peut s’avérer compliqué. On pourrait envisager de porter directement le pourcentage de temps restant sur la période d’étude.</p>
+<pre class="r"><code>ggplot(dat_)+aes(x=-prop_an,y=pr_an_c-prop_an)+
+  geom_point()+
+  scale_y_continuous(breaks=seq(0,0.3,.05),labels=scales::percent)+
+  scale_x_continuous(breaks = seq(-1,0,0.1),labels=scales::percent)+
+  theme_bw()+
+  theme(axis.title= element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p>La lecture est plus facile mais on a encore une fois les choses ne sont pas parfaites. Quelque soit la représentation choisie, on voit bien que les années les plus chaudes se concentrent sur les dernières décennies.</p>
+<p>Envisageons tout de même un autre type de graphe s’articulant autour de dénombrement. Essayons en nuage de points les fréquences cumulées des températures. Pour cela, établissons la proportion d’années présentant une température moyenne inférieure à celle de l’année considéré.</p>
+<pre class="r"><code>dat_1&lt;-dat %&gt;% mutate(prop_an_d_inf=(rank(deg_C)-1)/249) %&gt;%
+               select(annee,deg_C,prop_an_d_inf) %&gt;% 
+               arrange(annee)
+head(dat_1)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   annee deg_C prop_an_d_inf
+##   &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
+## 1  1772  9.17         0.367
+## 2  1773  9.29         0.460
+## 3  1774  9.08         0.295
+## 4  1775 10.1          0.847
+## 5  1776  9.01         0.245
+## 6  1777  9.11         0.329</code></pre>
+<p>Retenons la température en abscisse et la proportion de d’années à température inférieure à elle en ordonnée. Ajoutons une couleur suivant une progression allant de l’année la plus éloignée à la plus proche. Utilisons celle nommée turbo du package viridis.</p>
+<pre class="r"><code>ggplot(dat_1) +
+  geom_point(aes(deg_C,prop_an_d_inf,color=annee),shape=19,size=1.1)+
+  geom_hline(yintercept = 0.75, linetype=&#39;dotted&#39;)+
+  labs(x=&#39;°C&#39;)+
+  scale_x_continuous(breaks=seq(7.25,11,0.25))+
+  scale_y_continuous(labels=scales::percent)+
+  scale_color_viridis(option=&quot;turbo&quot;)+
+  guides(color=guide_colorbar(title=&quot;année&quot;,
+                              title.position = &#39;top&#39;,
+                              title.hjust=0.5,
+                              barwidth=unit(20,&#39;lines&#39;),
+                              barheight = unit(0.5,&#39;lines&#39;)))+
+  theme_bw()+
+  theme(legend.position = &#39;top&#39;,
+        axis.title.y = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<p>Marquons la température les plus chaudes, celles appartenant au dernier quartile des températures, par une ligne pointillée horizontale. On remarque que les points les plus rouges sont concentrées au-dessus de cette ligne. Encore une fois, cela met en évidence que les années les plus récentes sont aussi les plus chaudes.</p>
+</div>
+<div id="travailler-sur-une-distance-à-une-période-de-références" class="section level1">
+<h1>travailler sur une distance à une période de références ?</h1>
+<p>Prenons les choses sous un angle nouveau. Construisons une représentation basé sur la comparaison avec une période de référence. Choisissons la période avant 1900. Établissons la différence par rapport à la température moyenne de cette période et travaillons à partir de là.</p>
+<pre class="r"><code>dat_2&lt;-dat %&gt;% mutate(moy_19=mean(deg_C[annee&lt;1900]),
+                      dist_19=deg_C-moy_19,
+                      plus_ch_19=dist_19&gt;0) %&gt;% 
+               select(annee,dist_19,plus_ch_19)
+head(dat_2)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   annee dist_19 plus_ch_19
+##   &lt;dbl&gt;   &lt;dbl&gt; &lt;lgl&gt;     
+## 1  1772  0.0331 TRUE      
+## 2  1773  0.153  TRUE      
+## 3  1774 -0.0569 FALSE     
+## 4  1775  0.963  TRUE      
+## 5  1776 -0.127  FALSE     
+## 6  1777 -0.0269 FALSE</code></pre>
+<p>Nous pourrions utiliser les mêmes représentations que dans la première partie de ce post. Nous préférons, cependant, travailler sur des alternatives. Commençons par un lolipop chart (une graphe à sucette), un type de graphe proche de celui proposé à titre d’illustration sur le site du <strong>Hadley Center</strong> duquel nous avons tiré les données qui prend pour période de référence 1961-1990. Ajoutons un marqueur pour distinguer la période de référence de la suite une ligne verticale violette. Ajoutons une couleur aux points marquant les distances à la moyenne (rouge pour les années les plus chaudes et bleu pour les plus froides).</p>
+<pre class="r"><code>ggplot(dat_2,aes(annee,dist_19))+
+  geom_point(aes(color=plus_ch_19),size=1.5)+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 1900,color=&#39;purple&#39;)+
+  geom_segment(aes(xend=annee, 
+                   y=0, 
+                   yend=dist_19))+
+  labs(y=&#39;écart par rapport à la moyenne avant 1900 (en °C)&#39;)+
+  coord_cartesian(xlim=c(1770,2023),ylim=c(-1.80,1.9),expand = FALSE)+
+  scale_color_manual(values=c(&quot;blue&quot;, &quot;red&quot;))+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(-2,2,0.25))+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = &#39;none&#39;,
+        panel.grid.minor = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<p>On voit bien que sur la période de référence (avant 1900) les points rouges et les points bleus se répartissent uniformément au-dessus et en-dessous de la droite y=0. Sur la période post 1900, on voit que les points rouges sont bien plus nombreux que les points bleus ce qui une nouvelle fois marque le réchauffement.</p>
+<p>Une représentation alternative du même genre pourrait se baser sur des aires à la place des sucettes. Pour cela, on utilise le <strong>geom_area()</strong>. Colorons en rouge les aires correspondant aux températures supérieures à la référence et en bleu les aires correspondant aux températures inférieures.</p>
+<pre class="r"><code>ggplot(dat_2,aes(annee,dist_19))+
+  geom_area(aes(fill=plus_ch_19),colour=&#39;black&#39;)+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 1900,color=&#39;purple&#39;)+
+  labs(y=&#39;écart par rapport à la moyenne avant 1900 (en °C)&#39;)+
+  coord_cartesian(xlim=c(1770,2023),ylim=c(-1.80,1.9),expand = FALSE)+
+  scale_fill_manual(values=c(&quot;blue&quot;, &quot;red&quot;))+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(-2,2,0.25))+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = &#39;none&#39;,
+        panel.grid.minor = element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-25-1.png" width="672" /></p>
+<p>Avant 1900, l’aire au-dessus et en-dessous de la droite horizontale sont de même valeur. Après 1900, l’aire au-dessus est bien plus importante que l’aire en-dessous.</p>
+<p>Envisageons une autre représentation basée cette fois sur une référence mobile. Commençons par marquer les températures sur des périodes d’un quart de siècle. Pour cela, utilisons pour ce faire la fonction <strong>cut()</strong>.</p>
+<pre class="r"><code>dat &lt;- dat %&gt;% mutate(ving_5=cut(dat$annee,breaks=seq(1772,2025,25),
+                                 include.lowest = TRUE,dig.lab = 4))</code></pre>
+<p>Ceci fait, présentons un nuage de points pour chaque quart de siècle. Assurons-nous que les points ne s’alignent pas sur une seule droite en utilisant <strong>position_jitter()</strong>. Afin d’ajouter un repaire visuel pour faciliter le repaire de tendance, superposons à l’ensemble des boîtes à moustaches.</p>
+<pre class="r"><code>ggplot(dat)+
+  aes(ving_5,deg_C)+
+  geom_boxplot(aes(color=ving_5),show.legend=FALSE)+
+  geom_point(size=0.5,position=position_jitter(width=0.2,seed = 5))+
+  labs(y=&#39;°C&#39;)+
+  theme_bw()+
+  theme(axis.title.x=element_blank(),
+        axis.text.x = element_text(size=8),
+        axis.title.y=element_text(angle=360,vjust=0.5))</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-27-1.png" width="672" /></p>
+<p>On voit bien une tendance à la hausse à partir de 1872 et que le dernier quart de siècle est nettement le plus chaud.</p>
+</div>
+<div id="linclusion-dautres-marqueurs-de-tendance" class="section level1">
+<h1>l’inclusion d’autres marqueurs de tendance ?</h1>
+<p>Pour finir ce post déjà trop long, considérons des marqueurs de tendance plus fins que ceux utilisés dans le graphe de base. Commençons par utiliser une moyenne mobile (roulante). Disons sur 5 années. Il s’agit d’une valeur établie à chaque date en prenant les 5 dernières dates. Le package zoo propose une fonction dédiée <strong>rollmean()</strong>.</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% mutate(min_d_am5=zoo::rollmean(dat$deg_C,5,na.pad=TRUE))</code></pre>
+<p>Reprenons le nuage de points des températures et ajoutons-lui une courbe (verte) établie sur la base de la moyenne mobile calculée.</p>
+<pre class="r"><code>ggplot(dat)+
+  aes(annee,deg_C)+
+  geom_point()+
+  geom_line(aes(y=min_d_am5),color=&#39;green&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(7.5,11),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(8,12,0.5))+
+  labs(y=&#39;écart par rapport au minimum&#39;)+
+  theme_bw()+
+  theme(axis.title.x=element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-29-1.png" width="672" /></p>
+<p>Encore une fois, on voit bien que la courbe suit une tendance clairement haussière à compter du début du vingtième siècle.</p>
+<p>On peut utiliser le même marqueur de tendance sur notre lolipop chart. Calculons la moyenne mobile sur 5 années pour la distance à la moyenne des températures sur la période antérieure à 1900.</p>
+<pre class="r"><code>dat_2a&lt;-dat_2 %&gt;% mutate(min_d_am5=zoo::rollmean(dat_2$dist_19,5,na.pad=TRUE))</code></pre>
+<p>Prenons la couleur violette pour notre courbe de tendance.</p>
+<pre class="r"><code>ggplot(dat_2a,aes(annee,dist_19))+
+  geom_point(aes(color=plus_ch_19),size=1.5)+
+  geom_hline(yintercept = 0)+
+  geom_vline(xintercept = 1900,color=&#39;purple&#39;)+
+  geom_segment(aes(xend=annee, 
+                   y=0, 
+                   yend=dist_19))+
+  geom_line(aes(y=min_d_am5),color=&#39;purple&#39;,size=.75)+
+  labs(y=&#39;écart par rapport à la moyenne avant 1900 (en °C)&#39;)+
+  coord_cartesian(xlim=c(1770,2023),
+                  ylim=c(-1.80,1.9),
+                  expand = FALSE)+
+  scale_color_manual(values=c(&quot;blue&quot;, &quot;red&quot;))+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(-2,2,0.25))+
+  theme_bw()+
+  theme(axis.title.x = element_blank(),
+        legend.position = &#39;none&#39;,
+        panel.grid.minor = element_blank())</code></pre>
+<pre><code>## Warning: Removed 4 row(s) containing missing values (geom_path).</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-31-1.png" width="672" /></p>
+<p>La moyenne mobile marque bien la tendance et elle est assez flexible. On l’utilise souvent pour désaisonnaliser une série temporelle. On peut faire varier le nombre de périodes retenues pour la moyenne mobile afin d’affiner la représentation. Ici, le choix de 5 ans est purement arbitraire. Une réflexion avancée sur ce paramètre qui appuyer ce choix.</p>
+<p>Une autre possibilité pour mettre en évidence des tendances est de chercher les moyennes les plus représentatifs de périodes caractéristiques. On peut utiliser différents package associés à l’études des séries temporelles pour les déterminer. Ceux-ci reposent sur différentes stratégies (sur lesquelles nous reviendrons dans un prochain post). Choisissons le package tree qui réalise une classification hiérarchique.</p>
+<pre class="r"><code>library(tree)</code></pre>
+<pre><code>## Registered S3 method overwritten by &#39;tree&#39;:
+##   method     from
+##   print.tree cli</code></pre>
+<pre class="r"><code>tree_mod &lt;- tree(deg_C ~ annee, data = dat)
+plot(tree_mod)
+text(tree_mod, pretty = TRUE)</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<p>Limitons-nous à trois périodes : 1772-1910;1911-1987;1988-2020. Encore une fois, ici le choix est arbitraire. L’arbre identifie 5 périodes (1772-1781 avec 9.465; 1782-1786 avec 8.388; 1786-1910 avec 9.141; 1911-1987 avec 9.488; 1988-2020 avec 10.250). Coupons l’arbre en conséquence. Représentons les moyennes correspondant par des segments rouges ajouter à notre nuages de points des températures.</p>
+<pre class="r"><code>ggplot(dat)+
+  aes(annee,deg_C)+
+  geom_point()+
+  geom_segment(aes(x=1988,
+                   xend=2020, 
+                   y=10.250, 
+                   yend=10.250),color=&#39;red&#39;)+
+  geom_segment(aes(x=1911,
+                   xend=1987, 
+                   y=9.488, 
+                   yend=9.488),color=&#39;red&#39;)+
+    geom_segment(aes(x=1772,
+                   xend=1910, 
+                   y=9.136739, 
+                   yend=9.136739),color=&#39;red&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(7.5,11),
+                  expand=FALSE)+
+  scale_x_continuous(breaks = seq(1770,2025,20))+
+  scale_y_continuous(breaks = seq(8,12,0.5))+
+  labs(y=&#39;écart par rapport au minimum&#39;)+
+  theme_bw()+
+  theme(axis.title.x=element_blank())</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-33-1.png" width="672" /></p>
+<p>Une autre possibilité est non plus d’établir des moyennes représentatives pour différentes périodes mais des droites de régressions marquant des tendances périodiques. Le package segmented permet d’isoler les plus représentatives. Il procède par itération à partir de références proposées. Ici, retenons trois périodes. Pour ce faire, donnons-lui deux références à partir desquels commencer à travailler (1900 deux fois pour faire simple). Ici, n’importe quelle date (de la période d’étude) peut être retenue.</p>
+<pre class="r"><code>library(segmented)
+df&lt;-dat %&gt;% select(deg_C,annee) %&gt;% rename(y=deg_C,x=annee)
+lin_mod &lt;- lm(y ~ x, data = df)
+segm_mod &lt;- segmented(lin_mod, seg.Z = ~x,psi=list(x=c(1900,1990)))
+summary(segm_mod)$psi</code></pre>
+<pre><code>##        Initial     Est.   St.Err
+## psi1.x    1900 1887.480 30.64849
+## psi2.x    1990 1981.007 11.57363</code></pre>
+<p>Le choix du nombre de périodes est ici arbitraire. Dans le cadre d’un travail d’analyse, il devrait être justifié. Celles identifiées par l’algorithme sont: 1772-1887; 1888-1981; 1982-2020. Traçons le graphe reprenant les segments associés en mobilisant le <strong>geom_smooth()</strong> avec la méthode lm (modèle linéaire).</p>
+<pre class="r"><code>dat&lt;-dat %&gt;% mutate(g_p=ifelse(dat$annee&lt;1887,&#39;p1&#39;,ifelse(dat$annee&lt;1981,&#39;p2&#39;,&#39;p3&#39;)))
+ggplot(dat)+
+  aes(annee,deg_C,color=g_p)+
+  geom_point()+
+  labs(y=&#39;°C&#39;)+
+  coord_cartesian(xlim=c(1770,2022),
+                  ylim=c(7.25,11),
+                  expand=FALSE)+
+  scale_x_continuous(breaks=seq(1770,2025,20))+
+  scale_y_continuous(breaks=seq(7,11,0.5))+
+  geom_smooth(method = &quot;lm&quot;, se = FALSE)+
+  theme_bw()+
+  theme(legend.position = &#39;none&#39;,
+        axis.title.x = element_blank(),
+        axis.title.y = element_text(vjust=0.5,angle=0))</code></pre>
+<pre><code>## `geom_smooth()` using formula &#39;y ~ x&#39;</code></pre>
+<p><img src="/post/2021-10-07-les-temperatures-augmentent-1/index_files/figure-html/unnamed-chunk-35-1.png" width="672" /></p>
+<p>L’ensemble des stratégies graphiques présentées ici n’est qu’un aperçu de ce qu’il est possible de réaliser avec GGPLOT pour mettre en relief les tendances mises au jour dans les données travailler. On peut sans difficulté croisé ou approfondir ces méthodes pour renforcer le message et mieux communiquer les résultats d’analyse. Ici, les limites sont celles de votre créativité et de la rigueur qui s’impose pour un traitement honnête des faits. Rappelons, avant de clore, que tous les graphes produits peuvent être accompagnés de titres, sous-titres, légendes et autres textes qui en facilitent la compréhension. Même si nous avons négligé, dans une très large mesure, cette dimension sur ce post, ces éléments sont importants et doivent être travaillé avec autant de soin que le reste. Nous y reviendrons prochainement.</p>
+</div>
+
+
+        <div class="share-icons d-flex justify-content-center d-print-none">
+            <a href="https://twitter.com/intent/tweet?url=%2fpost%2f2021-10-07-les-temperatures-augmentent-1%2f&text=Les%20temperatures%20augmentent%20%281%29&tw_p=tweetbutton" class="p-2" title="Share on Twitter" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-twitter fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Tweet</small></div>
+</a>
+
+<a href="https://www.facebook.com/sharer.php?u=%2fpost%2f2021-10-07-les-temperatures-augmentent-1%2f&t=Les%20temperatures%20augmentent%20%281%29" class="p-2" title="Share on Facebook" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-facebook fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=%2fpost%2f2021-10-07-les-temperatures-augmentent-1%2f&title=Les%20temperatures%20augmentent%20%281%29&source=mattbutton.com" class="p-2" title="Share on LinkedIn" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fab fa-linkedin fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Share</small></div>
+</a>
+
+<a href="javascript:window.print()" title="Print this article" class="p-2" target="_blank" rel="nofollow">
+    <div>
+        <span class="fa-stack">
+            <i class="fas fa-circle fa-stack-2x"></i>
+            <i class="fa fa-print fa-stack-1x fa-inverse"></i>
+        </span>
+    </div>
+    <div class="fa-inverse text-center"><small>Print</small></div>
+</a>
+        </div>
+    </div>
+
+    
+</div>
+<div class="sidebar d-print-none d-none d-xl-block">
+    
+        <h2>My Econ Tricks</h2>
+        <div>
+            Blog académique tenu par Ludovic Vigneron, docteur en Finance et, depuis un certain nombre d&#39;années, Maître de Conférences à l&#39;Université Polytechnique Hauts de France.
+        </div>
+        <a href='/about/' class="btn btn-outline-secondary mt-3" role="button">Read More...</a>
+        <h2 class="mt-4">Top Posts</h2>
+    
+    
+    <h2 class="mt-4">Posts recents</h2>
+    <nav class="nav flex-column">
+        
+        <a href="/post/2022-05-26-ttrer/" class="nav-link">ttrer</a>
+        
+        <a href="/post/2022-05-23-le-diagramme-en-chute-d-eau-gt12/" class="nav-link">Le diagramme en chute d&#39;eau GT12</a>
+        
+        <a href="/post/2022-05-10-le-diagramme-de-sankey-gt11/" class="nav-link">Le diagramme de Sankey GT11</a>
+        
+        <a href="/post/2022-05-05-bulles-de-comparaison-et-bulle-intriqu-e-gt10/" class="nav-link">Bulles de comparaison et bulle intriquée GT10</a>
+        
+        <a href="/post/2022-04-17-bullet-chart-et-gauge-chart-gt-9/" class="nav-link">Bullet chart et gauge chart GT9</a>
+        
+        <a href="/post/2022-04-10-test/" class="nav-link">Les heatmap et les calendar heatmap GT8</a>
+        
+        <a href="/post/2022-03-25-mes-premieres-videos-de-codage-de-graphes/" class="nav-link">Mes premieres videos de codage de graphes</a>
+        
+        <a href="/post/2022-04-29-les-diagramme-en-gaufre-et-les-isotypes-gt7/" class="nav-link">Les diagrammes en gaufre et les isotypes GT7</a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">categories</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/categories/datavisualisation/' class="nav-link">
+        datavisualisation
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/categories/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">16</span>
+        </a>
+        
+        <a href='/categories/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">6</span>
+        </a>
+        
+        <a href='/categories/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">2</span>
+        </a>
+        
+        <a href='/categories/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/mathematique/' class="nav-link">
+        mathematique
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/recherche/' class="nav-link">
+        recherche
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/categories/software-development/' class="nav-link">
+        software-development
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+    <h2 class="mt-4 text-capitalize">tags</h2>
+    <nav class="nav flex-column">
+        
+        <a href='/tags/dataviz/' class="nav-link">
+        dataviz
+        <span class="badge badge-pill badge-secondary">19</span>
+        </a>
+        
+        <a href='/tags/ggplot2/' class="nav-link">
+        ggplot2
+        <span class="badge badge-pill badge-secondary">17</span>
+        </a>
+        
+        <a href='/tags/r/' class="nav-link">
+        r
+        <span class="badge badge-pill badge-secondary">11</span>
+        </a>
+        
+        <a href='/tags/climat/' class="nav-link">
+        climat
+        <span class="badge badge-pill badge-secondary">3</span>
+        </a>
+        
+        <a href='/tags/analysis/' class="nav-link">
+        analysis
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/crowdfunding/' class="nav-link">
+        crowdfunding
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/exercice/' class="nav-link">
+        exercice
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/mathematic/' class="nav-link">
+        mathematic
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/plotly/' class="nav-link">
+        plotly
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+        <a href='/tags/publication/' class="nav-link">
+        publication
+        <span class="badge badge-pill badge-secondary">1</span>
+        </a>
+        
+    </nav>
+    
+</div>
+
+        </div>
+
+        <footer class="mt-auto footer d-print-none">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-md-4 col-xl-3">
+                        <h5>© Ludovic Vigneroin 2021–2022. All rights reserved.</h5>
+Content on this site is licensed under a Creative Commons Attribution 4.0 International license.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>Disclaimer</h5>
+Opinions expressed here are my own and may not reflect those of the company I work for, or the people I work with.
+                    </div>
+                    <div class="col-md-4 col-xl-3">
+                        <h5>About This Site</h5>
+This blog was created using the <a href="https://gohugo.io/">Hugo</a> static site generator, using
+<a href="https://getbootstrap.com/">Bootstrap</a>, using the Silhouette Hugo theme, created by
+<a href='https://www.mattbutton.com'>Matt Button</a>
+
+
+    <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+            displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+            processEscapes: true,
+            processEnvironments: true
+        },
+        // Center justify equations in code and markdown cells. Elsewhere
+        // we use CSS to left justify single line equations in code cells.
+        displayAlign: 'center',
+        "HTML-CSS": {
+            styles: {'.MathJax_Display': {"margin": 0}},
+            linebreaks: { automatic: true }
+        }
+    });
+    </script>
+    
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="d-flex justify-content-center icons">
+                    <a class="py-2 px-2" href="https://twitter.com/VigneronLudovic"><i class="fab fa-twitter"></i></a>
+<a class="py-2 px-2" href="https://www.linkedin.com/in/ludovic-vigneron-1ba27749/"><i class="fab fa-linkedin"></i></a>
+<a class="py-2 px-2" href='/index.xml'><i class="fas fa-rss"></i></a>
+
+                </div>
+            </div>
+        </footer>
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        
+    </body>
+</html>
