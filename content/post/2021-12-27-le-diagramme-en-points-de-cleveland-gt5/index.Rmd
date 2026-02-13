@@ -5,11 +5,19 @@ date: '2021-12-27'
 categories:
   - datavisualisation
   - R
+  - gt
+  - GT
+  - ggplot2
+  - r
 tags:
   - Dataviz
   - GGPLOT2
-  - R
   - gt
+  - R
+  - dataviz
+  - r
+  - GT
+  - ggplot2
 ---
 
 **Jusqu'à maintenant, nous nous sommes concentré sur des diagrammes reposant sur l'exploitation d'un même type de formes géométriques: les barres (ou les bâtons). Dans ce nouveau post de la série GT, nous allons continuer à nous intéresser à la représentation de variables qualitatives dans un but de description ou de comparaison, mais cette fois nous mobiliserons une autre forme: le point. En anglais, on parlera de dot plot.**

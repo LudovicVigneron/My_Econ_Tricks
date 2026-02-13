@@ -5,11 +5,19 @@ date: '2021-12-27'
 categories:
   - datavisualisation
   - R
+  - gt
+  - GT
+  - ggplot2
+  - r
 tags:
   - Dataviz
   - GGPLOT2
-  - R
   - gt
+  - R
+  - dataviz
+  - r
+  - GT
+  - ggplot2
 ---
 
 
@@ -46,8 +54,9 @@ head(dat)</code></pre>
 <p>Maintenant que nous avons des données, établissons un graphe en points pour décrire la distribution de la proportion de fumeur.ses dans les différents pays de la base (la variable Total). Pour cela, utilisons le <strong>geom_dotplot()</strong>.</p>
 <pre class="r"><code>ggplot(filter(dat,is.na(OCDE)==FALSE),aes(x = Total)) +
   geom_dotplot()</code></pre>
-<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with `binwidth`.</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="672" />
+<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with
+## `binwidth`.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" alt="" width="672" />
 Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que les pays. La graphe obtenu est très proche d’un simple diagramme à bâtons. Il permet néanmoins de compter le nombre de pays (de points) regroupés dans les différentes catégories (regroupement en classe de ici le nombre de classe a été fixé arbitrairement à 30 cela peut être modifier par l’option binwidth).</p>
 <p>Essayons d’améliorer le résultat obtenu à l’aide de quelques mise en forme. Supprimons l’axe des ordonnées qui ne sert pas à grand chose. Remettons en forme celui des abscisses en en changeant le titre pour quelque chose de plus signifiant et en en revoyant la gradation. Choisissons un thème plus discret et effaçons le quadrillage à l’arrière. Ajoutons un caption pour indiquer l’origine des données.</p>
 <pre class="r"><code>ggplot(filter(dat,is.na(OCDE)==FALSE),
@@ -62,8 +71,9 @@ Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que
         axis.title.x = element_markdown(),
         panel.grid = element_blank(),
         plot.caption = element_text(face=&#39;italic&#39;))</code></pre>
-<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with `binwidth`.</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with
+## `binwidth`.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" alt="" width="672" /></p>
 <p>On rendre l’ensemble plus informatif en jouant sur les couleurs par exemple de manière à mettre en relief un ou plusieurs groupes (de points). Ici, contentons-nous, sur les pays et distinguons ceux qui font ou non partie de l’OCDE. Mettons en vert (#E72689) les points correspondants à des pays de l’OCDE et en rose (#A5D57F) ceux qui n’en font pas partie. Profitons-en pour réarranger l’ensemble pour obtenir un résultat plus esthétique.</p>
 <pre class="r"><code>ggplot(filter(dat,is.na(OCDE)==FALSE),
        aes(x = Total,fill = factor(OCDE))) +
@@ -80,8 +90,9 @@ Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que
         plot.title = element_markdown(hjust=0.5),
         plot.caption = element_text(face=&#39;italic&#39;),
         legend.position=&#39;none&#39;)</code></pre>
-<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with `binwidth`.</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre><code>## Bin width defaults to 1/30 of the range of the data. Pick better value with
+## `binwidth`.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" alt="" width="672" /></p>
 <p>Ces graphes permettant de présenter les distributions à l’aide de points sont souvent désigné comme des diagrammes de Wilkinson (Wilkison dot plot). Ils peuvent connaître de nombreuses déclinaisons sur lesquels nous reviendrons à l’occasion.</p>
 <p>Mais attardons-nous, sur une des plus populaires en ce moment : le diagramme en points de Cleveland (Cleveland dot plot). Il s’agit simplement d’une série de points dont la position correspond à l’extrémité des barres d’un diagramme à bâtons et dans lesquels sont indiqués les valeurs représentées.</p>
 <p>Prenons un exemple rapide pour illustrer ce nouveau graphe. Représentons la proportion de fumeur dans les pays de l’échantillon ne faisant pas partie de l’OCDE et ka proportion moyenne dans les pays de l’OCDE. Préparons les données.</p>
@@ -103,7 +114,7 @@ Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que
         panel.grid = element_blank(),
         plot.caption = element_text(face=&#39;italic&#39;),
         legend.position = &#39;none&#39;)</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" alt="" width="672" /></p>
 <p>Comparons-le avec un diagramme de Cleveland construit à partir des mêmes données. Pour cela, utilisons cette fois le <strong>geom_point()</strong> couplé avec le <strong>geom_text()</strong>. Dimensionnons le points de manière à ce qu’ils puissent contenir un texte lisible. Jouons légèrement sur leur transparence (alpha) pour rendre les couleurs plus pastelles.</p>
 <pre class="r"><code>ggplot(red)+
   aes(x=de,y=fum,color=ocd)+
@@ -118,7 +129,7 @@ Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que
         panel.grid = element_blank(),
         plot.caption = element_text(face=&#39;italic&#39;),
         legend.position = &#39;none&#39;)</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" alt="" width="672" /></p>
 <p>On a notre diagramme de Cleveland. Mais, il peut encore être améliorer. Avec les valeurs étant indiquées dans les points, nous n’avons pas réellement besoin de l’axe des ordonnées. Supprimons-le. Profitons-en pour ajouter une ligne verticale pour chaque pays de manière à rendre la lecture plus facile.</p>
 <pre class="r"><code>ggplot(red)+
   aes(x=de,y=fum,color=ocd)+
@@ -133,7 +144,7 @@ Nous avons exclu de la représentation la moyenne de l’OCDE pour ne garder que
         panel.grid.major.y = element_blank(),
         plot.caption = element_text(face=&#39;italic&#39;),
         legend.position = &#39;none&#39;)</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-9-1.png" alt="" width="672" /></p>
 <p>Ce type de graphe permet de comparer les valeurs des différentes modalités d’une variable de manière assez élégante. Les points peuvent également être mobilisés pour des graphes plus complexes permettant les comparaisons des valeurs des modalités d’une variables sur deux groupes à l’image du diagramme en bâtons divergents, empilés ou pairés.</p>
 <p>Établissons-en un permettant de positionner les différents pays en fonction de leur différence en terme de proportion de fumeur par rapport à la moyenne de l’OCDE. Pour bien voir la différence avec un diagramme à bâtons commençons par en réaliser un divergeant avant de travailler avec des points. Calculons donc cette différence et marquons les cas où elle est négative. Assurons-nous également que les pays soient présentés dans l’ordre décroissant de leur proportion de fumeurs (Total).</p>
 <pre class="r"><code>dat$dif&lt;-dat$Total-dat$Total[dat$pays==&#39;OCDE (36)&#39;]
@@ -159,7 +170,10 @@ showtext_auto()</code></pre>
         panel.grid = element_blank(),
         plot.caption = element_text(face=&#39;italic&#39;),
         legend.position = &#39;none&#39;)</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre><code>## Warning in geom_richtext(aes(x = 10, y = &quot;OCDE (36)&quot;), label = &quot;la proportion moyenne de &lt;br&gt; fumeur.ses dans l&#39;OCDE est de 18%&quot;, : All aesthetics have length 1, but the data has 45 rows.
+## ℹ Please consider using `annotate()` or provide this layer with data containing
+##   a single row.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" alt="" width="672" /></p>
 <p>Réalisons le même mais à partir de points et non de barres. Marquons la moyenne de l’OCDE par une droite verticale de couleur rouge et un texte rapide comme dans la diagramme précédent.</p>
 <pre class="r"><code>ggplot(dat)+aes(x=Total,y=pays_f,color=psne)+
   geom_point()+
@@ -179,7 +193,13 @@ showtext_auto()</code></pre>
         panel.grid = element_blank(),
         plot.caption = element_text(face=&#39;italic&#39;),
         legend.position = &#39;none&#39;)</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+<pre><code>## Warning in geom_point(aes(x = Total[pays == &quot;OCDE (36)&quot;], y = &quot;OCDE (36)&quot;), : All aesthetics have length 1, but the data has 45 rows.
+## ℹ Please consider using `annotate()` or provide this layer with data containing
+##   a single row.</code></pre>
+<pre><code>## Warning in geom_richtext(aes(x = 30, y = &quot;OCDE (36)&quot;), label = &quot;la proportion moyenne de &lt;br&gt; fumeur.ses dans l&#39;OCDE est de 18%&quot;, : All aesthetics have length 1, but the data has 45 rows.
+## ℹ Please consider using `annotate()` or provide this layer with data containing
+##   a single row.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-13-1.png" alt="" width="672" /></p>
 <p>On obtient quelque chose de très comparable au graphe précédent, mais de beaucoup plus aéré. Par ailleurs, la modification d’échelle n’est pas ici nécessaire ce qui rend les choses plus simples (oui, nous aurions pu modifier l’axe des abscisses dans le diagramme à bâtons divergeant mais bon…).</p>
 <p>Une alternative efficace pour représenter des groupes plus marqués (non issue de la variable centrale) est d’utiliser un diagramme en points connectés (connected dots plot). Voyons ce qu’il en est à partir de la proportion de fumeurs hommes et la proportion de fumeurs femmes. Classons les pays représentés en fonction de la différence hommes/femmes (de la plus petite différence à la plus grande). Reproduisons un graphe proposé par Anne M. Dzikowska. Allons progressivement.Utilisons des points orange pour les femmes et noir pour les hommes.</p>
 <pre class="r"><code>dat$dif_h_f&lt;-dat$Men-dat$Women
@@ -196,7 +216,7 @@ ggplot(dat)+aes(y=pays_h_f)+
         plot.caption = element_markdown(),
         axis.title.y=element_text(angle=360,vjust = 1),
         panel.grid = element_blank())</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" alt="" width="672" /></p>
 <p>Les points sont un peu gros et on a du mal à les relier entre eux par pays. Réduisons leur taille et relions-les deux à deux par pays avec par des segments gris foncés.</p>
 <pre class="r"><code>ggplot(dat)+aes(y=pays_h_f)+
   geom_segment(aes(x=Men,xend=Women,y=pays_h_f,yend=pays_h_f),
@@ -212,7 +232,12 @@ ggplot(dat)+aes(y=pays_h_f)+
         plot.caption = element_markdown(),
         axis.title.y=element_text(angle=360,vjust = 1),
         panel.grid = element_blank())</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<pre><code>## Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+## ℹ Please use `linewidth` instead.
+## This warning is displayed once per session.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" alt="" width="672" /></p>
 <p>L’ensemble est élégant mais il manque un élément de légende permettant de poser que les points oranges concernent les femmes et les points noirs les hommes. Intégrons cette information sous la forme d’un commentaire portant sur deux pays particulier l’Islande et la Suède où les femmes fument plus que les hommes (très légèrement pour la Suède). Passons le fond du graphe en gris claire pour faire ressortir les couleurs.</p>
 <pre class="r"><code>ggplot(dat)+aes(y=pays_h_f)+
   geom_segment(aes(x=Men,xend=Women,y=pays_h_f,yend=pays_h_f),
@@ -231,5 +256,5 @@ ggplot(dat)+aes(y=pays_h_f)+
         axis.title.y=element_text(angle=360,vjust = 1),
         plot.background = element_rect(fill=&#39;#EBEAE5&#39;),
         panel.grid = element_blank())</code></pre>
-<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="672" /></p>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" alt="" width="672" /></p>
 <p>Voilà. Les possibilités d’exploiter le points (reliés ou non) à la place des barres (ou bâtons, pairés, empilés ou divergeant) pour illustrer des comparaisons entre catégorie sont multiples. Ce post n’en donne qu’un aperçu. Ces graphes présentent généralement l’avantage d’être plus aérés ce qui autorise pas mal de choses avant de submerger le lecteur de détails.</p>
