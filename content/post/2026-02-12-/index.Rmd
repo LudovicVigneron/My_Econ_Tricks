@@ -1,0 +1,805 @@
+---
+title: 'Détecter la contagion entre deux marchés'
+author: Ludovic Vigneron
+date: '2026-02-12'
+categories:
+  - Contagion
+  - Finance
+  - Finance comportementale
+  - R
+tags:
+  - Finance
+  - Finance comportementale
+  - Contagion
+  - R
+editor_options: 
+  markdown: 
+    wrap: 72
+bibliography: references.bib
+---
+
+**Dans ce post, nous passons en revue une série de tests statistiques
+simples élaborés afin de détecter la contagion des effets d'une crise
+d'un marché financier à un autre. Il s'inspire de la série qui leur a
+été consacré par la chaine
+[NEDL](https://www.youtube.com/@NEDLeducation) qui les présentent sous
+Excel. il s'agit, plus précisément, de mettre en évidence les
+changements existant dans les liens entre les rendements relevés sur ces
+deux marchés suite au déclenchement d'une crise sur l'un d'entre-eux. Ce
+faisant, nous cherchons à isoler les changements dus à la contagion de
+ceux qui sont dus à la simple évolution des fondamentaux, qui sont
+qualifiés de simple *spillover*, @rigobón2019 .**
+
+En fonction des tests, ces liens sont appréhendés au travers de
+différents comoments des mesures retenues de l'évolution de ses marchés
+: corrélation (la dépendance linéaire), *coskweness*, *cokurtosis* et
+covolatilité. Ils prennent ainsi différentes formes fonctions des effets
+attendus d'une crise déclenchée sur un marché sur la distribution des
+rendements d'un autre.
+
+Pour les besoins de l'illustration, nous utiliserons un exemple unique.
+Mais, avant d'aller plus loin, chargeons les packages que nous
+mobiliserons par la suite.
+
+```{r}
+#| label: charg_pack 
+#| message: false
+
+# chargement, manipulation de données
+library(tidyverse) # manipulation de données 
+library(readxl) # chargement de données au format excel
+
+# création et mise en forme de tableaux
+library(gt) # tableaux
+
+# mise en forme de graphes
+library(patchwork) # assemblage de graphes
+library(scales) # mise en forme des axes
+```
+
+Nous travaillerons sur le lien entre les marchés d'actions et marchés
+d'obligations aux Etats-Unis. Pour cela, nous utiliserons deux
+indicateurs : les cours d'un *tracker* cherchant à répliquer le *S&P
+500*, et les prix des titres d’État à court terme. Vous pouvez trouver
+les données utilisées [ici](dat_1.xlsx). Chargeons-les dans R.
+
+```{r}
+#| label: charg_data
+
+dat <- read_excel("data/dat_1.xlsx")
+
+head(dat,4)
+```
+
+La période couverte coure du 31 décembre 2018 au 31 décembre 2020.
+L’évènement déclencheur de la crise est l'annonce par l'Organisation
+Mondiale de la Santé du début de l'épidémie de COVID-19, le 10 mars
+2020.
+
+Avant d'aller plus loin, procédons à quelques mises en forme. Commençons
+par renommer les variables pour les rendre plus faciles à manipuler par
+la suite. Puis, calculons les rendements journaliers des actions et des
+obligations. Enfin, créons une variable marquant les périodes : pré
+crise puis crise.
+
+```{r}
+#| label: mise_en_forme
+
+dat<-dat %>% rename(act=`Stock index`, bon=`Bond index`) %>%
+  mutate(ret_act=act/lag(act)-1, ret_bon=bon/lag(bon)-1,
+         avant=Date<=ymd("2020-3-10")) %>% 
+  filter(!is.na(ret_act))
+
+head(dat,4)
+```
+
+Afin de nous donner un aperçu de ces deux séries, et a fortiori de leurs
+liens (potentiels), présentons en vis-à-vis les courbes de leur
+évolution dans le temps. Marquons la période de crise par un fond gris
+pour la démarquer de la période pré-crise (au fond blanc).
+
+```{r}
+#| label: graph_series 
+#| fig-height: 4 
+#| fig-width: 8
+
+g1<-ggplot(data=dat,aes(x=Date))+
+      annotate(geom="rect",xmin = ymd("2020-3-10"),
+               xmax=ymd("2020-12-31"),
+               ymin = -0.12,
+               ymax=0.12,fill="#DCDCDC")+
+      geom_line(aes(y=ret_act))+
+      labs(title="Actions")+
+      scale_y_continuous(labels = label_percent())+
+      scale_x_date(date_breaks = "4 month",date_labels = "%Y-%m")+
+      coord_cartesian(expand=FALSE)+
+      theme_minimal()+
+      theme( plot.title = element_text(size=8),
+             axis.title = element_blank())
+
+g2<-ggplot(data=dat,aes(x=Date))+
+      annotate(geom="rect",xmin = ymd("2020-3-10"),
+               xmax=ymd("2020-12-31"),
+               ymin = -0.12, 
+               ymax=0.12,fill="#DCDCDC")+
+      geom_line(aes(y=ret_bon))+
+      labs(title="Obligations")+
+      scale_y_continuous(labels = label_percent())+
+      scale_x_date(date_breaks = "4 month",date_labels = "%Y-%m")+
+      coord_cartesian(expand=FALSE,ylim=c(-0.001,0.001))+
+      theme_minimal()+
+      theme(plot.title = element_text(size=8),
+            axis.title = element_blank())
+
+g1+g2+ plot_annotation(title = "Rendements") & 
+  theme(plot.title = element_text(hjust = 0.5, face="bold"))
+```
+
+On constate la présence de changement dans les séries de rendement avec
+le déclenchement de la crise. Passons aux différents tests.
+
+```{r}
+#| label: netoyage 1 
+#| echo: false
+
+rm(g1,g2)
+```
+
+# Le test de changement dans la corrélation entre les séries
+
+Afin d'évaluer la possibilité d'une contagion d'une crise d'un marché à
+l'autre (au-delà du simple *spillover*), on peut assez spontanément
+penser à examiner la corrélation entre les rendements des titres traités
+sur ces marchés. Un changement significatif de cette corrélation pouvant
+être interprété comme une marque de contagion.
+
+Cela pourrait être réalisé en utilisant un classique test de différence
+entre deux coefficients de corrélation tel que proposé par Pearson.
+Cependant, @forbes2002 ont montré que cela serait une mauvaise idée du
+fait de biais impliqués par la présence d'hétéroscédasticité (de
+changement dans la variance des rendements entre la période pré-crise et
+la période de crise) contrevenant aux conditions d'utilisation de ce
+test. Ils proposent alors une solution basée sur un ajustement du
+coefficient de corrélation mesuré sur la période de crise que nous
+illustrons ici.
+
+Le test qu'ils proposent se présente comme un classique test d'égalité
+de deux corrélations: l'une mesurée sur la période pré-crise (avant le
+11 mars 2020), indexée $x$, et l'autre mesurée sur la période de crise,
+indexée $y$. On a ainsi le jeu d'hypothèses suivant:
+$H0 : \rho_x=\rho_y$ contre $H_1: \rho_x \neq \rho_y$ .
+
+Ici, nous retenons la configuration bilatérale. Néanmoins, certains
+travaux envisagent des textes directionnels. Une augmentation de la
+corrélation est alors interprétée comme une marque de contagion et une
+diminution comme la désignation du marché cible comme une place plus
+sûre durant la crise.
+
+Laissons cela de côté, et calculons une série de statistiques
+descriptives pour avoir un aperçu de la situation à la fois sur la
+période pré-crise et pendant la crise. Limitons nous aux volatilités et
+aux corrélations.
+
+```{r}
+#| label: stat_de_base
+
+tab<-dat %>% 
+  group_by(avant) %>%
+  summarise(vol_act=sd(ret_act),
+            vol_bon=sd(ret_bon),
+            taille=length(ret_act),
+            cor=cor(ret_act,ret_bon)) %>%
+  ungroup() %>%
+  mutate(Periode=ifelse(avant==FALSE,"Crise","Non-crise"),.after=avant)
+
+tab %>% 
+  arrange(desc(avant)) %>%
+  select(-avant) %>%
+  gt() %>%
+  tab_spanner(label = "Volatilité", columns = c(vol_act,vol_bon)) %>%
+  fmt_number(columns = c(vol_act,vol_bon,cor),decimals = 5) %>%
+  cols_label(vol_act="action",vol_bon="obligation",
+             cor="corrélation",Periode="Période")
+```
+
+On constate que la volatilité des actions à presque doublée pendant la
+crise tandis que celle des obligations est restée (quasiment) stable.
+Par ailleurs, la corrélation entre les rendements des actifs est quasi
+nulle avant la crise et augmente fortement durant la crise (même si elle
+demeure très faible).
+
+Notez que la corrélation est une mesure symétrique du lien (linéaire)
+entre deux variables. Elle ne dit donc rien sur celle qui influence
+potentiellement l'autre et a fortiori ici sur le sens de la contagion
+que l'on cherche à mesurer. Hors, nous avons besoin a minima de faire
+une hypothèse sur ce point pour établir la correction de notre test.
+Celle-ci est généralement tirée d'éléments empiriques et/ou de
+connaissances de terrain. Néanmoins, une position prudente à ce sujet
+consiste à retenir comme marché de départ celui qui a connu la plus
+grande augmentation de la volatilité et donc celui pour lequel les
+difficultés associées à l'hétéroscédasticité apparaissent les plus
+évidentes. Ici, nous retiendrons une contagion du marché actions vers le
+marché obligataire.
+
+Le test de Forbes et Rigobon (2002) fonctionne de la même manière que le
+test de Pearson, qui mobilise une transformation de Fisher afin de
+permettre à sa statistique de suivre une loi normale standard malgré les
+limites du coefficient de corrélation (-1 et 1). La différence est que
+la corrélation mesurée sur la période de crise, $\rho_y$ , est ajustée
+pour tenir compte du problème d'hétéroscédascité. On a alors:
+
+$$
+v_y= \frac{\rho_y}{\sqrt{1+\frac{\sigma_{yi}^2-\sigma_{xi}^2}{\sigma_{xi}^2}(1-\rho_y^2)}}
+$$
+
+Le coefficient de corrélation classique est rapporté à la racine de un
+plus le produit du taux de croissance de la variance du marché à
+l'origine de la contagion (ici le marché action) et de 1 moins le
+coefficient de corrélation classique. Ce faisant, on opère une
+correction de la tendance qu'à l'importance volatilité du marché
+d'origine à augmenter le biais associé à l'hétéroscédasticité tout en
+modérant cette correction pour tenir compte du fait qu'une corrélation
+importante a moins de chance d'être trompeuse (biaisée) qu'une
+corrélation faible. Effectuons le calcul.
+
+```{r}
+#| label: calc_corr_adjustée
+
+corr_adj<- tab$cor[1]/
+  sqrt(1+(tab$vol_act[1]^2-tab$vol_act[2]^2)/tab$vol_act[2]^2*(1-tab$cor[1]^2))
+
+corr_adj
+```
+
+Le coefficient de corrélation ajusté est bien plus faible que le
+coefficient d'origine, 0,023 contre 0,044. Il est presque moitié plus
+petit.
+
+C'est ce coefficient ajusté qui est mobilisé pour construire la
+statiques de test. Il subit comme celui à qui il est comparé une
+transformation de Fisher ($\frac{1}{2}ln(\frac{1+\rho}{1-\rho})$) ce qui
+lui permet de prendre une forme continue. On a alors:
+
+$$
+Z=\frac{\frac{1}{2}ln(\frac{1+v_y}{1-v_y})-\frac{1}{2}ln(\frac{1+\rho_x}{1-\rho_x})}{\sqrt{\frac{1}{n_y-3}+\frac{1}{n_x-3}}} \to N(0,1)
+$$La statistique obtenue, Z, suit alors sous $H_0$ une loi normale
+standard. Cela nous donne notre test. On a ainsi:
+
+```{r}
+#| label: calc_stat_pvalue
+
+Z<-(1/2*log((1+corr_adj)/(1-corr_adj))-1/2*log((1+tab$cor[2])/(1-tab$cor[2])))/
+  sqrt(1/(tab$taille[1]-3)+1/(tab$taille[2]-3))
+
+p_value<-(1-pnorm(Z))*2
+
+data.frame(cor_pre=tab$cor[2],
+           cor_crise=corr_adj,
+           Z=Z, p_value=p_value) %>%
+      gt() %>%
+      tab_header(title ="Test de contagion sur la base de la corrélation",
+             subtitle= "Forbes et Rigobon (2002)") %>% 
+      tab_spanner(label = "Corrélations", columns = c(cor_pre,cor_crise)) %>%
+      cols_label(cor_pre="pré-crise",cor_crise="crise")
+```
+
+Ici, avec une *p-value* de 0,86, il est impossible de rejeter $H_0$. Il
+ne semble donc pas y avoir de différence entre la corrélation avant et
+après le déclenchement de la crise. Il ne nous est donc pas possible de
+conclure dans le sens d'une contagion des marchés actions vers les
+obligations suite à l'annonce de l'épidémie.
+
+```{r}
+#| label: netoyage 2
+#| echo: false
+
+rm(p_value,Z)
+```
+
+# Le test de différence de *coskewness*
+
+La contagion financière peut difficilement se résumer à la seule
+évolution de la corrélation des rendements entre marchés (le comoment
+d'ordre 2). En période de crise, l'attention des investisseurs peut se
+porter sur d'autres dimensions caractéristiques de la distribution
+jointe des rendements.
+
+Il est, par exemple, facile de comprendre qu'en cas d'augmentation de
+l'incertitude (de la volatilité) sur un marché les investisseurs
+développent une préférence pour la *skewness* (@kraus1976). Au-delà de
+l'évolution des rendement moyens, ils vont plus nettement chercher à
+posséder des titres qui connaissent plus fréquemment des hausses que des
+baisses et fuir ceux qui connaissent plus fréquemment des baisses que
+des hausses pendant la période de crise. De fait, ils vont plus
+nettement chercher à détenir des actifs à *skewness* positives
+(rendements asymétriques dans le positif; moyenne \> médiane) et à
+sortir des actifs à skewness négatives (rendements asymétriques dans le
+négatif; médiane \> moyenne).
+
+Partant de là, il est possible de bâtir un test de contagion articulé
+autour du changement de la *coskewness* (asymétrie croisée) entre la
+période pré-crise et la crise. Nous nous intéressons ainsi au troisième
+moment de la jointe distribution des rendements. La *coskewness* peut
+être conceptualisée comme comme la manière dont fluctue la moyenne d'une
+variable i avec le carré d'une autre j et inversement. On a ainsi deux
+*coskewness* :
+
+$$ \Psi_{(i,j)}=\frac{1}{N}\sum_{t=1}^{N}\frac{r_{it}-\mu_i}{\sigma_i}\times\left(\frac{r_{jt}-\mu_j}{\sigma_j}\right)^2 $$
+$$ \Psi_{(j,i)}=\frac{1}{N}\sum_{t=1}^{N}\left(\frac{r_{it}-\mu_i}{\sigma_i}\right)^2\times\frac{r_{jt}-\mu_j}{\sigma_j} $$
+
+La *coskewness* reflète le lien entre les rendements d'un marché et la
+volatilité de ceux d'un autre. @fry2010 propose un test de contagion
+reposant sur cette mesure.
+
+Mais, avant d'aller plus loin à ce sujet, complétons nos statistiques
+descriptives en ajoutant les rendements moyens et les *coskewness*
+constatées entre les marchés (actions/obligations et
+obligations/actions) sur la période pré-crise ainsi que sur la période
+de crise.
+
+Commençons par ajouter les statistiques plus simple à calculer (les
+rendements moyens) :
+
+```{r}
+#| label: stat_de_base_2
+
+# calcul des rendements moyens
+moy<-dat %>% 
+  group_by(avant) %>%
+  summarise(moy_act=mean(ret_act), moy_bon=mean(ret_bon))
+
+# ajout des rendements moyens au tableau de base
+tab_<-data.frame(tab,moy) %>% 
+  select(avant:vol_bon,moy_act,moy_bon,everything(),-avant.1)
+
+# mise en forme du tableau
+tab_ %>% 
+  arrange(desc(avant)) %>% 
+  select(-avant) %>%
+  gt() %>%
+  tab_spanner(label = "Volatilité",columns = c(vol_act,vol_bon)) %>%
+  fmt_number(columns = c(vol_act,vol_bon,cor),decimals = 5) %>%
+  tab_spanner(label = "Moyenne",columns = c(moy_act,moy_bon)) %>%
+  fmt_number(columns = c(moy_act,moy_bon,cor),decimals = 5) %>%
+  cols_label(vol_act="action",vol_bon="obligation",
+             moy_act="action",moy_bon="obligation",
+             cor="corrélation",Periode="Période")
+```
+
+Ajoutons maintenant les *coskewness*. R base ne propose pas de fonction
+permettant de l'obtenir directement. Créons-en une.
+
+```{r}
+#| label: fx_coskewness
+
+Co_Skewness<-function(x_1,x_2){
+                  moy_x1<-mean(x_1) 
+                  moy_x2<-mean(x_2)
+                  sd_x1<-sd(x_1)
+                  sd_x2<-sd(x_2)
+                  v_1<-(x_1-moy_x1)/sd_x1
+                  v_2<-(x_2-moy_x2)/sd_x2 
+                  co_s<-mean(v_1*v_2^2)
+                  return(co_s)}
+```
+
+Appliquons-la à nos séries sur les deux périodes en considérons
+alternativement les deux sens possibles (*i*,*j* et *j*,*i*). Puis,
+ajoutons le résultat à notre tableau.
+
+```{r}
+#| label: stat_base_2_coskewness
+
+# calcul de la coskewness
+co_sk<-dat %>%
+  group_by(avant) %>%
+  summarise( co_s12=Co_Skewness(ret_act,ret_bon),
+             co_s21=Co_Skewness(ret_bon,ret_act))
+
+# intégration au tableau
+tab_sk<-data.frame(tab_,co_sk)
+
+# mise en forme du tableau
+tab_sk %>%
+  arrange(desc(avant)) %>% 
+  select(-avant,-avant.1) %>%
+  gt() %>%
+  tab_spanner(label = "Volatilité",columns = c(vol_act,vol_bon)) %>%
+  fmt_number(columns = c(vol_act,vol_bon,cor),decimals = 5) %>%
+  tab_spanner(label = "Moyenne",columns = c(moy_act,moy_bon)) %>%
+  fmt_number(columns = c(moy_act,moy_bon),decimals = 5) %>%
+  tab_spanner(label = "Co-Skewness",columns = c(co_s12,co_s21)) %>%
+  fmt_number(columns = c(co_s12,co_s21),decimals = 5) %>%
+  cols_label(vol_act="action",vol_bon="obligation", moy_act="action",
+             moy_bon="obligation", cor="corrélation",Periode="Période",
+             co_s12="actions/obligations",co_s21="obligations/actions")
+```
+
+On constate que les *coskewness* mesurées sur les deux périodes pour le
+lien actions/obligations sont toutes les deux négatives. Cela signifie
+que la variance des obligations est négativement associées avec les
+rendements des actions (et inversement). On note de même que, sur la
+période de crise, cette *coskewness* a fortement augmenté en valeur
+absolue (elle est encore plus négative).
+
+Pour le lien obligations/actions les choses sont différentes. Sur les
+deux périodes, la *coskewness* est positive et stable. Autrement-dit,
+les rendements des obligations sont positivement associés à la variance
+des actions (et inversement) et cela ne semble pas changer pendant la
+crise. Cette relation est typique des liens entre actifs risqués et
+actifs moins risqués. Si la volatilité (variance) des rendements des
+actions augmente, alors les obligations sont plus désirées et donc leurs
+prix/rendements augmentent.
+
+Reste à voir si ces différences sont statistiquement significatives
+(surtout la première actions/obligations). Dans ce cas, il y aurait un
+changement dans la structure de la distribution jointe des rendements
+des deux marchés caractérisant une forme de contagion.
+
+Le test proposé par Fry et al (2010) se base sur le jeu d'hypothèses
+suivant: $H0 : \Psi_x=\Psi_y$ (absence de contagion) contre
+$H_1: \Psi_x \neq \Psi_y$ (présence de contagion). En l'absence de
+contagion, la *coskewness* des séries devrait rester inchangée entre la
+période pré-crises ($x$) et la période de crise ($y$). Tandis qu'en
+présence de contagion, on devrait voir évoluer la *coskewness* d'une
+période à l'autre.
+
+La statistique du test se base sur la méthode du multiplicateur de
+Lagrange appliquée à la question de la différence de *coskewness*.
+
+Encore une fois, le calcul est réalisé en tenant compte de la
+désignation du marché source de la contagion. Cela sera la base pour la
+calcul de la corrélation ajustée (la même que dans le test de Forbes et
+Rigobon, 2002) qui sera mobilisée sur la période de crise.
+
+Sous $H_0$, la statistique du test suit une loi du $\chi^2$ à un degré
+de liberté.
+
+$$ \left(\frac{\psi_y-\psi_x}{\sqrt{\frac{4v_y^2+2}{N_y}+\frac{4\rho_x^2+2}{N_x}}}\right)^2 \to \chi^2_{(1)} $$
+
+Evidemment, le test est pratiqué pour les deux sens de *coskewness*
+(actions/obligations et obligations/actions). Procédons donc aux deux
+évaluations.
+
+```{r}
+#| label: calc_stat_p-value_2
+
+# calcul de la statistique
+chi12<-((co_sk$co_s12[2]-co_sk$co_s12[1])/ 
+          sqrt((4*corr_adj^2+2)/tab_$taille[2]+
+                 (4*tab_$cor[1]^2+2)/tab_$taille[1]))^2
+
+chi21<-((co_sk$co_s21[2]-co_sk$co_s21[1])/ 
+          sqrt((4*corr_adj^2+2)/tab_$taille[2]+
+                 (4*tab_$cor[1]^2+2)/tab_$taille[1]))^2
+
+# assemblage et mise en forme du tableau
+data.frame(cosk=c('action/obligation','obligation/action'),
+           avant=c(tab_sk$co_s12[2],tab_sk$co_s21[1]),
+           apres=c(tab_sk$co_s12[1],tab_sk$co_s21[2]),
+           chi=c(chi12,chi21),
+           p_value=c(1-pchisq(chi12,1),1-pchisq(chi21,1))) %>%
+  gt() %>%
+  tab_header(title ="Test de contagion sur la base de la co-skweness",
+             subtitle= "Fry, Martin et Tang (2010)") %>%
+  tab_spanner(label = "Co-Skweness",columns = c(avant,apres)) %>%
+  cols_label(avant="pré-crise",apres="crise",
+             cosk="sens",chi="Chi",p_value="p-value") %>%
+  fmt_number(columns = -cosk,decimals = 5)
+```
+
+On constate que seule la variation de la *coskewness* entre les périodes
+pré-crise et de crise dans le sens actions/obligations est
+statistiquement significative. Mais, elle ne l'est qu'au seuil de 10%.
+On peut donc, avec les précautions d'usage, trancher en faveur d'une
+contagion. Celle-ci prend la forme d'une *coskewness* plus négative
+suite à la crise et donc d'une diminution des rendements des actions
+suite à l'augmentation de la variance des obligations (ou inversement).
+
+```{r}
+#| label: netoyage 3 
+#| echo: false
+
+rm(chi12,chi21,moy,co_sk)
+```
+
+# Le test de différence de *cokurtosis*
+
+Il s'agit ici de prolonger le raisonnement précédent en étendant l'étude
+de la relation entre les rendements de deux marchés à un comoment
+supérieur. Encore une fois, la stabilité du comoments (comme de la
+corrélation ou la *coskewness*) entre la période pré-crise et la période
+de crise marque l'absence de contagion. *A contrario*, la détection d'un
+changement marque une forme de contagion.
+
+Le comoment considéré ici est la *cokurtosis*. Elle mesure la manière
+dont la moyenne d'une variable évolue en fonction de la skewness de
+l'autre (et inversement). On a donc deux mesures de *cokurtosis* selon
+le selon sens de contagion envisagé :
+
+$$
+\xi_{(i,j)}=\frac{1}{N}\sum_{t=1}^{T}\frac{r_{it}-\mu_i}{\sigma_i}\times\left(\frac{r_{jt}-\mu_j}{\sigma_j}\right)^3
+$$
+
+$$
+\xi_{(j,i)}=\frac{1}{N}\sum_{t=1}^{N}\left(\frac{r_{it}-\mu_i}{\sigma_i}\right)^3\times\frac{r_{jt}-\mu_j}{\sigma_j}
+$$
+
+Pour construire le test qu'ils proposent, @fry-mckibbin2016 utilisent
+une version légèrement modifiée de ces mesures de manière à exclure des
+constats réalisés l'influence de la corrélation entre les séries. Ils
+soustraire à la *cokurtosis* classique $-3\rho$. On a alors:
+
+$$
+\xi_{(i,j)}=\frac{1}{N}\sum_{t=1}^{T}\frac{r_{it}-\mu_i}{\sigma_i}\times\left(\frac{r_{jt}-\mu_j}{\sigma_j}\right)^3-3\rho
+$$
+
+$$
+\xi_{(j,i)}=\frac{1}{N}\sum_{t=1}^{N}\left(\frac{r_{it}-\mu_i}{\sigma_i}\right)^3\times\frac{r_{jt}-\mu_j}{\sigma_j}-3\rho
+$$
+
+Encore une fois, R base ne propose pas de fonction dédiée à la mesure de
+la *cokurtosis*, et encore moins sous cette forme. Donc, avant d'aller
+plus loin, créons en une.
+
+```{r}
+#| label: fx_cokurtosis
+
+Co_Kurtosis<-function(x_1,x_2,corr){
+                          moy_x1<-mean(x_1)
+                          moy_x2<-mean(x_2)
+                          sd_x1<-sd(x_1)
+                          sd_x2<-sd(x_2)
+                          v_1<-(x_1-moy_x1)/sd_x1
+                          v_2<-(x_2-moy_x2)/sd_x2
+                          co_k<-mean(v_1*v_2^3)-3*corr
+                          return(co_k)}
+```
+
+Ceci fait, on peut établir le tableau des statistiques descriptives dans
+une version incluant les *cokurtosis*. Notez que pour la correction
+associée à la corrélation, nous retenons sur la période de crise la
+corrélation ajustée proposée par Forbes et Rigobon (2002).
+
+```{r}
+#| label: stat_base_2_cokurtosis
+
+# calcul de la cokurtosis
+co_ku<-data.frame( 
+  cokurt_13=c(Co_Kurtosis(dat$ret_act[dat$avant==FALSE],
+                          dat$ret_bon[dat$avant==FALSE],corr_adj),
+              Co_Kurtosis(dat$ret_act[dat$avant==TRUE],
+                          dat$ret_bon[dat$avant==TRUE],tab_$cor[2])),
+  cokurt_31=c(Co_Kurtosis(dat$ret_bon[dat$avant==FALSE],
+                          dat$ret_act[dat$avant==FALSE],corr_adj),
+              Co_Kurtosis(dat$ret_bon[dat$avant==TRUE],
+                          dat$ret_act[dat$avant==TRUE],tab_$cor[2])))
+
+# intégration au tableau
+tab_ku<-data.frame(tab_,co_ku)
+
+# mise en forme du tableau
+tab_ku %>% 
+  arrange(desc(avant)) %>%
+  select(-avant) %>%
+  gt() %>%
+  tab_spanner(label = "Volatilité",columns = c(vol_act,vol_bon)) %>%
+  fmt_number(columns = c(vol_act,vol_bon,cor),decimals = 5) %>%
+  tab_spanner(label = "Moyenne",columns = c(moy_act,moy_bon)) %>% 
+  fmt_number(columns = c(moy_act,moy_bon),decimals = 5) %>%
+  tab_spanner(label = "Co-Kurtosis",columns = c(cokurt_13,cokurt_31)) %>%
+  fmt_number(columns = c(cokurt_13,cokurt_31),decimals = 5) %>%
+  cols_label(vol_act="action",vol_bon="obligation",
+             moy_act="action",moy_bon="obligation",
+             cor="corrélation",Periode="Période",
+             cokurt_13="action/obligation",cokurt_31="obligation/action")
+```
+
+Les *cokurtosis* mesurées sont toutes négatives. Cela marque le fait que
+les rendements d'un marché diminue quand la *skewness* des rendements
+sur l'autre augmente (et inversement). On a pour le lien
+actions/obligations une mesure montrant que si la *skewness* des
+rendements des obligations devient plus fréquemment négative, alors les
+investisseurs se tournent vers les actions ce qui augmente leur
+rendement moyen. Pour le lien obligations/actions le phénomène est plus
+marqué encore. La mesure montre qui si la *skewness* des rendements des
+actions devient plus fréquemment négative, alors les investisseurs se
+tournent vers les obligations.
+
+On a un déplacement des fonds du marché à *skewness* négative vers
+l'autre ce qui a tendance à augmenter ses rendements. Ce qui est le
+fruit de la préférence des investisseurs pour la *skewness* dans un
+contexte d'incertitude.
+
+Sur la période de crise les mesures de *cokurtosis* restent négatives,
+mais diminue fortement en terme de valeur absolue. Encore faudrait-il
+savoir si ces différences sont statistiquement significatives. Si c'est
+le cas, elle serait l'effet d'une contagion d'un marché vers l'autre. Le
+jeu d'hypothèses évalué est alors $H_0: \xi_x=\xi_y$ (absence de
+contagion) contre $H_1: \xi_x \neq \xi_y$ (présence de contagion).
+
+Comme le fait Fry et al. (2010) pour la *coskewness*, Fry-McKibbin and
+Hsiao (2016) construisent leur test autour du multiplicateur de
+Lagrange. Après adaptation (expansion polynomiale de la fonction de
+Lagrange), ils proposent la statistique suivante qui sous $H_0$ suit une
+loi du $\chi^2$ à un degré de liberté.
+
+$$
+\left(\frac{\xi_y-\xi_x}{\sqrt{\frac{18v_y^2+6}{N_y}+\frac{18\rho_x^2+6}{N_x}}}\right)^2 \to \chi^2_{(1)} 
+$$
+
+Evidemment, le test est pratiqué pour les deux sens de
+la *cokurtosis* (actions/obligations et obligations/actions). Procédons
+donc aux deux évaluations.
+
+```{r}
+#| label: calc_stat_p-value_3
+
+# calcul de la statistique
+chi13<-((co_ku$cokurt_13[2]-co_ku$cokurt_13[1])/
+          sqrt((18*corr_adj^2+6)/tab_$taille[2]+
+                 (18*tab_$cor[1]^2+6)/tab_$taille[1]))^2
+
+chi31<-((co_ku$cokurt_31[2]-co_ku$cokurt_31[1])/
+          sqrt((18*corr_adj^2+6)/tab_$taille[2]+
+                 (18*tab_$cor[1]^2+6)/tab_$taille[1]))^2
+
+# assemblage et mise en forme du tableau
+data.frame(cosk=c('actions/obligations','obligations/actions'),
+           avant=c(tab_ku$cokurt_13[2],tab_ku$cokurt_31[2]),
+           apres=c(tab_ku$cokurt_13[1],tab_ku$cokurt_31[1]),
+           chi=c(chi13,chi31),
+           p_value=c(1-pchisq(chi13,1),1-pchisq(chi31,1))) %>%
+  gt() %>%
+  tab_header(title ="Test de contagion sur la base de la co-kurtosis",
+             subtitle= "Fry-McKibbin et Hsiao (2018)") %>%
+  tab_spanner(label = "Co-Kurtosis", columns = c(avant,apres)) %>%
+  cols_label(avant="pré-crise", apres="crise", 
+             cosk="sens", chi="Chi", p_value="p-value") %>%
+  fmt_number(columns = -cosk, decimals = 5)
+```
+
+La différence de *cokurtosis* entre la période pré-crise et la crise
+n'est pas statistiquement significative concernant la relation
+actions/obligations, mais l'est fortement dans le sens
+obligations/actions.
+
+La relation entre la *skweness* des actions et les rendements
+obligataires a clairement été affectée par la crise.
+
+La propension des investisseurs à acheter des obligations si la
+*skewness* des marchés actions devient négative, et à vendre les
+obligation si la skewness des marchés actions devient positive, a
+diminué pendant la crise.
+
+# Le test de différence de covolatitilité
+
+Fry-Mc Kibbin et Hsiao (2016) proposent en plus du test de contagion
+basé de la *cokurtosis* un second test. Celui-ci prolonge l'analyse des
+moments supérieures de la distribution jointe rendement des marchés
+associés en considérant cette fois la covolatilité (le moment d'ordre
+4). Cette mesure lie la volatilité d'un marché avec la volatilité de
+l'autre. Contrairement à la *coskewness* et la *cokurtosis*, c'est une
+mesure symétrique. Il n'y a donc qu'une covolatilité comme il n'y a
+qu'une corrélation. Celle-ci mesure classiquement comme suit:
+
+$$
+\zeta(i,j)=\frac{1}{N}\sum^N_{t=1}\left(\frac{r_i-\mu_i}{\sigma_i}\right)^2\times\left(\frac{r_j-\mu_j}{\sigma_j}\right)^2
+$$
+
+Cependant, dans le cadre du test, Fry-Mc Kibbin et Hsiao (2016) en
+utilisent une version modifiée afin d'expurger la mesure de l'influence
+de la corrélation entre les séries sur la mesure, comme il l'on fait
+pour la *cokurtosis*. On a alors:
+
+$$
+\zeta(i,j)=\frac{1}{N}\sum^N_{t=1}\left(\frac{r_i-\mu_i}{\sigma_i}\right)^2\times\left(\frac{r_j-\mu_j}{\sigma_j}\right)^2-(1+2\rho^2)
+$$
+
+Encore une fois, R base ne propose pas de fonction dédiée à la mesure de
+la covolatilité, et encore moins sous cette forme. Donc, avant d’aller
+plus loin, créons en une.
+
+```{r}
+#| label: fx_volatilite
+
+Co_volatilite<-function(x_1,x_2,corr){
+                              moy_x1<-mean(x_1)
+                              moy_x2<-mean(x_2)
+                              sd_x1<-sd(x_1)
+                              sd_x2<-sd(x_2)
+                              v_1<-(x_1-moy_x1)/sd_x1
+                              v_2<-(x_2-moy_x2)/sd_x2
+                              co_vol<-mean(v_1^2*v_2^2)-(1+2*corr^2) 
+                              return(co_vol)}
+```
+
+Ceci étant fait, on peut établir le tableau des statistiques
+descriptives dans une version incluant les covolatilité pour la période
+pré-crise et la période de crise. Notez que pour la correction associée
+à la corrélation, nous retenons sur la période de crise la corrélation
+ajustée proposée par Forbes et Rigobon (2002) comme nous l'avons fait
+pour la *cokurtosis*.
+
+```{r}
+#| label: stat_base_3_covolatilité
+
+# calcul de la covolatilité
+co_vol<-data.frame( 
+  covol_a_o=c(Co_volatilite(dat$ret_act[dat$avant==FALSE],
+                            dat$ret_bon[dat$avant==FALSE],corr_adj),
+              Co_volatilite(dat$ret_act[dat$avant==TRUE],
+                            dat$ret_bon[dat$avant==TRUE],tab_$cor[2])))
+
+# intégration au tableau
+tab_vol<-data.frame(tab_,co_vol)
+
+# mise en forme du tableau
+tab_vol %>% 
+  arrange(desc(avant)) %>%
+  select(-avant) %>%
+  gt() %>%
+  tab_spanner(label = "Volatilité",columns = c(vol_act,vol_bon)) %>%
+  fmt_number(columns = c(vol_act,vol_bon,cor),decimals = 5) %>% 
+  tab_spanner(label = "Moyenne",columns = c(moy_act,moy_bon)) %>% 
+  fmt_number(columns = c(moy_act,moy_bon),decimals = 5) %>%
+  tab_spanner(label = "Co-Volatilité",columns = c(covol_a_o)) %>%
+  fmt_number(columns = c(covol_a_o),decimals = 5) %>%
+  cols_label(vol_act="action",vol_bon="obligation",
+             moy_act="action",moy_bon="obligation",
+             cor="corrélation",Periode="Période", 
+             covol_a_o="action-obligation")
+```
+
+Sur la période pré-crise, la covolatilité entre les marchés action et
+obligataire est de 2,19. Cela marque le fait que, lorsque la volatilité
+sur le marché des actions augmente, elle augmente aussi sur le marché
+obligataire (et vice-versa). Sur la période de crise, cette covolatilité
+chute très clairement. Elle passe à 0,68. Elle reste positive, et donc
+le lien des volatilités sur les marchés reste qualitativement le même,
+mais perd en intensité.
+
+Ce changement va dans le sens d'une potentielle contagion. Reste à
+savoir si la différence relevée est statistiquement significative. Le
+jeu d'hypothèses évalué est $H_0: \zeta_x=\zeta_y$ (pas de contagion)
+contre$H_1: \zeta_x \neq \zeta_y$ (présence de contagion).
+
+La statistique du test de différence de covolatilité est construit de la
+même manière que les deux précédentes (*coskewness* et *cokurtosis*).
+Elle repose sur un test du multiplicateur de Lagrange. Après adaptation
+(expansion polynomiale de la fonction de Lagrange), ils proposent la
+statistique suivante qui sous $H_0$ suit une loi du $\chi^2$ à un degré
+de liberté.
+
+$$
+\left(\frac{\zeta_y-\zeta_x}{\sqrt{\frac{4v_y^4+16v_y^2+4}{N_y}+\frac{4\rho_x^4+16\rho_x^2+4}{N_x}}}\right)^2\to \chi^2_{(1)}
+$$
+
+Ceci étant établi, procédons au test.
+
+```{r}
+#| label: calc_stat_p-value_4
+
+# calcul de la statistique
+chivol<-((co_vol$covol_a_o[2]-co_vol$covol_a_o[1])/
+           sqrt((4*corr_adj^4+16*corr_adj^2+4)/tab_$taille[2]+
+               (4*tab_$cor[1]^4+16*tab_$cor[1]^2+4)/tab_$taille[1]))^2
+
+# assemblage et mise en forme du tableau
+data.frame(cosk='action-obligation', 
+           avant=tab_vol$covol_a_o[2],
+           apres=tab_vol$covol_a_o[1],
+           chi=chivol, p_value=1-pchisq(chivol,1)) %>%
+  gt() %>% 
+  tab_header(title ="Test de contagion sur la base de la co-volatilité",
+             subtitle= "Fry-McKibbin et Hsiao (2018)") %>%
+  tab_spanner(label = "Co-Volatilité",columns = c(avant,apres)) %>%
+  cols_label(avant="pré-crise",apres="crise",
+             cosk="",chi="Chi",p_value="p-value") %>%
+  fmt_number(columns = -cosk,decimals = 5)
+```
+
+Le test rejette très nettement $H_0$. Il confirme donc l'existence d'une
+différence de covolatilité sur les marché action et obligation entre la
+période pré-crise et la période de crise. Cela peut être interprété
+comme un indice d'une forme de contagion.
