@@ -7,15 +7,17 @@ categories:
   - Finance
   - ggplot2
   - gt
-  - r
   - GT
+  - r
+  - datavisualisation
 tags:
   - Dataviz
   - Finance
   - ggplot2
   - gt
-  - r
   - GT
+  - r
+  - dataviz
 ---
 
 **Venons-en à notre second post de la sous-série de GT consacrée à l'illustration distribution des variables quantitatives. Il s'agit ici de traiter des histogrammes en pyramide. Ceux-ci permettent de faciliter la comparaison de la distribution d'une variable entre deux groupes d'observations. Ils sont souvent mobilisés en démographie pour mettre en regard les effectifs des différences classes d'âge pour chaque sexe (pour une zone géographique et à une date donnée). Le principe du graphe est simple. On a un histogramme réalisé sur la même variable avec les mêmes intervalles pour les deux groupes qui sont présentés à l'horizontale et orientés en miroir. Cela permet à la fois de mettre en évidence les similarités au travers les symétries et les différences au travers les dissymétries. Son principal défaut repose dans le fait que les comparaisons qu'il permet se limitent à deux groupes. Nous verrons par la suite d'autres graphes ouvrant plus de possibilité.**
