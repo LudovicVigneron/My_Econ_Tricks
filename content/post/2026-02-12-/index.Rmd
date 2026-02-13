@@ -1,5 +1,5 @@
 ---
-title: 'Détecter la contagion entre deux marchés'
+title: Détecter la contagion entre deux marchés
 author: Ludovic Vigneron
 date: '2026-02-12'
 categories:
@@ -8,12 +8,12 @@ categories:
   - Finance comportementale
   - R
 tags:
+  - Contagion
   - Finance
   - Finance comportementale
-  - Contagion
   - R
-editor_options: 
-  markdown: 
+editor_options:
+  markdown:
     wrap: 72
 bibliography: references.bib
 ---
