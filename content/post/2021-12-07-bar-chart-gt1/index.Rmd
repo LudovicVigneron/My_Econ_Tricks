@@ -4,10 +4,11 @@ author: Ludovic Vigneron
 date: '2021-12-07'
 categories:
   - datavisualisation
-  - GT
-  - R
   - gt
+  - GT
   - r
+  - R
+  - ggplot2
 tags:
   - Dataviz
   - GGPLOT2
@@ -15,6 +16,8 @@ tags:
   - GT
   - r
   - R
+  - dataviz
+  - ggplot2
 output: html_document
 ---
 
