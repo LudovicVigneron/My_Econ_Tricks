@@ -17,7 +17,7 @@ Les objectifs de cette publication, qui je l'espère sera régulière et trouver
 
 Pour celles et ceux qui auraient la curiosité d'en savoir plus sur moi, je propose quelques liens utiles:
 
-* [mon CV (pas très à jour) sur le site de mon laboratoire](Ludovic Vigneron CV (modifié juillet_2025)_.pdf)
+* [mon CV (pas très à jour) sur le site de mon laboratoire](Ludovic Vigneron CV (/modifié juillet_2025)_.pdf)
 
 * [la page reprenant les documents de travail que j'ai déposé sur le SSRN](https://papers.ssrn.com/sol3/cf_dev/AbsByAuth.cfm?per_id=1889934)
 
